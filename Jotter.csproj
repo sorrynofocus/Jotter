@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>build\Icos\gradiant_notebook.ico</ApplicationIcon>
+    <Platforms>AnyCPU;x64;ARM64;x86</Platforms>
+	  <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+	  <Deterministic>false</Deterministic>
+	  <!-- determinstic fixes error
+	Wildcards are only allowed if the build is not deterministic, which is the default for 
+	.Net Core projects. Adding False to csproj fixes the issue.-->	  
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="build\Icos\gradiant_notebook.ico" />
+  </ItemGroup>
+
+<PropertyGroup>
+
+</PropertyGroup> 
+
+
+</Project>

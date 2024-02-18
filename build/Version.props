@@ -1,0 +1,54 @@
+﻿<Project>
+  <!-- See https://aka.ms/dotnet/msbuild/customize for more details on customizing your build -->
+	<!-- 
+	See https://scottdorman.blog/2018/08/20/net-core-project-versioning/
+	example using dotnet compile
+	dotnet publish ./MyProject.csproj /p:Version="1.2.3" /p:InformationalVersion="1.2.3-qa"
+	-->
+  <PropertyGroup>
+
+	<Product>Jotter</Product>
+	<Title>Jotter.Core</Title>
+	<Company>Nobody Noze</Company>
+	<RootNamespace>Jotter.Core</RootNamespace>
+	<!-- <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile> -->
+
+	<Copyright>Copyright © $([System.DateTime]::Now.ToString("yyyy"))</Copyright>
+
+	<Description>Note taking app Mike would appreciate</Description>
+	<!-- The File Description from executable properties originates by assembly title, not description tag!-->
+	<AssemblyTitle>Note taking app Mike would appreciate</AssemblyTitle>
+	<AssemblyName>Jotter</AssemblyName>
+
+	  <!--<BuildInc>0</BuildInc>
+	<MajorMinorVersion>5</MajorMinorVersion>
+	<Version>$(MajorMinorVersion).0.0.$(BuildInc)</Version>
+	<FileVersion>$(MajorMinorVersion).0.0.$(BuildInc)</FileVersion>-->
+
+	<!-- Build number auto-increments, no need to adjust -->
+	<VersionSuffix>1.0.0.$([System.DateTime]::UtcNow.ToString(mmff))</VersionSuffix>
+	<AssemblyVersion Condition=" '$(VersionSuffix)' == '' ">0.0.0.1</AssemblyVersion>
+	<AssemblyVersion Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</AssemblyVersion>
+	<Version Condition=" '$(VersionSuffix)' == '' ">0.0.1.0</Version>
+	<Version Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</Version>
+	<FileVersion Condition=" '$(VersionSuffix)' == '' ">0.0.1.0</FileVersion>
+	<FileVersion Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</FileVersion>
+	<InformationalVersion>1.0.0.0.777</InformationalVersion>
+	  
+
+	<!-- <AutoIncrementPackageRevision>true</AutoIncrementPackageRevision> -->
+
+	<NeutralLanguage>en</NeutralLanguage>
+	  
+	<!--<PackageLicenseUrl>License URL</PackageLicenseUrl>
+	<PackageProjectUrl>Project URL</PackageProjectUrl>
+	<PackageIconUrl>Icon URL</PackageIconUrl>-->
+	  
+	<RepositoryUrl>https://github.com/sorrynofocus</RepositoryUrl>
+	<RepositoryType>Repo type</RepositoryType>
+	<PackageTags>Tags</PackageTags>
+	<PackageReleaseNotes>Release</PackageReleaseNotes>
+
+
+  </PropertyGroup>
+</Project>

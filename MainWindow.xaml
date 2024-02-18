@@ -1,0 +1,168 @@
+﻿<Window 
+    x:Class="Jotter.MainWindow"
+        Name="Jotter"
+        Title="Jotter V 1.0.0"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Jotter"
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        BorderBrush="Black"
+        BorderThickness="5"
+        AllowsTransparency="True"
+        Height="450" 
+        Width="350"
+>
+    <!-- Window properties -->
+
+    <Window.Resources>
+
+        <!-- Start of applying a style to buttons for pressed and static. the colors are grey
+        The style theme starts actually under style "ButtonClickTriggerStyle"
+        -->
+        <Style x:Key="FocusVisual">
+            <Setter Property="Control.Template">
+                <Setter.Value>
+                    <ControlTemplate>
+                        <Rectangle Margin="2" StrokeDashArray="1 2" Stroke="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" SnapsToDevicePixels="true" StrokeThickness="1"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <SolidColorBrush x:Key="Button.Static.Background" Color="#FFDDDDDD"/>
+        <SolidColorBrush x:Key="Button.Static.Border" Color="#FF707070"/>
+        <SolidColorBrush x:Key="Button.MouseOver.Background" Color="#FF707070"/>
+        <SolidColorBrush x:Key="Button.MouseOver.Border" Color="#FF656A6D"/>
+        <SolidColorBrush x:Key="Button.Pressed.Background" Color="#FFC5CACC"/>
+        <SolidColorBrush x:Key="Button.Pressed.Border" Color="#FFC5CACC"/>
+        <SolidColorBrush x:Key="Button.Disabled.Background" Color="#FFF4F4F4"/>
+        <SolidColorBrush x:Key="Button.Disabled.Border" Color="#FFADB2B5"/>
+        <SolidColorBrush x:Key="Button.Disabled.Foreground" Color="#FF838383"/>
+        <Style x:Key="ButtonClickTriggerStyle" TargetType="{x:Type Button}">
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
+            <Setter Property="Background" Value="{StaticResource Button.Static.Background}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Button.Static.Border}"/>
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" SnapsToDevicePixels="true">
+                            <ContentPresenter x:Name="contentPresenter" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsDefaulted" Value="true">
+                                <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="true">
+                                <Setter Property="Background" TargetName="border" Value="{StaticResource Button.MouseOver.Background}"/>
+                                <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.MouseOver.Border}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="true">
+                                <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Pressed.Background}"/>
+                                <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Pressed.Border}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="false">
+                                <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Disabled.Background}"/>
+                                <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.Disabled.Border}"/>
+                                <Setter Property="TextElement.Foreground" TargetName="contentPresenter" Value="{StaticResource Button.Disabled.Foreground}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- Start of applying a style to buttons for pressed and static. the colors are grey-->
+
+    </Window.Resources>
+
+    <!-- window chrome aka the non-client area.-->
+    <WindowChrome.WindowChrome>
+        <WindowChrome     
+        CaptionHeight="1"  
+        CornerRadius ="15"
+        ResizeBorderThickness="6"         
+        GlassFrameThickness="0"
+        >
+        </WindowChrome>
+    </WindowChrome.WindowChrome>
+
+    <!-- Window_MouseDown for dragging window since windowstyle = none-->
+    <Grid Row="0" MouseDown="Window_MouseDown">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+
+        <!-- Header 
+        Start with a dockpanel and buttons aligned and laid out. Styles are within.
+        Header ends with text of the application name
+        
+        -->
+        <DockPanel Background="#FF333333">
+            <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+                <Button Style="{DynamicResource ButtonClickTriggerStyle}" Name="btnAddNote" Content="+" FontWeight="Bold" Click="AddNote_Click" DockPanel.Dock="Left" Width="40" Height="40" />
+                <Button Style="{DynamicResource ButtonClickTriggerStyle}" Name="btnDeleteNote" Content="-" FontWeight="Bold" Click="DeleteNote_Click" DockPanel.Dock="Left" Width="40" Height="40"/>
+
+                <StackPanel DockPanel.Dock="Right">
+                    <Button Style="{DynamicResource ButtonClickTriggerStyle}" Name="btnExit" FontWeight="Bold" Content="X" Click="ExitApp_Click" Width="40" Height="40" />
+                </StackPanel>
+            </DockPanel>
+
+            <TextBlock Name="StickyNotesTitle" Padding="2,2,2,7" Text="Jotter" Foreground="White" FontSize="20" FontWeight="Bold"/>
+        </DockPanel>
+        <!-- End of Header -->
+
+
+
+        <!-- Note Content -->
+        <ListView Name="MyNotesListView" Grid.Row="1" SelectionMode="Single" ItemsSource="{Binding Notes}">
+            <ListView.ContextMenu>
+                <ContextMenu Name="ContextOnItem">
+                    <MenuItem Name="OpenNote"  Header="Open Note" Click="OpenNote_Click" />
+                    <MenuItem Name="DelNote"  Header="DeleteThisNote" Click="DeleteNoteFromContextMenu_Click" />
+                </ContextMenu>
+            </ListView.ContextMenu>
+
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <EventSetter Event="MouseDoubleClick" Handler="Note_DoubleClick"/>
+                </Style>
+            </ListView.ItemContainerStyle>
+
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="10" Background="LightYellow">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Note Header -->
+                        <StackPanel Grid.Row="0">
+                            <TextBox Text="{Binding Title}" FontSize="16" FontWeight="Bold"/>
+                        </StackPanel>
+
+                        <!-- Note Text -->
+                        <TextBox Grid.Row="1" Text="{Binding Text}" BorderThickness="0"/>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+
+        </ListView>
+    </Grid>
+
+
+
+
+
+</Window>

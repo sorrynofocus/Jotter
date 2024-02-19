@@ -80,6 +80,11 @@
             </Setter>
         </Style>
         <!-- Start of applying a style to buttons for pressed and static. the colors are grey-->
+        
+        <!-- Start of resources for settings button -->
+        <!--<ImageBrush x:Name="rscHambugerMenu" x:Key="rscHambugerMenu"  ImageSource="/build/Icos/hamburger-menu-icon-png-white-11.jpg" />-->
+        <!-- End of resources for settings button -->
+        
 
     </Window.Resources>
 
@@ -108,14 +113,19 @@
         Header ends with text of the application name
         
         -->
-        <DockPanel Background="#FF333333">
-            <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+        <DockPanel Background="#FF333333" FlowDirection="LeftToRight" LastChildFill="False">
+            <DockPanel DockPanel.Dock="Top"  LastChildFill="False" >
                 <Button Style="{DynamicResource ButtonClickTriggerStyle}" Name="btnAddNote" Content="+" FontWeight="Bold" Click="AddNote_Click" DockPanel.Dock="Left" Width="40" Height="40" />
                 <Button Style="{DynamicResource ButtonClickTriggerStyle}" Name="btnDeleteNote" Content="-" FontWeight="Bold" Click="DeleteNote_Click" DockPanel.Dock="Left" Width="40" Height="40"/>
 
-                <StackPanel DockPanel.Dock="Right">
+                <StackPanel Name="ExitDockPanel" DockPanel.Dock="Right">
                     <Button Style="{DynamicResource ButtonClickTriggerStyle}" Name="btnExit" FontWeight="Bold" Content="X" Click="ExitApp_Click" Width="40" Height="40" />
                 </StackPanel>
+
+                <!--<StackPanel Name="SettingsDockPanel" DockPanel.Dock="Right" >
+                    <Button Style="{DynamicResource ButtonClickTriggerStyle}" Name="btnSettings" Background="{StaticResource rscHambugerMenu}" FontWeight="Bold" Click="AppSettings_Click" Width="40" Height="40" />
+                </StackPanel>-->
+
             </DockPanel>
 
             <TextBlock Name="StickyNotesTitle" Padding="2,2,2,7" Text="Jotter" Foreground="White" FontSize="20" FontWeight="Bold"/>

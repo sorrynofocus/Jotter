@@ -26,6 +26,7 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using com.nobodynoze.flogger;
 
 /*
  * TODO:
@@ -38,6 +39,7 @@ using System.ComponentModel;
  * - Change the buttons from text-based ("+" is for add, for example) to image based
  * - Test the icons. Icon test in explorer is good. Great a final icon in future releases
  * - more comments in code. For beginners looking into this, it would help greatly. 
+ * - Move all these TODOs in the notes section, alnog with release notes.
  * 
  */
 
@@ -49,14 +51,26 @@ namespace Jotter
         // Data file here: C:\Users\<USER>\AppData\Local\Jotter\JotterNotes.xml
         public static string jotNotesFilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), 
                                                  Path.Join(Assembly.GetExecutingAssembly().GetName().Name, "JotterNotes.xml") );
+        
+        //Logging instance using older flogger code written a long time ago.
+        public static Logger logger = new Logger();
 
         /*
-         * changes to the Title and Text properties of a Note object will raise the PropertyChanged event. You can then subscribe to this event for each Note object in the ObservableCollection<Note> and update the isCollectionChanged flag accordingly whenever a property changes.
+         * Changes to the Title and Text properties of a Note object will raise the PropertyChanged event. 
+         * We subscribe to this event for each Note object in the ObservableCollection<Note>. We update 
+         * the isCollectionChanged flag accordingly whenever a property changes. This helps determine is 
+         * the collection has been changed. At the moment, I have not decided if I need it for textbox control.
+         * TODO: Fully test this.
          */
         public class Note: INotifyPropertyChanged
         {
             private string? title;
             private string? text;
+            /*
+             * TODO
+             * - Add Id to track notes.
+             * - Add tags. When user adds #{Tag} then let's find similar notes
+             */
 
             public string? Title
             {
@@ -84,9 +98,10 @@ namespace Jotter
                 }
             }
 
+            //property change event handler to detect prop changes
             public event PropertyChangedEventHandler? PropertyChanged;
 
-            //TODO: To capture we need to write Notes_PropertyChanged() nad subscribe to the properties. 
+            //TODO: To capture we need to write Notes_PropertyChanged() and subscribe to it for change tracking. 
             // 
             protected virtual void OnPropertyChanged(string propertyName)
             {
@@ -109,10 +124,24 @@ namespace Jotter
             isCollectionChanged = true;
         }
 
+        static void LogWrite_Handler(object source, LogEventArgs e)
+        {
+            Debug.WriteLine($"Log message: {e.LogMessage}");
+        }
 
 
+        //Entrypoint
         public MainWindow()
         {
+            // Subscribe to the log writing event
+            logger.LogWritten += LogWrite_Handler;
+            logger.LogFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                                                 Path.Join(Assembly.GetExecutingAssembly().GetName().Name, "JotterNotes.log"));
+            logger.EnableDTStamps = true;
+            
+            logger.LogInfo(new List<string> { " ", "------------------------------------------" });
+            logger.LogInfo("[Doing action] Started up the generator!");
+
             //InitializeComponent();
             //Notes = new ObservableCollection<Note>();
             //noteManager = new NoteManager();
@@ -123,25 +152,43 @@ namespace Jotter
             // Create the directory
             //string directoryPath = Path.GetDirectoryName(jotNotesFilePath);
             //System.IO.Directory.CreateDirectory(directoryPath);
+            logger.LogInfo(new List<string> { "[Doing action] Creating application save/log directory: ", Path.GetDirectoryName(jotNotesFilePath) });
             CreateDirectoryFullAccess(Path.GetDirectoryName(jotNotesFilePath));
 
 
-
+            logger.LogInfo("[Doing action] initializing components... ");
             InitializeComponent();
+
+            logger.LogInfo("[Doing action] Init'ing NoteManager...");
             noteManager = new NoteManager();
             Notes = noteManager.Notes; // Bind to the Notes collection of NoteManager
                                        // Subscribe to the CollectionChanged event
-            
+
+            logger.LogInfo("[Doing action] Subscribing to collection handler...");
             //Subscribe to the Notes collection change to a handler.
             //TODO Notes properties handler for changes not implemented yet.
             Notes.CollectionChanged += NotesCollectionChangedHandler;
+
+            logger.LogInfo("[Doing action] Starting logs: " + 
+                           (Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), 
+                           Path.Join(Assembly.GetExecutingAssembly().GetName().Name, "JotterNotes.log") ) );
+            logger.LogInfo("[Doing action] Subscribing to logging handler...");
+
             DataContext = this;
         }
 
+
+
+        /// <summary>
+        /// NoteManager handles CRUD operations for note taking
+        /// </summary>
         public class NoteManager
         {
            
+            //Tie the UI to collection
             public ObservableCollection<Note>? Notes { get; set; }
+            
+            //Use XML for crud operations
             private XmlSerializer? serializer;
 
 
@@ -152,33 +199,40 @@ namespace Jotter
             //Instead of use block body, use expression body for constructor
             public NoteManager() => Notes = LoadNotes(serializer, jotNotesFilePath);
 
-            public void AddOrUpdate(Note note)
+            /// <summary>
+            /// Add or update a note into NoteManager
+            /// </summary>
+            /// <param name="note"></param>
+            public void AddUpdateNote(Note note)
             {
+                logger.LogInfo(new List<string> { "[Doing action] AddUpdateNote", "Adding/Updating selected note." });
                 Note? existingNote = Notes.FirstOrDefault(n => n.Title == note.Title);
                 if (existingNote != null)
-                {
                     existingNote.Text = note.Text;
-                }
                 else
-                {
                     Notes.Add(note);
-                }
 
                 SaveNotes(jotNotesFilePath);
+                logger.LogInfo("[Ending action] AddUpdateNote");
             }
 
-            public void Remove(string title)
+            public void RemoveNote(string title)
             {
+                logger.LogInfo(new List<string> { "[Doing action] RemoveNote", "Deleting selected note." });
+
                 Note? noteToRemove = Notes.FirstOrDefault(n => n.Title == title);
                 if (noteToRemove != null)
                 {
                     Notes.Remove(noteToRemove);
                     SaveNotes(jotNotesFilePath);
                 }
+                logger.LogInfo("[Ending action] RemoveNote");
             }
 
             private ObservableCollection<Note>? LoadNotes(XmlSerializer serializer, string? filePath)
             {
+                logger.LogInfo(new List<string> { "[Doing action] LoadNotes", "Reading notes into RAM." });
+
                 if (File.Exists(filePath))
                 {
                     using (FileStream? fileStream = new FileStream(filePath, FileMode.Open))
@@ -195,6 +249,8 @@ namespace Jotter
 
             public void SaveNotes(string? filePath)
             {
+                logger.LogInfo(new List<string> { "[Doing action] SaveNotes", "Recording note in RAM." });
+
                 if ( (filePath == string.Empty) )
                 { 
                     MessageBox.Show("Cannot save data to file ${filePath}", "Error!", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -206,12 +262,15 @@ namespace Jotter
                     var serializer = new XmlSerializer(typeof(ObservableCollection<Note>));
                     serializer.Serialize(fileStream, Notes);
                 }
+                logger.LogInfo("[Ending action] SaveNotes");
             }
         }
 
 
-        private static void CreateDirectoryFullAccess(string file)
+        private void CreateDirectoryFullAccess(string file)
         {
+            logger.LogInfo(new List<string> { "[Doing action] Note_DoubleClick", "Pulling up data now." });
+
             bool exists = System.IO.Directory.Exists(file);
             if (!exists)
             {
@@ -230,31 +289,42 @@ namespace Jotter
                                                                                     PropagationFlags.NoPropagateInherit, 
                                                                                     AccessControlType.Allow));
             dInfo.SetAccessControl(dSecurity);
+            logger.LogInfo("[Ending action] CreateDirectoryFullAccess");
         }
 
         private void AddNote_Click(object sender, RoutedEventArgs e)
         {
+            logger.LogInfo(new List<string> { "[Doing action] Note_DoubleClick", "Pulling up data now." });
             //Notes.Add(new Note { Title = "New Note", Text = "Enter your text here." });
-            noteManager.AddOrUpdate(new Note { Title = "New Note", Text = "Enter your text here." });
+            noteManager.AddUpdateNote(new Note { Title = "New Note", Text = "Enter your text here." });
+            logger.LogInfo("[Ending action] AddNote_Click");
         }
 
         private void DeleteNote_Click(object sender, RoutedEventArgs e)
         {
+            logger.LogInfo(new List<string> { "[Doing action] Note_DoubleClick", "Pulling up data now." });
             if (MyNotesListView.SelectedItem != null)
                 //Notes.Remove((Note)MyNotesListView.SelectedItem);
-                noteManager.Remove(((Note)MyNotesListView.SelectedItem).Title); // Pass title instead of Note object
+                // Pass title instead of Note object
+                // Deciding in to keep the "-" or not.
+                noteManager.RemoveNote(((Note)MyNotesListView.SelectedItem).Title);
+            logger.LogInfo("[Ending action] DeleteNote_Click");
         }
 
         private void DeleteNoteFromContextMenu_Click(object sender, RoutedEventArgs e)
         {
+            logger.LogInfo(new List<string> { "[Doing action] Note_DoubleClick", "Pulling up data now." });
             if (MyNotesListView.SelectedItem != null)
                 Notes.Remove((Note)MyNotesListView.SelectedItem);
+            logger.LogInfo("[Ending action] DeleteNoteFromContextMenu_Click");
         }
 
         private void Note_DoubleClick(object sender, RoutedEventArgs e)
         {
+            logger.LogInfo(new List<string> { "[Doing action] Note_DoubleClick", "Pulling up data now." });
             if (sender is ListViewItem item && item.DataContext is Note note)
                 MessageBox.Show($"Double-clicked on: {note.Title}\n\nText: {note.Text}");
+            logger.LogInfo("[Ending action] Note_DoubleClick");
         }
 
         private void OpenNote_Click(object sender, RoutedEventArgs e)
@@ -264,7 +334,7 @@ namespace Jotter
 
         private void ExitApp_Click(object sender, RoutedEventArgs e)
         {
-            // Implement logic for saving settings/notes
+            // Logic for saving settings/notes
             // and check if the collection was changed
             // -only on add, remove, not on controls.
             if (isCollectionChanged)
@@ -277,18 +347,24 @@ namespace Jotter
                 Debug.WriteLine("Notes collection, NOT changed");
             }
 
+            logger.LogInfo(new List<string> { "ExitApp_Click called.", "Exitign application in progress." });
+
             Notes.CollectionChanged -= NotesCollectionChangedHandler;
+            logger.LogWritten -= LogWrite_Handler;
+
             Environment.Exit(0);
         }
 
-        //Coee behind for dragging window since windowstyle = none
+        //Drag window since windowstyle = none
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
                 this.DragMove();
         }
 
-
-
+        private void AppSettings_Click(object sender, RoutedEventArgs e)
+        {
+            //Settings
+        }
     }
 }

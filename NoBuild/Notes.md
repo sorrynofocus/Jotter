@@ -34,8 +34,13 @@ Line:
 
   ---
 
+## 2024.02.19 11:12:21pm
 
+**Jotter.csproj**
+Fixed settings button image resource. Instead of content like the app icon, the button is considered a resource.
 
+**MainWindow.xaml**
+- Completed the UI for mouse over button. Trying to get a hold of control temapltes. So much to re-do a control.
 
 
 

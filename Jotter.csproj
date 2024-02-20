@@ -16,7 +16,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="build\Icos\gradiant_notebook.ico;build\Icos\hamburger-menu-icon-png-white-11.jpg" />
+    <None Remove="build\Icos\hamburger-menu-icon-png-white-11.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="build\Icos\gradiant_notebook.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Label="hamburger-menu-icon" Include="build\Icos\hamburger-menu-icon-png-white-11.jpg" />
   </ItemGroup>
 
 <PropertyGroup>

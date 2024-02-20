@@ -14,8 +14,8 @@
         BorderBrush="Black"
         BorderThickness="5"
         AllowsTransparency="True"
-        Height="450" 
-        Width="350"
+        Height="600" 
+        Width="420"
 >
     <!-- Window properties -->
 
@@ -156,7 +156,7 @@
     </WindowChrome.WindowChrome>
 
     <!-- Window_MouseDown for dragging window since windowstyle = none-->
-    <Grid Row="0" MouseDown="Window_MouseDown">
+    <Grid x:Name="MainGrid" Row="0" MouseDown="Window_MouseDown" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -194,40 +194,54 @@
 
 
         <!-- Note Content -->
-        <ListView Name="MyNotesListView" Grid.Row="1" SelectionMode="Single" ItemsSource="{Binding Notes}">
-            <ListView.ContextMenu>
-                <ContextMenu Name="ContextOnItem">
-                    <MenuItem Name="OpenNote"  Header="Open Note" Click="OpenNote_Click" />
-                    <MenuItem Name="DelNote"  Header="DeleteThisNote" Click="DeleteNoteFromContextMenu_Click" />
-                </ContextMenu>
-            </ListView.ContextMenu>
+        <Grid x:Name="gridContainListView" Grid.Row="1" MaxWidth="900" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
-            <ListView.ItemContainerStyle>
-                <Style TargetType="ListViewItem">
-                    <EventSetter Event="MouseDoubleClick" Handler="Note_DoubleClick"/>
-                </Style>
-            </ListView.ItemContainerStyle>
+            <!--<Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>-->
 
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <Grid Margin="10" Background="LightYellow">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
 
-                        <!-- Note Header -->
-                        <StackPanel Grid.Row="0">
-                            <TextBox Text="{Binding Title}" FontSize="16" FontWeight="Bold"/>
-                        </StackPanel>
+            <ListView Name="MyNotesListView" Grid.Row="2" SelectionMode="Single" ItemsSource="{Binding Notes}"   ScrollViewer.HorizontalScrollBarVisibility="Hidden" >
+                <ListView.ContextMenu>
+                    <ContextMenu Name="ContextOnItem">
+                        <MenuItem Name="OpenNote"  Header="Open Note" Click="OpenNote_Click" />
+                        <MenuItem Name="DelNote"  Header="DeleteThisNote" Click="DeleteNoteFromContextMenu_Click" />
+                    </ContextMenu>
+                </ListView.ContextMenu>
 
-                        <!-- Note Text -->
-                        <TextBox Grid.Row="1" Text="{Binding Text}" BorderThickness="0"/>
-                    </Grid>
-                </DataTemplate>
-            </ListView.ItemTemplate>
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <EventSetter Event="MouseDoubleClick" Handler="Note_DoubleClick"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
 
-        </ListView>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid x:Name="gridSurroundDataTemplate" Margin="5" Background="LightYellow"   >
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Note Header -->
+                            <StackPanel Grid.Row="0">
+                                <TextBox Text="{Binding Title}" FontSize="16" FontWeight="Bold"/>
+                            </StackPanel>
+
+                            <!-- Note Text -->
+                            <!--<TextBox Grid.Row="1" Text="{Binding Text}" BorderThickness="0"/>-->
+                            <!--<TextBlock Grid.Row="1" Text="{Binding Text}" MaxHeight="100" MaxWidth="{Binding Width, ElementName=MyNotesListView}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"  />-->
+                            <TextBlock Grid.Row="1" Text="{Binding Text}" MaxHeight="100" MaxWidth="400" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"  />
+
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+
+            </ListView>
+        </Grid>
+
+
     </Grid>
 
 

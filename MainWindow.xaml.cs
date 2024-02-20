@@ -237,6 +237,9 @@ namespace Jotter
                 {
                     using (FileStream? fileStream = new FileStream(filePath, FileMode.Open))
                     {
+                        /* TODO check exception error: System.InvalidOperationException
+                         * Inner exception: XmlException: 'Element' is an invalid XmlNodeType.
+                        */
                         serializer = new XmlSerializer(typeof(ObservableCollection<Note>));
                         //return (ObservableCollection<Note>)serializer.Deserialize(fileStream);
                         //Possible null ref, declare private ObservableCollection<Note> as nullable

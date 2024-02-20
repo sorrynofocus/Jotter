@@ -43,4 +43,11 @@ Fixed settings button image resource. Instead of content like the app icon, the 
 - Completed the UI for mouse over button. Trying to get a hold of control temapltes. So much to re-do a control.
 
 
+## 2024.02.20 1:58am
+**MainWindow.xaml**
+- UI: trying to have notes adjust width automatically with main window.
+I may just go with a fixed with on the ListView. I think making the listbox items rounded at the corners maybe in the future. Main, this WPF xaml stuff is time consuming!
+The LsitView items also show note data up to a few lines. Future will have a separate window appear to enter the notes. 
 
+**MainWindow.xaml.cs**
+- Added a TODO to catch excpetion if the XML data is bad. In my test XML, I've added data and reached that exception.

@@ -34,6 +34,7 @@
 
 
 using System;
+using System.Diagnostics;
 
 namespace com.nobodynoze.flogger
 {
@@ -41,6 +42,7 @@ namespace com.nobodynoze.flogger
 
     public class LogEventArgs : EventArgs
     {
+
         public string LogMessage { get; }
 
         public LogEventArgs(string message)
@@ -238,6 +240,12 @@ namespace com.nobodynoze.flogger
             // Trigger the event if a handler is present
             LogWritten?.Invoke(this, new LogEventArgs(sLogMsg));
         }
+
+        //static void LogWrite_Handler(object source, LogEventArgs e)
+        //{
+        //    Debug.WriteLine($"Log message: {e.LogMessage}");
+        //}
+
     }
 
 }

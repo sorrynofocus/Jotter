@@ -1,7 +1,6 @@
 ﻿<Window 
-    x:Class="Jotter.MainWindow"
-        Name="Jotter"
-        Title="Jotter V 1.0.0"
+    x:Class="Jotter.NoteTemplateEditor"
+        Name="NoteEditor"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -12,13 +11,17 @@
         WindowStyle="None"
         ResizeMode="CanResize"
         BorderBrush="Black"
-        BorderThickness="5"
+        BorderThickness="3"
         AllowsTransparency="True"
-        Height="600" 
-        Width="420"
-        >
+        Height="570" 
+        Width="495"
+        Closing="NoteTemplateEditor_Closing" >
+
     
-    
+    <!--<Window.DataContext>
+        <local:MainWindow/>
+    </Window.DataContext>-->
+
     <!-- Window properties -->
 
     <Window.Resources>
@@ -83,9 +86,6 @@
         </Style>
         <!-- Start of applying a style to buttons for pressed and static. the colors are grey-->
 
-
-
-
         <!-- Start of resources for settings button 
         Make sure when you add image: Properties → BuildAction='Resource'-->
         <ImageBrush x:Name="rscHambugerMenu" x:Key="rscHambugerMenu" ImageSource="/build/Icos/hamburger-menu-icon-png-white-11.jpg" />
@@ -142,7 +142,6 @@
             </Setter>
         </Style>
         <!-- End of resources for settings button -->
-        
 
     </Window.Resources>
 
@@ -165,7 +164,6 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-
         <!-- Header 
         Start with a dockpanel and buttons aligned and laid out. Styles are within.
         Header ends with text of the application name
@@ -174,83 +172,35 @@
         <DockPanel Background="#FF333333" FlowDirection="LeftToRight" LastChildFill="False">
             <DockPanel DockPanel.Dock="Top"  LastChildFill="False" >
                 <!-- Add/Remove note button -->
-                <Button Style="{DynamicResource ButtonClickTriggerStyle}" Name="btnAddNote" Content="+" FontWeight="Bold" Click="AddNote_Click" DockPanel.Dock="Left" Width="40" Height="40" />
-                <Button Style="{DynamicResource ButtonClickTriggerStyle}" Name="btnDeleteNote" Content="-" FontWeight="Bold" Click="DeleteNote_Click" DockPanel.Dock="Left" Width="40" Height="40"/>
+
+                <!--  <Button Style="{DynamicResource ButtonClickTriggerStyle}" Name="btnAddNote" Content="+" FontWeight="Bold" Click="AddNote_Click" DockPanel.Dock="Left" Width="40" Height="40" /> -->
+                <!-- <Button Style="{DynamicResource ButtonClickTriggerStyle}" Name="btnDeleteNote" Content="-" FontWeight="Bold" Click="DeleteNote_Click" DockPanel.Dock="Left" Width="40" Height="40"/> -->
                 
+
                 <!-- Exit app button -->
                 <StackPanel Name="ExitDockPanel" DockPanel.Dock="Right">
-                    <Button Style="{DynamicResource ButtonClickTriggerStyle}" Name="btnExit" FontWeight="Bold" Content="X" Click="ExitApp_Click" Width="40" Height="40" />
+                    <Button Style="{DynamicResource ButtonClickTriggerStyle}" Name="btnExit" FontWeight="Bold" Content="X" Click="ExitCurrentNote_Click" Width="40" Height="40" />
                 </StackPanel>
 
                 <!-- Settings hamburger button -->
-                <StackPanel Name="SettingsDockPanel" DockPanel.Dock="Right" >
+                <!--<StackPanel Name="SettingsDockPanel" DockPanel.Dock="Right" >
                     <Button Style="{DynamicResource SettingsBtnStyle}" Name="btnSettings" Background="{StaticResource rscHambugerMenu}" FontWeight="Bold" Click="AppSettings_Click" Width="40" Height="40" />
-                </StackPanel>
+                </StackPanel>-->
             </DockPanel>
-            
+
             <!-- Application title branding button -->
-            <TextBlock Name="StickyNotesTitle" Padding="2,2,2,7" Text="Jotter" Foreground="White" FontSize="20" FontWeight="Bold"/>
+            <!-- <TextBlock Name="StickyNotesTitle" Text="Jotter" Padding="2,2,2,7" Foreground="White" FontSize="20" FontWeight="Bold"/> -->
+            <!-- TODO Rename this from StickyNotesTitle to NotesTitle this was a port from the mainwindow-->
+            <TextBox Name="StickyNotesTitle" Text="{Binding Title, Mode=TwoWay}" MaxLength="50" KeyUp="StickyNotesTitleTextBox_KeyUp" Padding="2,2,2,7" Foreground="White" FontSize="20" FontWeight="Bold" Background="{DynamicResource Button.MouseOver.Background}" /> 
         </DockPanel>
         <!-- End of Header -->
 
-
-
         <!-- Note Content -->
-        <Grid x:Name="gridContainListView" Grid.Row="1" MaxWidth="900" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <Grid x:Name="gridContainsNote" Grid.Row="1" MaxWidth="900" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <RichTextBox x:Name="rchEditNote" Width="{Binding ElementName=gridContainsNote}" FontSize="16" />
 
-            <!--<Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>-->
-
-
-            <ListView Name="MyNotesListView" Grid.Row="2" SelectionMode="Single" ItemsSource="{Binding Notes}" SelectedItem="{Binding SelectedNote}"  ScrollViewer.HorizontalScrollBarVisibility="Hidden" >
-                <ListView.ContextMenu>
-                    <ContextMenu Name="ContextOnItem">
-                        <MenuItem Name="OpenNote"  Header="Open Note" Click="OpenNote_Click" />
-                        <MenuItem Name="DelNote"  Header="DeleteThisNote" Click="DeleteNoteFromContextMenu_Click" />
-                    </ContextMenu>
-                </ListView.ContextMenu>
-
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
-                        <EventSetter Event="MouseDoubleClick" Handler="Note_DoubleClick"/>
-                    </Style>
-                </ListView.ItemContainerStyle>
-
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid x:Name="gridSurroundDataTemplate" Margin="5" Background="LightYellow"   >
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <!-- Note Header -->
-                            <StackPanel Grid.Row="0">
-
-                                <!-- <TextBox x:Name="txtTitle" Text="{Binding Title}" Loaded="txtTitle_Loaded" KeyUp="TitleInMainTextBox_KeyUp" FontSize="16" FontWeight="Bold"/> -->
-                                <TextBox x:Name="txtTitle" Text="{Binding Title}" KeyUp="TitleInMainTextBox_KeyUp" FontSize="16" FontWeight="Bold"/> 
-
-                            </StackPanel>
-
-                            <!-- Note Text -->
-                            <!--<TextBox Grid.Row="1" Text="{Binding Text}" BorderThickness="0"/>-->
-                            <!--<TextBlock Grid.Row="1" Text="{Binding Text}" MaxHeight="100" MaxWidth="{Binding Width, ElementName=MyNotesListView}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"  />-->
-                            <TextBlock x:Name="txtText" Grid.Row="1" Text="{Binding Text}" MaxHeight="100" MaxWidth="400" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"  />
-
-                        </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-
-            </ListView>
         </Grid>
 
-
     </Grid>
-
-
-
-
 
 </Window>

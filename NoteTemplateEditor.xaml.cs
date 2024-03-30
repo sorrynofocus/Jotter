@@ -7,6 +7,7 @@
 using com.nobodynoze.flogger;
 using com.nobodynoze.notemanager;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -75,7 +76,7 @@ namespace Jotter
             LoadNoteContent(note.Title, note.Text);
         }
 
-        
+
         //Same with the mainwindow - drag window since windowstyle = none
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -152,17 +153,13 @@ namespace Jotter
             if (existingNote != null)
             {
                 // Update the existing note with the content of SelectedNote
+                UpdateSelectedNoteContent();
                 existingNote.Title = SelectedNote.Title;
                 existingNote.Text = SelectedNote.Text;
             }
             else
-            {
                 // Add the SelectedNote to the Notes collection if it doesn't exist
                 Notes.Add(SelectedNote);
-
-                // Update the SelectedNote's content only if it's a new note
-                UpdateSelectedNoteContent();
-            }
 
             // Remove the SelectedNote from the Notes collection if it should be deleted
             if (SelectedNote.IsDeleted)

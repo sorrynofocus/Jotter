@@ -15,15 +15,9 @@
         AllowsTransparency="True"
         Height="570" 
         Width="495"
-        Closing="NoteTemplateEditor_Closing" >
-
-    
-    <!--<Window.DataContext>
-        <local:MainWindow/>
-    </Window.DataContext>-->
+         >
 
     <!-- Window properties -->
-
     <Window.Resources>
 
         <!-- Start of applying a style to buttons for pressed and static. the colors are grey

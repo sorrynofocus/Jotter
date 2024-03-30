@@ -39,6 +39,9 @@ namespace Jotter
 
         private NoteTemplateEditor noteEditor;
 
+        //Track opened notes. This is so we don't have open redundant open notes. ^_^
+        private List<NoteTemplateEditor> openNoteWindows = new List<NoteTemplateEditor>();
+
 
         public MainWindow()
         {
@@ -186,10 +189,30 @@ namespace Jotter
             // Save the notes before exiting the application
             noteManager?.SaveNotes(jotNotesFilePath);
 
+            //Iter and close all open windows.
+            // Add all opened child windows to the lists of windows to close
+            // The list will contain window data.
+            // Created "windowsToClose" (separate list) to store the child windows
+            // that need to be closed -- then close them outside the foreach loop.
+            // Previously, used a single list "chilDwindow" but the for loop modifies it,
+            // thus getting exception System.InvalidOperationException:
+            // 'Collection was modified; enumeration operation may not execute.'
+            List<NoteTemplateEditor> windowsToClose = new List<NoteTemplateEditor>();
+
+            foreach (NoteTemplateEditor? childWindow in openNoteWindows)
+            {
+                windowsToClose.Add(childWindow);
+            }
+
+            // Close all windows from the separate list
+            foreach (NoteTemplateEditor? windowToClose in windowsToClose)
+            {
+                windowToClose.Close();
+            }
+
             //Get rid of our subscriptions
             MyNotesListView.SelectionChanged -= MyNotesListView_SelectionChanged;
             logger.LogWritten -= LogWrite_Handler;
-            noteEditor.NoteUpdated -= NoteEditor_NoteUpdated;
 
             Environment.Exit(0);
         }
@@ -200,12 +223,47 @@ namespace Jotter
             //NOT YET IMPLEMENTED
         }
 
+
         private void OpenSelectedNote()
         {
             if (MyNotesListView.SelectedItem is Note note)
             {
-                NoteTemplateEditor noteEditor = new NoteTemplateEditor(note);
-                noteEditor.Show();
+                bool noteIsOpen = false;
+
+                // Is note already open via its IdIndexer?
+                foreach (var window in openNoteWindows)
+                {
+                    if (window.DataContext is Note openedNote && openedNote.IdIndexer == note.IdIndexer)
+                    {
+                        noteIsOpen = true;
+                        // a'right, then go back to the opened note
+                        window.Focus();
+                        break;
+                    }
+                }
+
+                if (!noteIsOpen)
+                {
+                    //IF it's not open, then go ahead and open it
+                    NoteTemplateEditor noteEditor = new NoteTemplateEditor(note);
+                    //Subscribe to event to handle clean up when the note is closed.
+                    noteEditor.Closed += NoteEditor_Closed; 
+                    noteEditor.Show();
+
+                    // Add the note editor window to the tracking list
+                    openNoteWindows.Add(noteEditor);
+                }
+            }
+        }
+
+        // Cleanup method when a note window is closed
+		// Used by OpenSelectedNote() as a subscriber
+        private void NoteEditor_Closed(object sender, EventArgs e)
+        {
+            if (sender is NoteTemplateEditor closedEditor)
+            {
+                // Remove the closed window from the tracking list
+                openNoteWindows.Remove(closedEditor);
             }
         }
 

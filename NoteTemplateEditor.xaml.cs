@@ -27,7 +27,6 @@ namespace Jotter
 
         public event EventHandler<NoteEventArgs> NoteUpdated;
 
-
         // Save data after timer triggers. When user enteres
         // data on note, after the delay, data is saved.
         // Delay is in milliseconds - see "Initialize the timer for auto-saving" below
@@ -35,12 +34,6 @@ namespace Jotter
         //TODO - Settings feature can be set for save delay
         private const int SaveDelayMilliseconds = 25000; 
         private DateTime lastActivityTime;
-
-        //private void Window_Closed(object sender, EventArgs e)
-        //{
-        //    NoteUpdated?.Invoke(this, new NoteEventArgs((Note)DataContext));
-        //}
-
 
         //Main Note template application child window
         public NoteTemplateEditor(Note note)
@@ -114,17 +107,6 @@ namespace Jotter
             SelectedNote.Text = new TextRange(rchEditNote.Document.ContentStart, rchEditNote.Document.ContentEnd).Text;
         }
 
-        //The child window -this- is closing, so save!
-        private void NoteTemplateEditor_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            // Check if there's a selected note and save its contents
-            if (SelectedNote != null)
-            {
-                SaveNoteChanges();
-            }
-        }
-
-
         //Kept in because the add/remove buttons were on each note. 
         //This wil be removed soon.
         public void DeleteNote_Click(object sender, RoutedEventArgs e)
@@ -143,67 +125,29 @@ namespace Jotter
             // Verify if there's a selected note and save its contents
             if (SelectedNote != null)
             {
-                SaveNoteChanges1();
+                //SaveNoteChanges1();
+                SaveNoteChanges();
             }
             this.Close();
-        }
-
-
-        /*
-         * HELLO to SELF!
-         * Had a problem with saving, so there's two funcs: SaveNoteChanges() and SaveNoteChanges1()
-         * Debug and find out which func is best method to use or combine.
-         * I think I got confused -where- the best area is to save -closing or exit- of the child
-         * window. Also, the indexing was added to track the notes for existing ones, etc. So, there's 
-         * probably redundancy.
-         * 
-         * SaveNoteChanges1() -> fired at ExitcurrentNote_Click(), that completely exits tthe child window
-         * 
-         * SaveNoteChanges() -> fired at NoteTemplateEditor_Closing(), and this happens -during- the 
-         * window closing. This also gets fired at SaveTimer_Tick().
-         * 
-         * The difference is SaveNoteChanges1() doesn't check if the note existing by checking the index
-         * 
-         * Note - during test saves the data appears right 
-         */
-
-        // SAve the note, without indexing. See "HELLO to SELF!"
-        private void SaveNoteChanges1()
-        {
-            //Get note data and fill into SelectedNote.Text
-            //SelectedNote.Text = new TextRange(rchEditNote.Document.ContentStart, rchEditNote.Document.ContentEnd).Text;
-            UpdateSelectedNoteContent();
-            
-            // Notify the parent window about the updated note before saving
-            NoteUpdated?.Invoke(this, new NoteEventArgs(SelectedNote));
-
-            //Save notes
-            //noteManager?.SaveNotes(jotNotesFilePath);
-
-            // Save the note using the NoteManager
-            if (noteManager != null)
-                //noteManager.Notes.Add(SelectedNote); 
-                noteManager.SaveNotes(jotNotesFilePath);
-            else
-                MessageBox.Show("Error: NoteManager is null. Unable to save changes.", 
-                                "Error", 
-                                MessageBoxButton.OK, 
-                                MessageBoxImage.Error);
-
-            // Force update the Notes collection after saving
-            Notes = noteManager?.Notes;
         }
 
         // SAve the note, with indexing. See "HELLO to SELF!"
         private void SaveNoteChanges()
         {
-            // Update the SelectedNote with new content
-            // Is this redundant? Below we do that with existingNote?
-            // I think so! Test!
-            UpdateSelectedNoteContent();
+            // Check if the note already exists in the Notes collection based on IdIndexer
+            //Note existingNote = Notes.FirstOrDefault(n => n.IdIndexer == SelectedNote.IdIndexer);
 
             // Check if the note already exists in the Notes collection based on IdIndexer
-            Note existingNote = Notes.FirstOrDefault(n => n.IdIndexer == SelectedNote.IdIndexer);
+            Note? existingNote = null;
+
+            foreach (Note note in Notes)
+            {
+                if (note.IdIndexer == SelectedNote.IdIndexer)
+                {
+                    existingNote = note;
+                    break;
+                }
+            }
 
             if (existingNote != null)
             {
@@ -212,8 +156,13 @@ namespace Jotter
                 existingNote.Text = SelectedNote.Text;
             }
             else
+            {
                 // Add the SelectedNote to the Notes collection if it doesn't exist
                 Notes.Add(SelectedNote);
+
+                // Update the SelectedNote's content only if it's a new note
+                UpdateSelectedNoteContent();
+            }
 
             // Remove the SelectedNote from the Notes collection if it should be deleted
             if (SelectedNote.IsDeleted)

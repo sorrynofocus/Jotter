@@ -153,4 +153,9 @@ FUTURE FEATURE CREEP!
 - Add date/time stamps. Can use this to see most recent notes (as an option in settings)
 - Add tags. When user adds #{Tag} then let's find similar notes
 
+Fixes:
+- If you open a note more than one time, duplicate note will appear. Added functionality to open the note only one time.
+- When closing the application, child windows do not close. Added functionality to close all child windows.
+
+
 

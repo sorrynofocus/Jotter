@@ -145,8 +145,8 @@ Fixed the README to include a ref to screenshot exhibit.
 TODO 
 - Examine previous TODOs. Mark them complete or turn into issues.
 - In NoteManager.cs we added an indexer but the indexer isn't use during CRUD operations. Currently, everything is done by Title look up.
-- In NoteManager.cs, LoadNotes() need desperate try/catches
-- In NoteManager.cs, examine TODO in NoteEventArgs -> figure out which save is best and combine.
+- In NoteManager.cs, LoadNotes() need desperate try/catches - COMPLETED see [2024.03.31](#2024-03-31) 
+- In NoteManager.cs, examine TODO in NoteEventArgs -> figure out which save is best and combine. -COMPLETED, saving with indexer
 
 
 FUTURE FEATURE CREEP!
@@ -158,4 +158,7 @@ Fixes:
 - When closing the application, child windows do not close. Added functionality to close all child windows.
 
 
+## <a name="2024-03-31"></a> 2024.03.31
+- LoadNotes() in NoteManagers.cs needed try catches against invalid XML data files. Created a backup function to back the current data file. 
+  User would need to fix the data if they modified it incorrectly. Application will exit after an invalid data file.
 

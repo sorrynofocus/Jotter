@@ -7,6 +7,8 @@ using System.Xml.Serialization;
 using System.ComponentModel;
 using com.nobodynoze.flogger;
 using static Jotter.MainWindow;
+using System.Windows.Shapes;
+using System.Diagnostics;
 
 
 /*
@@ -128,9 +130,11 @@ namespace com.nobodynoze.notemanager
         //public NoteManager()
         //{
         //    Notes = LoadNotes(serializer);
+        //      if (Notes == null)
+        //        JustExit();
         //}
         //Instead of use block body, use expression body for constructor
-        public NoteManager() => Notes = LoadNotes(serializer, jotNotesFilePath);
+        public NoteManager() => Notes = LoadNotes(serializer, jotNotesFilePath) ?? JustExit();
 
         /// <summary>
         /// Loads and deserializes notes from XML-based data file into a NoteManager 
@@ -144,27 +148,59 @@ namespace com.nobodynoze.notemanager
 
             if (File.Exists(filePath))
             {
-                using (FileStream? fileStream = new FileStream(filePath, FileMode.Open))
-                {
-                    /* TODO check exception error: System.InvalidOperationException
-                     * Inner exception: XmlException: 'Element' is an invalid XmlNodeType.
-                    */
-                    serializer = new XmlSerializer(typeof(ObservableCollection<Note>));
-                    //return (ObservableCollection<Note>)serializer.Deserialize(fileStream);
-                    //Possible null ref, declare private ObservableCollection<Note> as nullable
-                    return serializer.Deserialize(fileStream) as ObservableCollection<Note>;
+                    try
+                    {
+                        serializer = new XmlSerializer(typeof(ObservableCollection<Note>));
 
-                    /*
-                    TODO: This needs some heavy error checking.   
-                    Other errors to check
-                    System.InvalidOperationException: 'There is an error in XML document (5, 6).'
-                    Inner Exception FormatException: Unrecognized Guid format.
-                     */
+                        using (FileStream fileStream = new FileStream(filePath, FileMode.Open))
+                        {
+                            return serializer.Deserialize(fileStream) as ObservableCollection<Note>;
+                        }
+                    }
+                    catch (Exception? ex)
+                    {
+                        string? exceptionMessage = string.Empty;
 
-                }
+                        //message will try to show area in XML the problem is
+                        //ex.Message example: There is an error in XML document (6, 6).
+                        string[]? arBits = ex.Message.Split(new char[] { '(', ',', ')' }, StringSplitOptions.RemoveEmptyEntries);
+                        string? rowNum = string.Empty;
+                        string? columnNum = string.Empty;
+
+                        if (arBits.Length >= 2)
+                        {
+                            rowNum = arBits[1].Trim();
+                            columnNum = arBits[2].Trim();
+                            //FormatException: Unrecognized Guid format
+                            // There is an error in XML document (6, 6).
+                            exceptionMessage = ex.InnerException?.Message ?? ex.Message;
+                            exceptionMessage += $" Examine Row {rowNum}, Column {columnNum} in the notes data file: {filePath}.";
+                        }
+
+
+                        if (ex.InnerException?.Message.Contains("Unrecognized Guid format") == true ||
+                            ex.InnerException?.Message.Contains("invalid XmlNodeType") == true ||
+                            ex.Message.Contains("error in XML") == true)
+                        {
+                            MessageBoxResult result = MessageBox.Show(exceptionMessage, "Invalid config!", MessageBoxButton.OK);
+                        
+                            CreateBackup(filePath);
+
+                        }
+                            //eh.. return an empty collection
+                            return (null);
+                    }
             }
             else
                 return new ObservableCollection<Note>();
+        }
+
+        //Safety check function if loading doesn't work based on bad data.
+        private ObservableCollection<Note> JustExit()
+        {
+            MessageBox.Show("Failed to load notes. Exiting application.", "Error", MessageBoxButton.OK);
+            Environment.Exit(1); // Exit the application with an error code
+            return new ObservableCollection<Note>(); // This line is added to satisfy the return type
         }
 
         /// <summary>
@@ -231,7 +267,37 @@ namespace com.nobodynoze.notemanager
         public Guid GenerateID()
         { 
             return Guid.NewGuid(); 
-        }  
+        }
+
+
+        /// <summary>
+        /// Create backup of a source file with the unique timestamp.
+        /// </summary>
+        /// <param name="sourceFile"></param>
+        /// TODO - Instead of pop up message, perhaps return a string of backed up file.
+        static void CreateBackup(string sourceFile)
+        {
+            try
+            {
+                // Get the filename from the source file
+                string fileName = System.IO.Path.GetFileNameWithoutExtension(sourceFile);
+                string extension = System.IO.Path.GetExtension(sourceFile);
+
+                // Generate a unique timestamp for the backup file name
+                string timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+
+                string backupFileName = $"{fileName}_{timestamp}{extension}";
+                string backupFilePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(sourceFile), backupFileName);
+                
+                File.Copy(sourceFile, backupFilePath, true);
+
+                MessageBox.Show($"Successfully copied {sourceFile}\n\r to {backupFilePath} as a backup!", "A BACKUP HAD BEEN CREATED!", MessageBoxButton.OK);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show($"Error copying file: {e.Message}", "Error!", MessageBoxButton.OK);
+            }
+        }
 
     } //Internal class NoteManager
 

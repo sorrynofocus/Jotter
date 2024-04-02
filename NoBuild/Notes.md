@@ -149,10 +149,6 @@ TODO
 - In NoteManager.cs, examine TODO in NoteEventArgs -> figure out which save is best and combine. -COMPLETED, saving with indexer
 
 
-FUTURE FEATURE CREEP!
-- Add date/time stamps. Can use this to see most recent notes (as an option in settings)
-- Add tags. When user adds #{Tag} then let's find similar notes
-
 Fixes:
 - If you open a note more than one time, duplicate note will appear. Added functionality to open the note only one time.
 - When closing the application, child windows do not close. Added functionality to close all child windows.
@@ -161,4 +157,33 @@ Fixes:
 ## <a name="2024-03-31"></a> 2024.03.31
 - LoadNotes() in NoteManagers.cs needed try catches against invalid XML data files. Created a backup function to back the current data file. 
   User would need to fix the data if they modified it incorrectly. Application will exit after an invalid data file.
+
+
+## 2024.04.01 23h18m (11:18pm)
+- Done! April Fool's!
+- Add vertical scrollbars in notes. Main window has it, but not the notes. -COMPLETED
+- In the main window (note manager) the Title has a box around it, a side effect from default textbox. (BorderBrush="Transparent") -COMPLETED
+- In the note manager, the notes have a harsh font. Change to the Windows 10/11 Segoe UI font at 11pt. -COMPLETED
+- Beginning to work on the "search" UI for both Note Manager and the Note templates.
+- In version.props, adjusted the <InformationalVersion> to match same value as <FileVersion>. Tested - [ok]
+
+--- 
+
+### BUG AND ANNOYANCES REPORT
+- Re-check timing for note auto-save. If there's no activity, there should be no reason to save or time check.
+- Opening a note should flow on top of main window, or to the side. User has to move the main window out of the way or click on note to have focus.
+
+### FEATURE CREEPS AND TESTING REQUESTS
+- Add date/time stamps. Can use this to see most recent notes (as an option in settings)
+- Add tags. When user adds #{Tag} then let's find similar notes
+- Add search in notes and outside of notes (main window)
+- Add coloring bar for notes. This surrounds the notes and sets them apart from others.
+- Add a "favorites" button. 
+- Add a label "grouping". If notes tend to float toward a specific thing, they can be labeled. This is similar to gmail labels in email.
+- Option to either put in taskbar tray or fully exit. Currently, it fully exits. 
+- In the note manager, over to the far right, top-corner, add a date to note creation.
+- In the notes, there's no Context menu for copy/cut/paste. 
+- On notes, pressing enter may give double return lines.
+- In notes, there's a thin border for the window to adjust. A bottom bar should be added for font bold, italics, etc. The botton bar can be used to move the notes around.
+
 

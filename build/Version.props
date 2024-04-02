@@ -35,15 +35,22 @@
 			<AssemblyTitle>Note taking app Mike would appreciate</AssemblyTitle>
 			<AssemblyName>Jotter</AssemblyName>
 
-			<!-- Build number auto-increments, no need to adjust -->
+			<!-- Build number auto-increments, no need to adjust EXCEPT Major, Minor, Patch - See Semantic versioning -->
 			<VersionSuffix>1.0.0.$([System.DateTime]::UtcNow.ToString(mmff))</VersionSuffix>
+					
 			<AssemblyVersion Condition=" '$(VersionSuffix)' == '' ">0.0.0.1</AssemblyVersion>
 			<AssemblyVersion Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</AssemblyVersion>
+
 			<Version Condition=" '$(VersionSuffix)' == '' ">0.0.1.0</Version>
 			<Version Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</Version>
+			
 			<FileVersion Condition=" '$(VersionSuffix)' == '' ">0.0.1.0</FileVersion>
 			<FileVersion Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</FileVersion>
-			<InformationalVersion>1.0.0.0.777</InformationalVersion>
+
+			<InformationalVersion Condition=" '$(VersionSuffix)' == '' ">0.0.1.0</InformationalVersion>
+			<InformationalVersion Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</InformationalVersion>
+			
+			<!-- <InformationalVersion>1.0.0.0.777</InformationalVersion> -->
 			<!-- <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile> -->
 			<!-- <AutoIncrementPackageRevision>true</AutoIncrementPackageRevision> -->
 			<NeutralLanguage>en</NeutralLanguage>
@@ -54,7 +61,8 @@
 			<RepositoryType>Repo type</RepositoryType>
 			<!--<PackageTags>Tags</PackageTags>
 			<PackageReleaseNotes>Release</PackageReleaseNotes>-->
-		</PropertyGroup>
+		
+	</PropertyGroup>
 	</Target>
 
 </Project>

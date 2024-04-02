@@ -42,6 +42,8 @@ namespace Jotter
         //Track opened notes. This is so we don't have open redundant open notes. ^_^
         private List<NoteTemplateEditor> openNoteWindows = new List<NoteTemplateEditor>();
 
+        private string SearchValue= "Search...";
+
 
         public MainWindow()
         {
@@ -301,6 +303,35 @@ namespace Jotter
         {
             if (e.ChangedButton == MouseButton.Left)
                 this.DragMove();
+        }
+
+        //Once we click elsewhere, reset the search box watermark, or html "placeholder"
+        private void NoteManagerSearch_LostFocus(object sender, RoutedEventArgs e)
+        {
+                NoteManagerSearch.Text = "Search...";
+        }
+
+        //clear the tesxtbox watermark so we can search.
+        private void NoteManagerSearch_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (NoteManagerSearch.Text == "Search...")
+            {
+                NoteManagerSearch.Text = string.Empty;
+            }
+        }
+
+        //Begin the search after pressing enter.
+        private void NoteManagerSearch_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter || e.Key == Key.Return)
+            {
+                // We are searching! NOT IMPLEMENTED YET
+
+                // ..do search stuff here.
+
+                //Move focus off the control and to the next available one.
+                NoteManagerSearch.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+            }
         }
     }
 }

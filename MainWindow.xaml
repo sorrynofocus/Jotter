@@ -190,13 +190,21 @@
             
             <!-- Application title branding button -->
             <TextBlock Name="StickyNotesTitle" Padding="2,2,2,7" Text="Jotter" Foreground="White" FontSize="20" FontWeight="Bold"/>
+            <TextBox x:Name="NoteManagerSearch" Text="{Binding SearchValue,Mode=TwoWay,Delay=500,UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" Foreground="White" Background="{DynamicResource Button.MouseOver.Background}" BorderThickness="0,0,0,1" DockPanel.Dock="Right" FontFamily="Segoe UI Semibold" Width="171" Height="20" MinWidth="2" GotFocus="NoteManagerSearch_GotFocus" LostFocus="NoteManagerSearch_LostFocus" KeyUp="NoteManagerSearch_KeyUp" />
+
+
+
+
+
+
         </DockPanel>
         <!-- End of Header -->
 
 
 
         <!-- Note Content -->
-        <Grid x:Name="gridContainListView" Grid.Row="1" MaxWidth="900" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <!-- if you don't want the background color to bleed into infinite, put back the MaxWidth="500" -->
+        <Grid x:Name="gridContainListView" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
             <!--<Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -204,7 +212,7 @@
             </Grid.RowDefinitions>-->
 
 
-            <ListView Name="MyNotesListView" Grid.Row="2" SelectionMode="Single" ItemsSource="{Binding Notes}" SelectedItem="{Binding SelectedNote}"  ScrollViewer.HorizontalScrollBarVisibility="Hidden" >
+            <ListView Name="MyNotesListView" Grid.Row="2" SelectionMode="Single" ItemsSource="{Binding Notes}" SelectedItem="{Binding SelectedNote}"  ScrollViewer.HorizontalScrollBarVisibility="Hidden" FontFamily="Segoe UI Semibold">
                 <ListView.ContextMenu>
                     <ContextMenu Name="ContextOnItem">
                         <MenuItem Name="OpenNote"  Header="Open Note" Click="OpenNote_Click" />
@@ -220,24 +228,21 @@
 
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <Grid x:Name="gridSurroundDataTemplate" Margin="5" Background="LightYellow"   >
+                        <Grid x:Name="gridSurroundDataTemplate" Margin="5" Background="LightYellow" >
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <!-- Note Header -->
+                            <!-- Note title header -->
                             <StackPanel Grid.Row="0">
-
                                 <!-- <TextBox x:Name="txtTitle" Text="{Binding Title}" Loaded="txtTitle_Loaded" KeyUp="TitleInMainTextBox_KeyUp" FontSize="16" FontWeight="Bold"/> -->
-                                <TextBox x:Name="txtTitle" Text="{Binding Title}" KeyUp="TitleInMainTextBox_KeyUp" FontSize="16" FontWeight="Bold"/> 
-
+                                <TextBox x:Name="txtTitle" Text="{Binding Title}" KeyUp="TitleInMainTextBox_KeyUp" FontSize="18" FontWeight="Normal"  BorderThickness="0,0,0,1" FontFamily="Segoe UI Semibold"/> 
                             </StackPanel>
 
-                            <!-- Note Text -->
-                            <!--<TextBox Grid.Row="1" Text="{Binding Text}" BorderThickness="0"/>-->
-                            <!--<TextBlock Grid.Row="1" Text="{Binding Text}" MaxHeight="100" MaxWidth="{Binding Width, ElementName=MyNotesListView}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"  />-->
-                            <TextBlock x:Name="txtText" Grid.Row="1" Text="{Binding Text}" MaxHeight="100" MaxWidth="400" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"  />
+                            <!-- Note Text preview body-->
+                            <!-- setting MaxWidth="400" MinWidth="400" seems to tame the preview text in the textblock. MaxHeight keeps the sentenaces to a preview of 5. -->
+                            <TextBlock x:Name="txtText" Grid.Row="1" Text="{Binding Text}" MaxHeight="100" MaxWidth="400" MinWidth="400" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"  />
 
                         </Grid>
                     </DataTemplate>

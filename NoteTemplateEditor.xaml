@@ -11,7 +11,7 @@
         WindowStyle="None"
         ResizeMode="CanResize"
         BorderBrush="Black"
-        BorderThickness="3"
+        BorderThickness="5"
         AllowsTransparency="True"
         Height="570" 
         Width="495"
@@ -174,6 +174,7 @@
                 <!-- Exit app button -->
                 <StackPanel Name="ExitDockPanel" DockPanel.Dock="Right">
                     <Button Style="{DynamicResource ButtonClickTriggerStyle}" Name="btnExit" FontWeight="Bold" Content="X" Click="ExitCurrentNote_Click" Width="40" Height="40" />
+
                 </StackPanel>
 
                 <!-- Settings hamburger button -->
@@ -185,13 +186,15 @@
             <!-- Application title branding button -->
             <!-- <TextBlock Name="StickyNotesTitle" Text="Jotter" Padding="2,2,2,7" Foreground="White" FontSize="20" FontWeight="Bold"/> -->
             <!-- TODO Rename this from StickyNotesTitle to NotesTitle this was a port from the mainwindow-->
-            <TextBox Name="StickyNotesTitle" Text="{Binding Title, Mode=TwoWay}" MaxLength="50" KeyUp="StickyNotesTitleTextBox_KeyUp" Padding="2,2,2,7" Foreground="White" FontSize="20" FontWeight="Bold" Background="{DynamicResource Button.MouseOver.Background}" /> 
+            <TextBox Name="StickyNotesTitle" Text="{Binding Title, Mode=TwoWay}" MaxLength="50" KeyUp="StickyNotesTitleTextBox_KeyUp" BorderBrush="Transparent" Padding="2,2,2,7" Foreground="White" FontSize="20" FontWeight="Bold" Background="{DynamicResource Button.MouseOver.Background}" />
+            <!-- Seaerch TExt box -->
+            <TextBox x:Name="NoteSearch" Text="TESTTESTTESTTEST" MaxLength="50" Height="20" BorderBrush="Transparent" Foreground="White" DockPanel.Dock="Right" Width="120" Background="{DynamicResource Button.MouseOver.Background}" />
         </DockPanel>
         <!-- End of Header -->
 
         <!-- Note Content -->
         <Grid x:Name="gridContainsNote" Grid.Row="1" MaxWidth="900" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <RichTextBox x:Name="rchEditNote" Width="{Binding ElementName=gridContainsNote}" FontSize="16" />
+            <RichTextBox x:Name="rchEditNote" Width="{Binding ElementName=gridContainsNote}" FontSize="16" VerticalScrollBarVisibility="Visible" />
 
         </Grid>
 

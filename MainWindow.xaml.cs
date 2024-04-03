@@ -68,20 +68,97 @@ namespace Jotter
             Notes = noteManager.Notes;
             DataContext = noteManager;
 
+            //Initialise the dragging and drop
+            InitializeDragDrop();
+
             MyNotesListView.ItemsSource = Notes;
             MyNotesListView.SelectionChanged += MyNotesListView_SelectionChanged;
         }
 
         //UI if title is changed and the keypress is ENTER
         //TODO: not implemented, BUT if user closes mainwindow, the data is saved and retained. 
+        //private void TitleInMainTextBox_KeyUp(object sender, KeyEventArgs e)
+        //{
+        //  if (e.Key == Key.Enter || e.Key == Key.Return)
+        //    {
+        //        // Save changes when Enter or Return key is pressed
+        //        //NOT IMPLEMENTED YET
+        //        TextBox textBox = sender as TextBox;
+        //        if (textBox != null)
+        //        {
+        //            //Get text in ui
+        //            string newTitle = textBox.Text;
+        //            noteManager.GetIndexOfSelectedNoteById(??);
+        //            noteManager.UpdateNoteByIdIndexer(idIndexer, newTitle);
+
+        //        }
+
+        //    }
+        //}
+
+
         private void TitleInMainTextBox_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter || e.Key == Key.Return)
             {
-                // Save changes when Enter or Return key is pressed
-                //NOT IMPLEMENTED YET
+                TextBox textBox = sender as TextBox;
+                if (textBox != null)
+                {
+                    string newTitle = textBox.Text;
+
+                    // Get the index of the selected note
+                    Guid? idIndexer = SelectedNote?.IdIndexer;
+                    //note may not be selected, then try if (textBox.Tag is Guid idIndexer)...
+
+                    if (idIndexer != null)
+                    {
+                        //Get the index, compare with selected note
+                        int selectedIndex = noteManager.GetIndexOfSelectedNoteById(idIndexer.Value);
+
+                        if (selectedIndex != -1)
+                            // Update title
+                            noteManager.UpdateNoteByIdIndexer(idIndexer.Value, newTitle);
+                        else
+                        {
+                            //FUTURE - handle if the note cannot be updated. Ignore for now
+                        }
+                    }
+                    else
+                    {
+                        //User did NOT select the note, only text box for title
+                        // Retrieve the IdIndexer from the TextBox DataContext
+                        //DAMN this took time to figure out!
+                        if (textBox.DataContext is Note note)
+                        {
+                            // Get the IdIndexer from the Note object
+                            Guid curIdIndexer = note.IdIndexer.Value;
+
+                            // Iterate through the dictionary to find the correct Note object
+                            //TODO hide the dict - make a function to do something with it. 
+                            //This works, but within the mainwindow. 
+                            //Discovered this will not work if:
+                            //- open the note, change title, close note. data changes -fine.
+                            //- change title on main window, press enter. focus doesn't clear and title not updated. 
+                            // -data only updated when closing application
+                            foreach (KeyValuePair<Guid, Note> kvp in noteManager.idIndexerNoteMap)
+                            {
+                                if (kvp.Value.IdIndexer == curIdIndexer)
+                                {
+                                    // Update the title of the Note object
+                                    kvp.Value.Title = textBox.Text;
+                                    noteManager.UpdateNoteByIdIndexer(curIdIndexer, newTitle);
+                                    noteManager.SaveNotes(jotNotesFilePath);
+                                    textBox.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+                                    break; 
+                                }
+                            }
+                        }
+
+                    }
+                }
             }
         }
+
 
 
         /// <summary>
@@ -333,5 +410,134 @@ namespace Jotter
                 NoteManagerSearch.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
             }
         }
+
+        // Drag/Drop handling
+        /*
+           (Comments for education... WPF handles this a bit differently than WinForms):
+
+            ----
+            Summary of Drag/Drop events to add a note from a text file.
+            ----
+
+            InitializeDragDrop() 
+            Helper func sets up the "drag and drop" functionality by attaching event handlers to the necessary events.
+            
+            MainWindow_DragEnter() / MainWindow_DragOver() funcs 
+            Handle the drag enter and drag over events to allow dropping files. Text files are in mind, and there may be side effects on others. Will handle those later.
+            
+            MainWindow_Drop() func 
+            Processes dropped files, reads the text content, and adds a new note to the NoteManager.
+            
+            AddNewNoteWithText() helper func 
+            Creates a new note object with new content and adds it to the notes collection.
+
+            ----    
+            Handle Drag Events 
+            ----
+
+            - In the DragEnter event, check if the data being dragged is of type DataFormats.FileDrop (which indicates a file).
+            - In the DragOver event, set the Effects property to DragDropEffects.Copy to indicate that the drop action is allowed.
+            - In the Drop event, extract the file path from the dropped data and read the contents of the text file.
+
+            And, process the file and its contents:
+
+            - Get filename and full path, read the contents.
+            - Create new note object with the file contents.
+            - Add new note object to the NoteManager (collection of notes) and update UI.
+            - .TXT files are supported at the moment for this initial part of drag/drop
+
+            ----
+            UI
+            ----
+            No UI components need property adjustments. Mostly subscriptions and events handling.
+
+         */
+        private void InitializeDragDrop()
+        {
+            AllowDrop = true;
+            DragEnter += MainWindow_DragEnter;
+            DragOver += MainWindow_DragOver;
+            Drop += MainWindow_Drop;
+        }
+
+        private void MainWindow_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                e.Effects = DragDropEffects.Copy;
+            else
+                e.Effects = DragDropEffects.None;
+        }
+
+        private void MainWindow_DragOver(object sender, DragEventArgs e)
+        {
+            e.Effects = DragDropEffects.Copy;
+            e.Handled = true;
+        }
+
+        private void MainWindow_Drop(object sender, DragEventArgs e)
+        {
+            string[] arFiles = (string[])e.Data.GetData(DataFormats.FileDrop);
+
+            foreach (string fileItem in arFiles)
+            {
+                //REMmed for the moment. We should test other files, but the foramts won't be supported
+                //For this initial code, let's do a cheap check for binary files.
+                //if (File.Exists(fileItem) && Path.GetExtension(fileItem).Equals(".txt", StringComparison.OrdinalIgnoreCase))
+
+                //if ( File.Exists(fileItem) && 
+                //     Path.GetExtension(fileItem).Equals(".txt", StringComparison.OrdinalIgnoreCase)
+                //   )
+                if (File.Exists(fileItem) )
+                {
+                    bool isBinary = IsBinaryFile(fileItem);
+
+                    if (!isBinary)
+                    {
+                        string text = File.ReadAllText(fileItem);
+                        AddNewNoteWithText(text);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Cheap way to check for binary file.
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <returns>true if binary file detect, false otherwise</returns>
+        private bool IsBinaryFile(string filePath)
+        {
+            using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            {
+                for (int i = 0; i < fileStream.Length; i++)
+                {
+                    int byteValue = fileStream.ReadByte();
+                    //Is null char?
+                    if (byteValue == 0) 
+                        //Yep, ok, bin file!
+                        return true; 
+                }
+            }
+            return (false); 
+        }
+
+        // Create new note from the dropped file
+        private void AddNewNoteWithText(string text)
+        {
+            //- Create a new note with contents
+            //- Add the new note object to note manager
+            //- Save the notes in the note manager
+            //- Update list view.
+            Note newNote = new Note { IdIndexer = noteManager.GenerateID(), 
+                                      Title = "A new note!", 
+                                      Text = text 
+                                    };
+
+            Notes.Add(newNote);
+            noteManager.SaveNotes(jotNotesFilePath);
+
+            UpdateListView();
+        }
+        // End rag and drop handling
     }
 }

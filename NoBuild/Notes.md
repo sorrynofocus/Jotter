@@ -167,6 +167,30 @@ Fixes:
 - Beginning to work on the "search" UI for both Note Manager and the Note templates.
 - In version.props, adjusted the <InformationalVersion> to match same value as <FileVersion>. Tested - [ok]
 
+
+## 2024.04.02 23h48m (11:48pm)
+- MainWindow.xaml.cs
+Added drag and drop text type files to NoteMAnager. This will enable user to drag and drop files to add a new note. Multiple drag/drop of non-binary/text files are supported.
+
+TitleInMainTextBox_KeyUp() function event needed attention. If user enters a new title in the NoteMAnager, the title get updated. Previously this did not work. This was also challenging as hell -code -wise and trying to figure out where. Dicovered if note was selected, then title can be updated, but if the note wasn't then there's no way of getting the index of the note, because title doesn't select the note. 
+
+- NoteMAnager.cs
+For updating the note, additional helper functions where needed to update notes with index look ups. In addition, the textbox datacontext helped out trying to figure out indexes. Had to create a dictionary to keep a list of all the notes Still think there's a better way, but this will work for now. 
+There _is_ an issue though.... Updating via note editor will break the title update under the note manager. This is because the notee ditor _also_ needs to update the map. Should really move the map into some sort of helper function to look up and _do_ stuff.
+
+_Here's the TODO_ in the MainWindow.xaml.cs 
+```
+//TODO hide the dict - make a function to do something with it. 
+//This works, but within the mainwindow. 
+//Discovered this will not work if:
+//- open the note, change title, close note. data changes -fine.
+//- change title on main window, press enter. focus doesn't clear and title not updated. 
+// -data only updated when closing application
+```
+
+Getting late. Tired.
+
+
 --- 
 
 ### BUG AND ANNOYANCES REPORT

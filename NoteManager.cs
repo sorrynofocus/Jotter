@@ -103,6 +103,7 @@ namespace com.nobodynoze.notemanager
             }
         }
 
+
         /// <summary>
         /// Snitches to the listeners a property has changed.
         /// </summary>
@@ -136,6 +137,10 @@ namespace com.nobodynoze.notemanager
         //Instead of use block body, use expression body for constructor
         public NoteManager() => Notes = LoadNotes(serializer, jotNotesFilePath) ?? JustExit();
 
+
+        //Keep a dictionary of note indexing. Can't figure out how to get the title text box tags since data is dynamic
+        public Dictionary<Guid, Note> idIndexerNoteMap = new Dictionary<Guid, Note>();
+
         /// <summary>
         /// Loads and deserializes notes from XML-based data file into a NoteManager 
         /// </summary>
@@ -154,8 +159,26 @@ namespace com.nobodynoze.notemanager
 
                         using (FileStream fileStream = new FileStream(filePath, FileMode.Open))
                         {
-                            return serializer.Deserialize(fileStream) as ObservableCollection<Note>;
+                        // return serializer.Deserialize(fileStream) as ObservableCollection<Note>;
+                        ObservableCollection<Note>? loadedNotes = serializer.Deserialize(fileStream) as ObservableCollection<Note>;
+
+                        if (loadedNotes != null)
+                        {
+                            // Clear the existing dictionary before populating it with new notes
+                            idIndexerNoteMap.Clear();
+
+                            // Populate the dictionary with notes and their IdIndexer values
+                            foreach (Note note in loadedNotes)
+                            {
+                                if (note.IdIndexer != null)
+                                {
+                                    idIndexerNoteMap[note.IdIndexer.Value] = note;
+                                }
+                            }
                         }
+
+                        return loadedNotes;
+                    }
                     }
                     catch (Exception? ex)
                     {
@@ -201,6 +224,28 @@ namespace com.nobodynoze.notemanager
             MessageBox.Show("Failed to load notes. Exiting application.", "Error", MessageBoxButton.OK);
             Environment.Exit(1); // Exit the application with an error code
             return new ObservableCollection<Note>(); // This line is added to satisfy the return type
+        }
+
+        public int GetIndexOfSelectedNoteById(Guid idIndexer)
+        {
+            if (Notes == null)
+            {
+                // Handle null cases or return a default value
+                return -1;
+            }
+
+            // Iterate through the Notes collection to find the index of the note with the given IdIndexer
+            for (int i = 0; i < Notes.Count; i++)
+            {
+                if (Notes[i].IdIndexer == idIndexer)
+                {
+                    // Return the index of the note with the given IdIndexer
+                    return i;
+                }
+            }
+
+            // Return -1 or handle the case where the note with the given IdIndexer is not found
+            return -1;
         }
 
         /// <summary>
@@ -267,6 +312,38 @@ namespace com.nobodynoze.notemanager
         public Guid GenerateID()
         { 
             return Guid.NewGuid(); 
+        }
+
+        /// <summary>
+        /// Search for note with specified IdIndexer and update it
+        /// </summary>
+        /// <param name="idIndexer">the GUID index to look up</param>
+        /// <param name="newTitle">the new title of the note</param>
+        /// <param name="newText">the new text/body of the note</param>
+        /// Example: noteManager.UpdateNoteByIdIndexer(idIndexer, newTitle, newText);
+        public void UpdateNoteByIdIndexer(Guid idIndexer, string? newTitle, string? newText = null)
+        {
+            
+            Note noteToUpdate = null;
+            foreach (Note note in Notes)
+            {
+                if (note.IdIndexer.Equals(idIndexer))
+                {
+                    noteToUpdate = note;
+                    //Found note
+                    break; 
+                }
+            }
+
+            if (noteToUpdate != null)
+            {
+                // Update note props
+                if (newTitle != null)
+                    noteToUpdate.Title = newTitle;
+
+                if (newText != null)
+                    noteToUpdate.Text = newText;
+            }
         }
 
 

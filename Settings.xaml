@@ -1,0 +1,327 @@
+﻿<Window x:Class="Jotter.Settings"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Jotter"
+        mc:Ignorable="d"
+        
+        AllowsTransparency="False"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        BorderBrush="Black"
+        BorderThickness="5"
+        Height="600" 
+        Width="420"
+        Title="Settings"
+        Loaded="Window_Loaded"
+        >
+
+    <Window.Resources>
+        <Style TargetType="{x:Type CheckBox}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type CheckBox}">
+                        <ControlTemplate.Resources>
+                            <SolidColorBrush x:Key="fillBrush">LightBlue</SolidColorBrush>
+                            <SolidColorBrush x:Key="borderBrush">Gray</SolidColorBrush>
+                        </ControlTemplate.Resources>
+                        <Grid Background="Transparent" SnapsToDevicePixels="True" Height="18">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="34" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid x:Name="markGrid">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Rectangle Fill="Transparent" Height="16" x:Name="moveEllipse">
+                                    <Rectangle.Style>
+                                        <Style TargetType="Rectangle">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                                                    <DataTrigger.EnterActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation From="0" To="21" Duration="0:0:0.2" Storyboard.TargetProperty="Width" />
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </DataTrigger.EnterActions>
+                                                    <DataTrigger.ExitActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation To="0" Duration="0:0:0.2" Storyboard.TargetProperty="Width"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </DataTrigger.ExitActions>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Rectangle.Style>
+                                </Rectangle>
+                                <!-- rectangle with rounded ends. -->
+                                <!-- Margin="1,4,1,4" Margin="1,1,-4,3" -->
+                                <Rectangle RadiusX="6" RadiusY="6" 
+                       Grid.ColumnSpan="2" 
+                       Name="line" 
+                       StrokeThickness=".8" 
+                       IsHitTestVisible="False" Margin="1,1,-4,3">
+                                    <Rectangle.Style>
+                                        <Style TargetType="{x:Type Rectangle}">
+                                            <Setter Property="Fill" Value="White"/>
+                                        </Style>
+                                    </Rectangle.Style>
+                                </Rectangle>
+                                <!-- the toggle round switch -->
+                                <!-- Margin="3,3,0,5" -->
+                                <Ellipse Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}" 
+                     StrokeThickness=".8" 
+                     Name="spot" 
+                     Grid.Column="1" 
+                     HorizontalAlignment="Left" Margin="3,3,0,5">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="White"/>
+                                            <Setter Property="Stroke" Value="White"/>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                            </Grid>
+                            <ContentPresenter x:Name="contentPresenter" ContentTemplate="{TemplateBinding ContentTemplate}" Grid.Column="1" ContentStringFormat="{TemplateBinding ContentStringFormat}" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
+                                <ContentPresenter.Content>
+                                    <!-- ON/OFF text here-->
+                                    <TextBlock Text="{TemplateBinding Tag}" FontFamily="Segoe UI Semibold" Margin="8,1,0,0" FontSize="11"/>
+                                </ContentPresenter.Content>
+                            </ContentPresenter>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Stroke" TargetName="line" Value="DarkGray"/>
+                                <Setter Property="Stroke" TargetName="spot" Value="DarkGray"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity"  Value=".5"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Stroke" TargetName="line" Value="Black"/>
+                                <Setter Property="Stroke" TargetName="spot" Value="Black"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Fill" TargetName="line" Value="LightGray"/>
+                                <Setter Property="Fill" TargetName="spot" Value="Black"/>
+                                <Setter Property="Stroke" TargetName="spot" Value="LightGray"/>
+                                <Setter Property="Tag" Value="ON" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="False">
+                                <Setter Property="Fill" TargetName="line" Value="Black"/>
+                                <Setter Property="Tag" Value="OFF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style for the headers -->
+        <Style TargetType="TextBlock" x:Key="SettingsTitle">
+            <Setter Property="Text" Value="Jotter" />
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Padding" Value="5,2,2,7"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+        </Style>        
+        
+        <Style TargetType="TextBlock" x:Key="HeaderTextStyle">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="5,10,0,5"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+        </Style>
+
+        <Style TargetType="TextBlock" x:Key="GeneralTextStyle">
+            <Setter Property="Margin" Value="5,10,0,10"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+        </Style>
+
+        <!-- Style for the separators -->
+        <Style TargetType="Separator" x:Key="SeparatorStyle">
+            <Setter Property="Margin" Value="0,5,0,5"/>
+            <Setter Property="Foreground" Value="#FFDDDDDD"/>
+        </Style>
+
+        <!-- Style for the buttons -->
+        <Style TargetType="Button" x:Key="ButtonStyle">
+            <Setter Property="Width" Value="100"/>
+            <Setter Property="Margin" Value="0,10,10,0"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+
+        <Style TargetType="TextBox" x:Key="FilePathTextStyle">
+            <Setter Property="Margin" Value="5,2,0,2"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="MinWidth" Value="300"/>
+            <Setter Property="MaxWidth" Value="300"/>
+            <!--<Setter Property="IsReadOnly" Value="True"/>-->
+            <!-- Blue color for file paths -->
+        </Style>
+
+        <Style x:Key="CloseButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="25"/>
+            <Setter Property="Height" Value="25"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#FF6B6B6B"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid Background="{TemplateBinding Background}">
+                            <TextBlock Text="X" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="{x:Type ScrollBar}" TargetType="{x:Type ScrollBar}">
+            <Setter Property="MinWidth" Value="35" />
+            <Setter Property="Width" Value="35" />
+        </Style>
+
+    </Window.Resources>
+
+    <!-- Background="#FF333333" -->
+    <Grid x:Name="GlobalSettingsGrid" Grid.Row="0" >
+        
+        <!-- Close Button -->
+        <Grid x:Name="TopBorderGrid" MouseDown="TopBorderGrid_MouseDown" Grid.Row="1" Background="#FF333333" MaxWidth="700" >
+            <TextBlock Name="StickyNotesSettingsTitle" Style="{StaticResource SettingsTitle}"/>
+            <Button x:Name="CloseSettings" Click="CloseSettings_Click" Style="{StaticResource CloseButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="3"/>
+        </Grid>
+        
+        <!-- TODO 
+        GlobalSettingsGrid and TopBorderGrid I'm a bit troubled on. TopBorerGRid has a maxwidth of 700 and that's just to get the "border band" to extend to end of window.
+        If it were not setting the ScrollViewerMain's background color, then the whole window will be TopBorderGrid's background.
+        The whole grid may have to be re-done to have a partition to separate the ScrollViewerMain from TopBorderGrid.
+        This is a bit tricky because GlobalSettingsGrid was originally placed because of an error complaing about a grid placed before ScrollViewerMain saying a child window was defined, or something. 
+        The whole settings, at the time, of this writing, was a bit of a challenge to create esepcially the toggleswitches. 
+        I still get annoying UI errors causing me to clean/rebuild/clean, rebuild. And when I think the problem has gone
+        away, I had made changes to "fix" a problem in cache. Ended up closing VS2022 and restarting to get it to behave after clean builds.
+        So... yeah, settings UI grid layouts may need to get re-done.
+        -->
+        <ScrollViewer x:Name="ScrollViewerMain" VerticalScrollBarVisibility="Auto" Margin="0,35,0,0" Background="WhiteSmoke">
+
+            <Grid Margin="15">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="61*"/>
+                    <ColumnDefinition Width="59*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- General Settings -->
+                <TextBlock Grid.Row="0" Text="General Settings" Style="{StaticResource HeaderTextStyle}" Grid.ColumnSpan="2"/>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,36" Grid.RowSpan="2">
+                    <TextBlock Text="User data: " Style="{StaticResource GeneralTextStyle}" VerticalAlignment="Center"/>
+                    <TextBox x:Name="TextUserData" Text="C:\MyApp\SaveFile" Style="{StaticResource FilePathTextStyle}" VerticalAlignment="Center" IsReadOnly="False"/>
+                </StackPanel>
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,11" Grid.RowSpan="2">
+                    <TextBlock Text="Log path:  " Style="{StaticResource GeneralTextStyle}" VerticalAlignment="Center"/>
+                    <TextBox x:Name="TextLogFile" Text="C:\Logs\logfile.txt" Style="{StaticResource FilePathTextStyle}" VerticalAlignment="Center"/>
+                </StackPanel>
+                <Separator Grid.Row="3" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,5"/>
+
+                <!-- Application behavior -->
+                <TextBlock Grid.Row="4" Text="Application behavior:" Style="{StaticResource HeaderTextStyle}" Grid.ColumnSpan="2"/>
+                <StackPanel Grid.Row="4" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,33,0,0" Grid.RowSpan="2">
+                    <RadioButton Content="Minimize to tray" Margin="8,5,10,5"/>
+                    <RadioButton Content="Fully exit" IsChecked="True" Margin="0,5"/>
+                </StackPanel>
+
+                <!-- Appearance -->
+                <Separator Grid.Row="6" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,5"/>
+                <TextBlock Grid.Row="7" Text="Appearance" Style="{StaticResource HeaderTextStyle}" Grid.ColumnSpan="2"/>
+
+                <StackPanel Grid.Row="8" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,32" Grid.RowSpan="2">
+                    <TextBlock Text="Theme: " VerticalAlignment="Center"/>
+                    <ComboBox SelectedIndex="0" Height="24" Margin="5,5,0,5">
+                        <ComboBoxItem>Light Theme</ComboBoxItem>
+                        <ComboBoxItem>Dark Theme</ComboBoxItem>
+                        <ComboBoxItem>Custom Theme</ComboBoxItem>
+                    </ComboBox>
+                </StackPanel>
+
+                <!-- Set number of seconds for auto save -->
+                <StackPanel Grid.Row="9" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,11" Grid.RowSpan="2">
+                    <TextBlock Text="Set number of seconds for auto save: " VerticalAlignment="Center"/>
+                    <ComboBox SelectedIndex="0" Margin="5,5,0,5" Height="25">
+                        <ComboBoxItem>Auto [3 seconds]</ComboBoxItem>
+                        <ComboBoxItem>25 seconds</ComboBoxItem>
+                        <ComboBoxItem>45 seconds</ComboBoxItem>
+                        <ComboBoxItem>60 seconds</ComboBoxItem>
+                    </ComboBox>
+                </StackPanel>
+
+                <!-- Note Options -->
+                <Separator Grid.Row="10" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,5"/>
+                <TextBlock Grid.Row="11" Text="Note Options" Style="{StaticResource HeaderTextStyle}" Grid.ColumnSpan="2"/>
+
+                <StackPanel Grid.Row="11" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,33,0,0" Grid.RowSpan="2">
+                    <TextBlock Text="Add date/time stamps to notes: " VerticalAlignment="Center"/>
+                    <CheckBox Margin="5,5,0,5"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="12" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,28,0,0" Grid.RowSpan="2">
+                    <TextBlock Text="Confirm deletion of notes: " VerticalAlignment="Center"/>
+                    <CheckBox Margin="5,5,0,5" IsChecked="True" />
+                </StackPanel>
+
+                <!-- Logging -->
+                <Separator Grid.Row="14" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,5"/>
+                <TextBlock Grid.Row="15" Text="Logging" Style="{StaticResource HeaderTextStyle}" Grid.ColumnSpan="2"/>
+
+                <StackPanel Grid.Row="16" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,11" Grid.RowSpan="2">
+                    <TextBlock Text="Enable logging" VerticalAlignment="Center"/>
+                    <CheckBox Margin="5,5,0,5"/>
+                </StackPanel>
+
+                <!-- Save and Cancel buttons remove these later  - finally have a closing button working
+                Place holders at the moment 
+                -->
+                <Separator Grid.Row="17" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,5"/>
+                <StackPanel Grid.Row="18" Orientation="Horizontal" Grid.ColumnSpan="2" Grid.RowSpan="4">
+                    <!--<Button Content="Save" Style="{StaticResource ButtonStyle}"/>
+                    <Button Content="Cancel" Style="{StaticResource ButtonStyle}"/>-->
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+
+</Window>

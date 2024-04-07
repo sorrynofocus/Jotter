@@ -15,7 +15,7 @@
         BorderThickness="5"
         AllowsTransparency="True"
         Height="600" 
-        Width="420"
+        Width="450"
         >
     
     
@@ -142,7 +142,12 @@
             </Setter>
         </Style>
         <!-- End of resources for settings button -->
-        
+
+        <!-- WIDTH of the scrollbar -->
+        <Style x:Key="{x:Type ScrollBar}" TargetType="{x:Type ScrollBar}">
+            <Setter Property="MinWidth" Value="10" />
+            <Setter Property="Width" Value="10" />
+        </Style>
 
     </Window.Resources>
 
@@ -211,8 +216,8 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>-->
 
-
-            <ListView Name="MyNotesListView" Grid.Row="2" SelectionMode="Single" ItemsSource="{Binding Notes}" SelectedItem="{Binding SelectedNote}"  ScrollViewer.HorizontalScrollBarVisibility="Hidden" FontFamily="Segoe UI Semibold">
+            <!--  VirtualizingPanel.ScrollUnit="Pixel" smooth scrolling on .NET 7 and up! -->
+            <ListView Name="MyNotesListView" Grid.Row="2" SelectionMode="Single" ItemsSource="{Binding Notes}" SelectedItem="{Binding SelectedNote}"  ScrollViewer.HorizontalScrollBarVisibility="Hidden" FontFamily="Segoe UI Semibold" VirtualizingPanel.ScrollUnit="Pixel">
                 <ListView.ContextMenu>
                     <ContextMenu Name="ContextOnItem">
                         <MenuItem Name="OpenNote"  Header="Open Note" Click="OpenNote_Click" />

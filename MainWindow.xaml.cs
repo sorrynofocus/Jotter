@@ -24,6 +24,7 @@ using System.Security.Principal;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media.Animation;
 using static Jotter.MainWindow;
 
 namespace Jotter
@@ -48,6 +49,17 @@ namespace Jotter
         public MainWindow()
         {
             InitializeComponent();
+
+            //Start Jotter at bottom left of screen.
+            //We can later add this to settings
+            //Center - WindowStartupLocation.CenterScreen
+            //Top left: this.Left and this.Top =0
+            //Top right: this.Left = SystemParameters.PrimaryScreenWidth - this.Width and this.top =0
+            //bottom right: this.Left = SystemParameters.WorkArea.Width - Width and this.Top = SystemParameters.WorkArea.Height - Height
+            //We can additionally record the position of window this.Left and this.Top =(x) for some custom posiiton set prior.
+            WindowStartupLocation = WindowStartupLocation.Manual;
+            this.Left = 0;
+            this.Top = SystemParameters.WorkArea.Height - Height;
 
             logger.LogWritten += LogWrite_Handler;
             logger.LogFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -300,6 +312,7 @@ namespace Jotter
         {
             // Open AppSettings window or handle app settings here
             //NOT YET IMPLEMENTED
+            TransitionToSettings();
         }
 
 
@@ -539,5 +552,64 @@ namespace Jotter
             UpdateListView();
         }
         // End rag and drop handling
+
+        //Cheap transition to settings screen and back to main
+        //Found this under the VS2022 "see examples". Did not know about this
+        //little gem!
+        //This may end up being changed.
+        private async void TransitionToSettings()
+        {
+            // Save the current positions of MainWindow
+            double mainLeft = Application.Current.MainWindow.Left;
+            double mainTop = Application.Current.MainWindow.Top;
+
+            // Fade out MainWindow
+            DoubleAnimation fadeOutAnimation = new DoubleAnimation(0, TimeSpan.FromSeconds(0.2));
+            this.BeginAnimation(Window.OpacityProperty, fadeOutAnimation);
+
+            // Wait for the fade-out transition animation to complete
+            await Task.Delay(TimeSpan.FromSeconds(0.2));
+
+            this.Hide();
+
+            // Loaded up the settings!
+            Settings settingsWindow = new Settings();
+            //settingsWindow.Left = Application.Current.MainWindow.Left;
+            //settingsWindow.Top = Application.Current.MainWindow.Top;
+            settingsWindow.Left = mainLeft; 
+            settingsWindow.Top = mainTop;
+            settingsWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+            settingsWindow.Closed += SettingsWindow_Closed;
+
+            settingsWindow.ShowDialog();
+            //Application.Current.MainWindow.Left = Window.GetWindow(this).Left;
+            //Application.Current.MainWindow.Top = Window.GetWindow(this).Top;
+
+
+            // Show MainWindow again and fade in
+            this.Opacity = 0;
+            this.Show();
+
+            DoubleAnimation fadeInAnimation = new DoubleAnimation(1, TimeSpan.FromSeconds(0.5));
+            this.BeginAnimation(Window.OpacityProperty, fadeInAnimation);
+            
+            // Restore MainWindow's position
+            //Application.Current.MainWindow.Left = mainLeft;
+            //Application.Current.MainWindow.Top = mainTop;
+        }
+
+        private void SettingsWindow_Closed(object sender, EventArgs e)
+        {
+            if (Application.Current.MainWindow is MainWindow mainWindow)
+            {
+                // Update the position of MainWindow based on the closed Settings window
+                if (sender is Settings settingsWindow)
+                {
+                    mainWindow.Left = settingsWindow.Left;
+                    mainWindow.Top = settingsWindow.Top;
+                }
+            }
+        }
+
     }
 }

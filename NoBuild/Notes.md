@@ -191,6 +191,17 @@ _Here's the TODO_ in the MainWindow.xaml.cs
 Getting late. Tired.
 
 
+## 2024.04.07 12h10 (12:10am)
+- Adding Settings UI
+Settings UI has a small transition animation from main screen and back. It's plain at the moment, but it will suffice.
+- Slight mods to the NoteManager (MainWindow) UI's scrollbar and NoteManager width. Also, found a neat little trick for smooth scrolling using `VirtualizingPanel.ScrollUnit="Pixel" smooth scrolling`
+- `MainWindow.xaml.cs` Decided to open application on the Bottom left side of the screen. Using the applicaiton, I end up moving the app to the left bottom anyway. I've added comments to open in all four corners including custom window positions. Will add these the settings later.
+
+Added `TransitionToSettings()` and `SettingsWindow_Closed` to perform transitionig to settings and back, remembering position of windows if either move. Keepin the main and settings windows follow each other has consistency in postional behavior. 
+
+
+
+
 --- 
 
 ### BUG AND ANNOYANCES REPORT

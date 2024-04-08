@@ -170,6 +170,13 @@ namespace Jotter
 
             // Refresh the Notes collection
             Notes = noteManager?.Notes;
+
+            //ADDED event handler to handle note update. Needed for the search stuff
+            //If user searches, finds the note, edits it, closes it, the the UI wasn't updated.
+            //The note and listview ui needs to be updated
+            // ref: mainwindow.xaml.cs see NoteEditor_NoteUpdated()
+            NoteUpdated?.Invoke(this, new NoteEventArgs(SelectedNote));
+
         }
 
 

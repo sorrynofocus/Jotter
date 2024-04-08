@@ -85,6 +85,11 @@ namespace Jotter
 
             MyNotesListView.ItemsSource = Notes;
             MyNotesListView.SelectionChanged += MyNotesListView_SelectionChanged;
+
+            // Attach the Loaded event handler to the Window or TextBox
+            //Loaded += MainWindow_Loaded;
+
+
         }
 
         //UI if title is changed and the keypress is ENTER
@@ -218,12 +223,33 @@ namespace Jotter
             if (MyNotesListView.SelectedItem != null) SelectedNote = (Note)MyNotesListView.SelectedItem;
         }
 
-        //here for testing. May remove later.
+        //note updated handler. take out older code. will trace later.
+        //this was needed for sarerch
         private void NoteEditor_NoteUpdated(object sender, NoteEventArgs e)
         {
-            // Handle NoteUpdated event here accessing the updated note via e.UpdatedNote
             Note? test = e.UpdatedNote;
             logger.LogInfo("[TEST - NoteEditor_NoteUpdated] " + test.Title);
+
+           // Handle NoteUpdated event here accessing the updated note via e.UpdatedNote (event arg)
+            Note updatedNote = e.UpdatedNote;
+
+            // Log for testing
+            logger.LogInfo("[NoteEditor_NoteUpdated] Updated Note Title: " + updatedNote.Title);
+
+            foreach (var note in Notes)
+            {
+                if (note.IdIndexer == updatedNote.IdIndexer)
+                {
+                    note.Title = updatedNote.Title;
+                    note.Text = updatedNote.Text;
+
+                    // Optionally refresh the ListView UI here if necessary
+                    UpdateListView();
+
+                    // Exit the loop once the note is found and updated
+                    break;
+                }
+            }
         }
 
         /// <summary>
@@ -339,7 +365,9 @@ namespace Jotter
                     //IF it's not open, then go ahead and open it
                     NoteTemplateEditor noteEditor = new NoteTemplateEditor(note);
                     //Subscribe to event to handle clean up when the note is closed.
-                    noteEditor.Closed += NoteEditor_Closed; 
+                    noteEditor.Closed += NoteEditor_Closed;
+                    //ADDED
+                    noteEditor.NoteUpdated += NoteEditor_NoteUpdated;
                     noteEditor.Show();
 
                     // Add the note editor window to the tracking list
@@ -348,8 +376,10 @@ namespace Jotter
             }
         }
 
+
+
         // Cleanup method when a note window is closed
-		// Used by OpenSelectedNote() as a subscriber
+        // Used by OpenSelectedNote() as a subscriber
         private void NoteEditor_Closed(object sender, EventArgs e)
         {
             if (sender is NoteTemplateEditor closedEditor)
@@ -398,30 +428,101 @@ namespace Jotter
         //Once we click elsewhere, reset the search box watermark, or html "placeholder"
         private void NoteManagerSearch_LostFocus(object sender, RoutedEventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(NoteManagerSearch.Text) || NoteManagerSearch.Text == "Search...")
+            {
                 NoteManagerSearch.Text = "Search...";
+
+                // Reset to show all ntoes
+                MyNotesListView.ItemsSource = Notes;
+            }
         }
 
         //clear the tesxtbox watermark so we can search.
         private void NoteManagerSearch_GotFocus(object sender, RoutedEventArgs e)
         {
-            if (NoteManagerSearch.Text == "Search...")
+            TextBox textBox = sender as TextBox;
+            if (textBox != null && textBox.Text == "Search...")
             {
-                NoteManagerSearch.Text = string.Empty;
+                textBox.Text = string.Empty;
             }
+
+            //if (NoteManagerSearch.Text == "Search...")
+            //{
+            //    NoteManagerSearch.Text = string.Empty;
+            //}
         }
 
         //Begin the search after pressing enter.
         private void NoteManagerSearch_KeyUp(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Enter || e.Key == Key.Return)
+
+
+            if (e.Key == Key.Enter)
             {
-                // We are searching! NOT IMPLEMENTED YET
-
-                // ..do search stuff here.
-
-                //Move focus off the control and to the next available one.
-                NoteManagerSearch.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+                TextBox textBox = sender as TextBox;
+                if (textBox != null)
+                {
+                    // Convert to lowercase for cheap-ass case-insensitive search
+                    string searchText = textBox.Text.Trim().ToLower(); 
+                    PerformSearch(NoteManagerSearch.Text);
+                }
             }
+
+            else if (NoteManagerSearch.Text.Length == 0 && e.Key == Key.Back || e.Key == Key.Delete)
+            {
+                // Clear the search when the textbox is empty and the user presses Backspace
+                ClearSearch();
+            }
+            //    //Move focus off the control and to the next available one.
+            //    NoteManagerSearch.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+        }
+
+        private void PerformSearch(string searchText)
+        {
+                // Create a temp collection to hold filtered notes
+                ObservableCollection<Note> filteredNotes = new ObservableCollection<Note>();
+
+                foreach (Note note in noteManager.Notes)
+                {
+                    if (note.Title.ToLower().Contains(searchText) || note.Text.ToLower().Contains(searchText))
+                        filteredNotes.Add(note); 
+                }
+
+                // Update the UI with filtered notes
+                UpdateUIWithFilteredNotes(filteredNotes, searchText);
+        }
+
+        private void ClearSearch()
+        {
+            //NoteManagerSearch.Text = "Search...";
+            //show all notes
+            MyNotesListView.ItemsSource = Notes;
+        }
+
+
+        private void UpdateUIWithFilteredNotes(ObservableCollection<Note> notes, string searchText)
+        {
+            //MyNotesListView.Items.Clear();
+            // System.InvalidOperationException: 'Operation is not valid while ItemsSource is in use. Access and modify elements with ItemsControl.ItemsSource instead.'
+
+            //// Add the filtered notes to the UI
+            //foreach (Note note in filteredNotes)
+            //{
+            //    MyNotesListView.Items.Add(note);
+            //}
+
+            ObservableCollection<Note> filteredNotes = new ObservableCollection<Note>();
+
+            foreach (Note note in noteManager.Notes)
+            {
+                if (note.Title.ToLower().Contains(searchText) || note.Text.ToLower().Contains(searchText))
+                {
+                    filteredNotes.Add(note); // Add the note to the filtered collection
+                }
+            }
+
+            // Update the bound collection with the filtered notes
+            MyNotesListView.ItemsSource = filteredNotes;
         }
 
         // Drag/Drop handling
@@ -610,6 +711,7 @@ namespace Jotter
                 }
             }
         }
+
 
     }
 }

@@ -145,8 +145,8 @@ Fixed the README to include a ref to screenshot exhibit.
 TODO 
 - Examine previous TODOs. Mark them complete or turn into issues.
 - In NoteManager.cs we added an indexer but the indexer isn't use during CRUD operations. Currently, everything is done by Title look up.
-- In NoteManager.cs, LoadNotes() need desperate try/catches - COMPLETED see [2024.03.31](#2024-03-31) 
-- In NoteManager.cs, examine TODO in NoteEventArgs -> figure out which save is best and combine. -COMPLETED, saving with indexer
+- ~~In NoteManager.cs, LoadNotes() need desperate try/catches~~ - COMPLETED see [2024.03.31](#2024-03-31) 
+- ~~In NoteManager.cs, examine TODO in NoteEventArgs -> figure out which save is best and combine. -COMPLETED, saving with indexer~~
 
 
 Fixes:
@@ -200,18 +200,27 @@ Settings UI has a small transition animation from main screen and back. It's pla
 Added `TransitionToSettings()` and `SettingsWindow_Closed` to perform transitionig to settings and back, remembering position of windows if either move. Keepin the main and settings windows follow each other has consistency in postional behavior. 
 
 
+## 2024.04.08 12h26 (12:26am)
+- `MainWindow.xaml` Edited the `NoteManagerSearch` edited the tag and text props.
+- `MainWindow.xaml.cs` finally got around to `NoteEditor_NoteUpdated` event (was kept for testing) but now used to handle note updates. TODO is to remove or disable the older methods in updating notes. The subscription is initated in OpenSelectedNote()
+- Added search capabilities to the following funcs: `NoteManagerSearch_LostFocus(), NoteManagerSearch_GotFocus(), NoteManagerSearch_KeyUp(), PerformSearch() (new), ClearSearch() (new), UpdateUIWithFilteredNotes() (new)`
+- `NoteTemplateEditor.xaml` modded `SaveNoteChanges()` to include event handler to handle note update. If user searches, finds the note, edits it, closes it, the the UI wasn't updated. The note and listview ui needs to be updated.
+- Added the mainwindow to open to bottom left side of screen so notes can open in center of screen. Will add options to save position later or to certain parts of screen like top right, top left, etc.
+
+
+
 
 
 --- 
 
 ### BUG AND ANNOYANCES REPORT
 - Re-check timing for note auto-save. If there's no activity, there should be no reason to save or time check.
-- Opening a note should flow on top of main window, or to the side. User has to move the main window out of the way or click on note to have focus.
+- ~~Opening a note should flow on top of main window, or to the side. User has to move the main window out of the way or click on note to have focus.~~
 
 ### FEATURE CREEPS AND TESTING REQUESTS
 - Add date/time stamps. Can use this to see most recent notes (as an option in settings)
 - Add tags. When user adds #{Tag} then let's find similar notes
-- Add search in notes and outside of notes (main window)
+- Add search in notes and ~~outside of notes (main window)~~
 - Add coloring bar for notes. This surrounds the notes and sets them apart from others.
 - Add a "favorites" button. 
 - Add a label "grouping". If notes tend to float toward a specific thing, they can be labeled. This is similar to gmail labels in email.

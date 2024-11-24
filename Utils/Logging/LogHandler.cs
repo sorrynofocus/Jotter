@@ -209,6 +209,24 @@ namespace com.nobodynoze.flogger
             Log(lMessage, LogDifficultyLvl.INFO);
         }
 
+        public void LogError(string sMessage)
+        {
+
+            List<string> lMessage = new List<string>
+                                        (
+                                            new string[]
+                                                {
+                                                    sMessage
+                                                }
+                                        );
+            Log(lMessage, LogDifficultyLvl.INFO);
+        }
+
+
+        public void LogError(List<string> lMessage)
+        {
+            Log(lMessage, LogDifficultyLvl.ERROR);
+        }
 
         public void WriteLog(string sLogMsg, LogDifficultyLvl LogDiffLvl)
         {

@@ -2,13 +2,14 @@
 * Jotter
 * C.Winters / US / Arizona / Thinkpad T15g
 * Feb 2024
- * 
- * Remember: If it doesn't work, I didn't write it.
- * 
- * Purpose 
- * A note taking application. Wrote this to learn WPF and to use at work because work will not allow applicaitons like Sticky notes.
- * Ideally, would like to have this /not/ cloud based, unless you desire to move the save file to your own cloud based platform.
- */
+* 
+* Remember: If it doesn't work, I didn't write it.
+* 
+* Purpose 
+* A note taking application. Wrote this to "learn" WPF some work places don't support applicaitons 
+* like Sticky notes (personal cloud). Ideally, would like to have this /not/ cloud based, unless 
+* you desire to move the data file to your own cloud based platform.
+*/
 
 using com.nobodynoze.flogger;
 using com.nobodynoze.notemanager;
@@ -16,9 +17,11 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 //imports for FileStream and XmlSerializer
 using System.IO;
+using System.Net;
 using System.Reflection;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -34,12 +37,10 @@ namespace Jotter
         public ObservableCollection<Note> Notes { get; set; }
         public NoteManager? noteManager;
         public Note SelectedNote { get; set; }
-
         private NoteTemplateEditor noteEditor;
 
         //Track opened notes. This is so we don't have open redundant open notes. ^_^
         private List<NoteTemplateEditor> openNoteWindows = new List<NoteTemplateEditor>();
-
         private string SearchValue= "Search...";
 
 
@@ -534,7 +535,8 @@ namespace Jotter
             Helper func sets up the "drag and drop" functionality by attaching event handlers to the necessary events.
             
             MainWindow_DragEnter() / MainWindow_DragOver() funcs 
-            Handle the drag enter and drag over events to allow dropping files. Text files are in mind, and there may be side effects on others. Will handle those later.
+            Handle the drag enter and drag over events to allow dropping files. Text files are in mind, and there may be 
+            side effects on others. Will handle those later.
             
             MainWindow_Drop() func 
             Processes dropped files, reads the text content, and adds a new note to the NoteManager.
@@ -571,6 +573,12 @@ namespace Jotter
             Drop += MainWindow_Drop;
         }
 
+        /// <summary>
+        /// Event trigger when a file is dragged INTO (or entering) the main window.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// TODO: Using e.Data.GetData(DataFormats.FileDrop) determine if it's a valid file. If not, then don't change the mouse cursor
         private void MainWindow_DragEnter(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -579,12 +587,22 @@ namespace Jotter
                 e.Effects = DragDropEffects.None;
         }
 
+        /// <summary>
+        /// Event trigger when a file is dragged OVER the main window. The DragEvent arguments tag this as a copy-from the source (file)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void MainWindow_DragOver(object sender, DragEventArgs e)
         {
             e.Effects = DragDropEffects.Copy;
             e.Handled = true;
         }
 
+        /// <summary>
+        /// The event trigger when a file is dropped onto the main window to add a new note from a text or html file.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void MainWindow_Drop(object sender, DragEventArgs e)
         {
             string[] arFiles = (string[])e.Data.GetData(DataFormats.FileDrop);
@@ -601,11 +619,23 @@ namespace Jotter
                 if (File.Exists(fileItem) )
                 {
                     bool isBinary = IsBinaryFile(fileItem);
+                    string? newNoteTitle = Path.GetFileNameWithoutExtension(fileItem);
+                    string? convertedText = string.Empty;
 
                     if (!isBinary)
                     {
-                        string text = File.ReadAllText(fileItem);
-                        AddNewNoteWithText(text);
+                        if (IsHtmlFile(fileItem))
+                        {
+                            convertedText = ConvertHTMLToText(fileItem);
+                            
+                            if (convertedText != string.Empty)     
+                                AddNewNoteWithText(newNoteTitle, convertedText);
+                        }
+                        else
+                        {
+                            convertedText = File.ReadAllText(fileItem);
+                            AddNewNoteWithText(newNoteTitle, convertedText);
+                        }
                     }
                 }
             }
@@ -632,15 +662,82 @@ namespace Jotter
             return (false); 
         }
 
-        // Create new note from the dropped file
-        private void AddNewNoteWithText(string text)
+        /// <summary>
+        /// Check if the file source is a valid HTML file (by checking basic contents)
+        /// </summary>
+        /// <param name="filePath">file source to process for valid content</param>
+        /// <returns>true - if a "valid" HTML file</returns>
+        private bool IsHtmlFile(string filePath)
+        {
+            logger.LogInfo($"Doing action: [IsHtmlFile]");
+
+            string extension = Path.GetExtension(filePath).ToLower();
+            if (extension == ".html" || extension == ".htm")
+                return true;
+
+            //Try peeking into the file, reading a few lines. Look for standard HTML stuff
+            try
+            {
+                using (StreamReader reader = new StreamReader(filePath))
+                {
+                    string content = reader.ReadLine() + reader.ReadLine(); 
+                    
+                    //Add more checks here to check for valid HTML file... 
+                    if (content != null &&
+                       (content.Contains("<!DOCTYPE html>", StringComparison.OrdinalIgnoreCase) ||
+                        content.Contains("<html>", StringComparison.OrdinalIgnoreCase)))
+                        return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"(IsHtmlFile) Error processing file: {ex.Message}");
+            }
+            
+            logger.LogInfo($"Ending action: [IsHtmlFile] {filePath} Not a valid HTML");
+            return (false); 
+        }
+
+        /// <summary>
+        ///  Read the HTML content and remove HTML tags
+        /// </summary>
+        /// <param name="htmlFilePath">string - content of text to convert</param>
+        /// <returns>string - results from conversion</returns>
+        /// NOTES: I'm new to WebUtility only finding a basic result. Will improve if it needs
+        public static string ConvertHTMLToText(string htmlFilePath)
+        {
+            try
+            {
+                //Read the HTML content remove HTML tags (example: &quot; -> ")
+                string? htmlContent = File.ReadAllText(htmlFilePath);
+                string? plainText = Regex.Replace(htmlContent, "<.*?>", string.Empty);
+                plainText = WebUtility.HtmlDecode(plainText);
+                
+                if (plainText != null) 
+                    return (plainText);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"(ConvertHTMLToText) Error processing file: {ex.Message}");
+                return ($"Error processing file: {ex.Message}");
+            }
+            return (null);
+        }
+
+
+        /// <summary>
+        ///  Create new note from the dropped file
+        /// </summary>
+        /// <param name="title">string to title of a new note</param>
+        /// <param name="text">string to content of note</param>
+        private void AddNewNoteWithText(string title, string text)
         {
             //- Create a new note with contents
             //- Add the new note object to note manager
             //- Save the notes in the note manager
             //- Update list view.
             Note newNote = new Note { IdIndexer = noteManager.GenerateID(), 
-                                      Title = "A new note!", 
+                                      Title = title, 
                                       Text = text 
                                     };
 
@@ -708,7 +805,6 @@ namespace Jotter
                 }
             }
         }
-
 
     }
 }

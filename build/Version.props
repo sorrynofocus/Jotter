@@ -1,68 +1,90 @@
 ﻿<Project>
-  <!-- See https://aka.ms/dotnet/msbuild/customize for more details on customizing your build -->
-	<!-- 
-	See https://scottdorman.blog/2018/08/20/net-core-project-versioning/
-	example using dotnet compile
-	dotnet publish ./MyProject.csproj /p:Version="1.2.3" /p:InformationalVersion="1.2.3-qa"
-	-->
+	<Target Name="ManageVersion" BeforeTargets="BeforeBuild">
+		<PropertyGroup>
+			<!-- File path to store the version -->
+			<VersionFile>$(MSBuildProjectDirectory)\build\VersionInfo.txt</VersionFile>
+			<!-- Default version if the file does not exist -->
+			<DefaultVersion>1.0.0.0</DefaultVersion>
+		</PropertyGroup>
 
-	<!-- below, we do a auto-increement  of build, but intellisense will start in an infinite loop.
-	The "target" and the propertygroup condition will help work around this.
-	This took time to figure out and search, but finally some light:
-	https://github.com/dotnet/project-system/issues/1457
-	https://developercommunity.visualstudio.com/t/running-low-priority-background-processes-never-co-1/899082
-	https://github.com/dotnet/project-system/blob/main/docs/design-time-builds.md
-	
-	Problem is under the <Versionsuffix> and intellisense stays in inifinite loop processing stuff
-	in Directory.Build.props. Discovered the problem was in <VersionSuffix> with System.DateTime call.
-	Status constant reporting "Running low priority background process". 
-	After searching, applied conditions under Target and PropertyGroup. This seems to help.
-	-->
-	
-	<!--<Target Name="AddAdditionalReferences" BeforeTargets="ResolveAssemblyReferences">
-		<PropertyGroup Condition="'$(DesignTimeBuild)' == 'false' OR '$(BuildingProject)' != 'true'">-->
-			<Target Name="AddAdditionalReferences" BeforeTargets="ResolveAssemblyReferences">
-				<PropertyGroup Condition="'$(DesignTimeBuild)' == 'false' OR '$(BuildingProject)' == 'true'">
+		<!-- Ensure the version file exists -->
+		<Exec Command="if not exist $(VersionFile) echo $(DefaultVersion) > $(VersionFile)" />
 
-					<!-- VERSION INFORMATION for application-->
+		<!-- Read the version from the file -->
+		<ReadLinesFromFile File="$(VersionFile)">
+			<Output TaskParameter="Lines" PropertyName="CurrentVersion" />
+		</ReadLinesFromFile>
+
+		<!-- Log the current version from the file -->
+		<Message Text="Current version read from file: $(CurrentVersion)" Importance="High" />
+
+		<!-- Parse the version components -->
+		<PropertyGroup>
+			<FileMajorVersion>$([MSBuild]::ValueOrDefault($([System.String]::Copy($(CurrentVersion)).Split('.')[0]), '0'))</FileMajorVersion>
+			<FileMinorVersion>$([MSBuild]::ValueOrDefault($([System.String]::Copy($(CurrentVersion)).Split('.')[1]), '0'))</FileMinorVersion>
+			<FileRevision>$([MSBuild]::ValueOrDefault($([System.String]::Copy($(CurrentVersion)).Split('.')[2]), '0'))</FileRevision>
+			<FileBuildNumber>$([MSBuild]::ValueOrDefault($([System.String]::Copy($(CurrentVersion)).Split('.')[3]), '0'))</FileBuildNumber>
+		</PropertyGroup>
+
+		<!-- Reset or Increment the build number -->
+		<PropertyGroup>
+			<MajorVersion>1</MajorVersion>
+			<!-- Update this manually -->
+			<MinorVersion>0</MinorVersion>
+			<!-- Update this manually -->
+			<RevisionNumber>0</RevisionNumber>
+			<!-- Update this manually -->
+
+			<!-- Reset build number if major version changes -->
+			<BuildNumber Condition="'$(FileMajorVersion)' != '$(MajorVersion)'">0</BuildNumber>
+			<BuildNumber Condition="'$(FileMajorVersion)' == '$(MajorVersion)'">$([MSBuild]::Add($(FileBuildNumber), 1))</BuildNumber>
+		</PropertyGroup>
+
+		<!-- Log the updated components -->
+		<Message Text="Parsed Major Version: $(FileMajorVersion)" Importance="High" />
+		<Message Text="Parsed Minor Version: $(FileMinorVersion)" Importance="High" />
+		<Message Text="Parsed Revision: $(FileRevision)" Importance="High" />
+		<Message Text="Parsed Build Number: $(FileBuildNumber)" Importance="High" />
+		<Message Text="Updated Build Number: $(BuildNumber)" Importance="High" />
+
+		<!-- Combine the version -->
+		<PropertyGroup>
+			<FinalVersion>$(MajorVersion).$(MinorVersion).$(RevisionNumber).$(BuildNumber)</FinalVersion>
+		</PropertyGroup>
+
+		<!-- Log the final version -->
+		<Message Text="Final Version: $(FinalVersion)" Importance="High" />
+
+		<!-- Write the updated version back to the file -->
+		<WriteLinesToFile
+            File="$(VersionFile)"
+            Lines="$(FinalVersion)"
+            Overwrite="true" />
+	</Target>
+
+	<Target Name="AddAdditionalReferences" BeforeTargets="ResolveAssemblyReferences">
+		<PropertyGroup Condition="'$(DesignTimeBuild)' == 'false' OR '$(BuildingProject)' == 'true'">
+
+			<!-- VERSION INFORMATION for application -->
 			<Product>Jotter</Product>
 			<Title>Jotter.Core</Title>
 			<Company>Nobody Noze</Company>
 			<RootNamespace>Jotter.Core</RootNamespace>
 			<Copyright>Copyright © $([System.DateTime]::Now.ToString("yyyy"))</Copyright>
 			<Description>Note taking app Mike would appreciate</Description>
-			<!-- The File Description from executable properties originates by assembly title, not description tag!-->
 			<AssemblyTitle>Note taking app Mike would appreciate</AssemblyTitle>
 			<AssemblyName>Jotter</AssemblyName>
 
-			<!-- Build number auto-increments, no need to adjust EXCEPT Major, Minor, Patch - See Semantic versioning -->
-			<VersionSuffix>1.0.0.$([System.DateTime]::UtcNow.ToString(mmff))</VersionSuffix>
-					
-			<AssemblyVersion Condition=" '$(VersionSuffix)' == '' ">0.0.0.1</AssemblyVersion>
-			<AssemblyVersion Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</AssemblyVersion>
+			<!-- Combine for full semantic version -->
+			<VersionSuffix>$(FinalVersion)</VersionSuffix>
 
-			<Version Condition=" '$(VersionSuffix)' == '' ">0.0.1.0</Version>
-			<Version Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</Version>
-			
-			<FileVersion Condition=" '$(VersionSuffix)' == '' ">0.0.1.0</FileVersion>
+			<AssemblyVersion Condition=" '$(VersionSuffix)' != '' ">$(MajorVersion).$(MinorVersion).$(RevisionNumber).0</AssemblyVersion>
 			<FileVersion Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</FileVersion>
-
-			<InformationalVersion Condition=" '$(VersionSuffix)' == '' ">0.0.1.0</InformationalVersion>
 			<InformationalVersion Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</InformationalVersion>
-			
-			<!-- <InformationalVersion>1.0.0.0.777</InformationalVersion> -->
-			<!-- <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile> -->
-			<!-- <AutoIncrementPackageRevision>true</AutoIncrementPackageRevision> -->
-			<NeutralLanguage>en</NeutralLanguage>
-			<!-- <PackageLicenseUrl>License URL</PackageLicenseUrl>
-			<PackageProjectUrl>Project URL</PackageProjectUrl>
-			<PackageIconUrl>Icon URL</PackageIconUrl> -->
-			<RepositoryUrl>https://github.com/sorrynofocus</RepositoryUrl>
-			<RepositoryType>Repo type</RepositoryType>
-			<!--<PackageTags>Tags</PackageTags>
-			<PackageReleaseNotes>Release</PackageReleaseNotes>-->
-		
-	</PropertyGroup>
-	</Target>
 
+			<NeutralLanguage>en</NeutralLanguage>
+			<RepositoryUrl>https://github.com/sorrynofocus</RepositoryUrl>
+			<RepositoryType>git</RepositoryType>
+		</PropertyGroup>
+	</Target>
 </Project>

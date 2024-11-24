@@ -12,8 +12,6 @@
 
 using com.nobodynoze.flogger;
 using com.nobodynoze.notemanager;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 //imports for FileStream and XmlSerializer
@@ -25,7 +23,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
-using static Jotter.MainWindow;
 
 namespace Jotter
 {

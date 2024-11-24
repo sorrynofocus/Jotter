@@ -209,6 +209,19 @@ Added `TransitionToSettings()` and `SettingsWindow_Closed` to perform transition
 
 
 
+## 2024.11.23 12h26 (06:50pm)
+When editing or adding notes, a double linefeed was present in the note (RichEdit control under NoteTemplateEditor).
+
+Additions:
+- Added data structure in NoBuilds sub-folder
+- Changed auto-build flag from debug to release in auto-build.cmd (build command)
+
+## 2024.11.24 12h26 (02:35am)
+- Added support to convert basic HTML to text when dragging and dropping notes in MainWindow_Drop(). New  funcs: IsHtmlFile() and ConvertHTMLToText().
+- Modded AddNewNoteWithText() func to add a title used from MainWindow_Drop(). Instead of adding a default text value of "A New Note", the file you drop in will default to the file name as a title.
+- Added LogError() in Utils -> Logging -> LogHandler.cs. Did not have an error type log. Added. TODO: NEED to add more logging like warnings, etc.
+- Improved build version info. See document Build-info.md
+
 
 
 --- 

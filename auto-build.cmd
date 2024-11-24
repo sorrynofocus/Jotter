@@ -7,7 +7,7 @@
     @REM https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/trim-self-contained
 
 @REM Set IS_DEBUG=true to only build DEBUG build. FALSE = release build.
-set IS_DEBUG=true
+set IS_DEBUG=false
 set VERBOSE_LEVEL=normal
 
 set CURDIR=%CD%
@@ -34,7 +34,7 @@ if "%IS_DEBUG%" == "true" (
     dotnet build "%SOLUTIONFILE%" --framework %FRAMEWORK% --configuration %CONFIG_DEBUG% --property:Platform=%PLATFORM% --nologo -nodeReuse:true --verbosity "%VERBOSE_LEVEL%"
     dotnet publish "%SOLUTIONFILE%" --framework %FRAMEWORK% -r "%RUNTIME_IDENTIFIER%" --configuration %CONFIG_DEBUG% --property:Platform=%PLATFORM% --self-contained true --property:PublishSingleFile=true  --property:IncludeNativeLibrariesForSelfExtract=true --verbosity "%VERBOSE_LEVEL%" --property:PublishDir=%PUBLISHDIR_DEBUG%
     echo.
-    echo Product location %RUNTIME_IDENTIFIER%-%FRAMEWORK%: %PUBLISHDIR_DEBUG%
+    echo Product location [DEBUG]  %RUNTIME_IDENTIFIER%-%FRAMEWORK%: %PUBLISHDIR_DEBUG%
 
 ) else (
     echo RUNNING RELEASE BUILD...
@@ -42,7 +42,7 @@ if "%IS_DEBUG%" == "true" (
     dotnet build "%SOLUTIONFILE%" --framework %FRAMEWORK% --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --nologo -nodeReuse:true --verbosity "%VERBOSE_LEVEL%"
     dotnet publish "%SOLUTIONFILE%" --framework %FRAMEWORK% -r "%RUNTIME_IDENTIFIER%" --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --self-contained true --property:PublishSingleFile=true  --property:IncludeNativeLibrariesForSelfExtract=true --verbosity "%VERBOSE_LEVEL%" --property:PublishDir=%PUBLISHDIR_RELEASE%
     echo.
-    echo Product location %RUNTIME_IDENTIFIER%-%FRAMEWORK%: %PUBLISHDIR_RELEASE%    
+    echo Product location [RELEASE]  %RUNTIME_IDENTIFIER%-%FRAMEWORK%: %PUBLISHDIR_RELEASE%    
 )
 
 

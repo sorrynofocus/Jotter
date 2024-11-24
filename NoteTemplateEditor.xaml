@@ -194,8 +194,17 @@
 
         <!-- Note Content -->
         <Grid x:Name="gridContainsNote" Grid.Row="1" MaxWidth="900" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <RichTextBox x:Name="rchEditNote" Width="{Binding ElementName=gridContainsNote}" FontSize="16" VerticalScrollBarVisibility="Visible" />
-
+            <RichTextBox x:Name="rchEditNote"
+             Width="{Binding ElementName=gridContainsNote}" 
+             FontSize="16" 
+             VerticalScrollBarVisibility="Visible" 
+             >
+                <RichTextBox.Resources>
+                    <Style TargetType="{x:Type Paragraph}">
+                        <Setter Property="Margin" Value="0" />
+                    </Style>
+                </RichTextBox.Resources>
+            </RichTextBox>
         </Grid>
 
     </Grid>

@@ -42,6 +42,13 @@ jobs:
     steps:
       - attach_workspace:
           at: ./workspace
+
+      - run:
+          name: Install Additional Dependencies (github CLI)
+          command: |
+            choco install gh zip -y 
+            where zip
+
       - run:
           name: Prepare release
           command: |

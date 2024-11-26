@@ -35,10 +35,6 @@ jobs:
             ./auto-build.cmd
             tree /f
 
-      - persist_to_workspace:
-          root: bin
-          paths:
-            - ./bin
 
   release:
     executor: win/default

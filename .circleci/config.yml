@@ -2,14 +2,12 @@
 # See: https://circleci.com/docs/configuration-reference
 version: 2.1
 
-executors:
-  dotnet-default:
-    docker:
-      - image: mcr.microsoft.com/dotnet/sdk:9.0-nanoserver-ltsc2022
+orbs:
+  win: circleci/windows@5.0.0
 
 jobs:
   build:
-    executor: dotnet-default
+    executor: win/default
     steps:
       - checkout
       
@@ -31,7 +29,7 @@ jobs:
           name: Execute auto-build script
           command: |
             chmod +x auto-build.cmd
-            call ./auto-build.cmd
+            cmd call ./auto-build.cmd
 
       - persist_to_workspace:
           root: bin
@@ -39,7 +37,7 @@ jobs:
             - ./bin
 
   release:
-    executor: dotnet-default
+    executor: win/default
     steps:
       - attach_workspace:
           at: ./workspace

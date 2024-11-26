@@ -12,9 +12,12 @@ jobs:
       - checkout
       
       - run:
-          name: Install Additional Dependencies (Optional)
+          name: Install Additional Dependencies (github CLI)
           command: |
-            tree /f
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+            apt update
+            apt install gh            
 
       - run:
           name: Set up build environment
@@ -45,6 +48,17 @@ jobs:
             echo Creating release archive
             mkdir release
             zip -r ./release/jotter-release.zip ./workspace/bin/x64/Release/net8.0-windows/publishprod/*
+      - run:
+          name: Create GitHub Release
+          command: |
+            TAG_NAME=v$(date +"%Y%m%d%H%M%S") # Example tag name based on timestamp
+            RELEASE_NAME="Release $TAG_NAME"
+            echo "Creating release $RELEASE_NAME"
+
+            # Create the GitHub release
+            gh release create "$TAG_NAME" ./release/jotter-release.zip \
+              --title "$RELEASE_NAME" \
+              --notes "Automated release via CircleCI"
       - store_artifacts:
           path: ./release/jotter-release.zip
           destination: jotter-release.zip

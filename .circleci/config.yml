@@ -15,11 +15,12 @@ jobs:
           name: Install Additional Dependencies (github CLI)
           command: |
             # Install Chocolatey package manager
-            powershell -NoProfile -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" 
+            #powershell -NoProfile -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" 
             # Install GitHub CLI using Chocolatey 
             choco install gh -y 
             # Verify installation 
-            gh --version        
+            where gh 
+            #gh --version
 
       - run:
           name: Set up build environment

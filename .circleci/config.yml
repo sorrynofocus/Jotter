@@ -53,8 +53,11 @@ jobs:
           name: Prepare release
           command: |
             echo Creating release archive
-            mkdir release
-            zip -r ./release/jotter-release.zip ./workspace/bin/x64/Release/net8.0-windows/publishprod/*
+            mkdir ./workspace/release/
+            tree /f 
+            # Product location [RELEASE]  win-x64-net8.0-windows: C:\Users\circleci\project\bin\x64\Release\net8.0-windows\publishprod\
+            zip -r ./workspace/release/jotter-release.zip ./workspace/bin/x64/Release/net8.0-windows/publishprod/*
+      
       - run:
           name: Create GitHub Release
           command: |
@@ -66,6 +69,7 @@ jobs:
             gh release create "$TAG_NAME" ./release/jotter-release.zip \
               --title "$RELEASE_NAME" \
               --notes "Automated release via CircleCI"
+      
       - store_artifacts:
           path: ./release/jotter-release.zip
           destination: jotter-release.zip

@@ -12,16 +12,13 @@ jobs:
       - checkout
       
       - run:
-          name: Install Additional Dependencies (github CLI)
+          name: Install Additional Dependencies (GitHub CLI and zip)
           command: |
-            # Install Chocolatey package manager
-            #powershell -NoProfile -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" 
-            # Install GitHub CLI using Chocolatey 
+            # Install Chocolatey package manager and dependencies
             choco install gh zip -y 
-            # Verify installation 
+            # Verify installations
             where gh 
             where zip
-            #gh --version
 
       - run:
           name: Set up build environment
@@ -36,15 +33,20 @@ jobs:
             ./auto-build.cmd
             tree /f
 
+      - persist_to_workspace:
+          root: C:\Users\circleci\project\
+          paths:
+            - bin\x64\Release\net8.0-windows\publishprod
+            - build\versioninfo.txt
 
   release:
     executor: win/default
     steps:
       - attach_workspace:
-          at: ./workspace
+          at: C:\workspace
 
       - run:
-          name: Install Additional Dependencies (github CLI)
+          name: Install Additional Dependencies (GitHub CLI and zip)
           command: |
             choco install gh zip -y 
             where zip
@@ -53,26 +55,43 @@ jobs:
           name: Prepare release
           command: |
             echo Creating release archive
-            mkdir ./workspace/release/
+            mkdir C:\workspace\release\
             tree /f 
-            # Product location [RELEASE]  win-x64-net8.0-windows: C:\Users\circleci\project\bin\x64\Release\net8.0-windows\publishprod\
-            zip -r ./workspace/release/jotter-release.zip ./workspace/bin/x64/Release/net8.0-windows/publishprod/*
-      
+            zip -r C:\workspace\release\jotter-release.zip C:\workspace\bin\x64\Release\net8.0-windows\publishprod
+
+      - run:
+          name: Read Version Information
+          command: |
+            set /p TAG_NAME=<C:\workspace\build\versioninfo.txt
+            echo "Release tag will be: v%TAG_NAME%"
+
       - run:
           name: Create GitHub Release
           command: |
-            TAG_NAME=v$(date +"%Y%m%d%H%M%S") # Example tag name based on timestamp
-            RELEASE_NAME="Release $TAG_NAME"
+            RELEASE_NAME="Release v%TAG_NAME%"
             echo "Creating release $RELEASE_NAME"
 
             # Create the GitHub release
-            gh release create "$TAG_NAME" ./release/jotter-release.zip \
-              --title "$RELEASE_NAME" \
+            gh release create "v%TAG_NAME%" C:\workspace\release\jotter-release.zip \
+              --title "Release v%TAG_NAME%" \
               --notes "Automated release via CircleCI"
-      
+
+      - run:
+          name: Commit and Push Updated Version
+          command: |
+            git config --global user.name "SorryNoFocus"
+            git config --global user.email "thechriswinters@gmail.com"
+
+            echo "Committing updated versioninfo.txt to the repository"
+            cd C:\workspace
+            git add build\versioninfo.txt
+            git commit -m "Update versioninfo.txt to v%TAG_NAME% [skip ci]"
+            git push origin HEAD
+
       - store_artifacts:
-          path: ./release/jotter-release.zip
+          path: C:\workspace\release\jotter-release.zip
           destination: jotter-release.zip
+
 
 workflows:
   build-and-release:

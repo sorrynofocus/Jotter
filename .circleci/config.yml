@@ -14,22 +14,20 @@ jobs:
       - run:
           name: Install Additional Dependencies (Optional)
           command: |
-            apt-get update
-            apt-get install -y zip unzip
             tree /f
 
       - run:
           name: Set up build environment
           command: |
             echo Setting up environment variables
-            export IS_DEBUG=false
-            export VERBOSE_LEVEL=normal
+            set IS_DEBUG=false
+            set VERBOSE_LEVEL=normal
 
       - run:
           name: Execute auto-build script
           command: |
-            chmod +x auto-build.cmd
-            cmd call ./auto-build.cmd
+            ./auto-build.cmd
+            tree /f
 
       - persist_to_workspace:
           root: bin

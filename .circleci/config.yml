@@ -43,7 +43,8 @@ jobs:
             git config --global user.email "thechriswinters@gmail.com"
             echo "Committing updated versioninfo.txt to the repository"
             git add build\versioninfo.txt
-            git commit -m "Update versioninfo.txt to reflect release version [skip ci]"
+            git status
+            git commit -am "Update versioninfo.txt to reflect release version [skip ci]"
             git push origin HEAD
 
       - persist_to_workspace:

@@ -10,6 +10,9 @@ jobs:
   build:
     executor: win/default
     steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:q7mwwYGg5K0Vf6IYVuNanJlLdX3DjFEdfyMyIOOABWU"
       - checkout
       
       - run:

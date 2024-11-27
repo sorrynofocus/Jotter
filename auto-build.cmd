@@ -8,7 +8,8 @@
 
 @REM Set IS_DEBUG=true to only build DEBUG build. FALSE = release build.
 set IS_DEBUG=false
-set VERBOSE_LEVEL=normal
+@REM Levels for verbosity: 	Quiet Minimal Normal Detailed Diagnostic
+set VERBOSE_LEVEL=quiet
 set DOTNET_CLI_TELEMETRY_OPTOUT=1
 
 set CURDIR=%CD%

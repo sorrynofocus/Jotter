@@ -42,6 +42,8 @@ jobs:
             git config --global user.name "SorryNoFocus"
             git config --global user.email "thechriswinters@gmail.com"
             echo "Committing updated versioninfo.txt to the repository"
+            set /p TAG_NAME=<build\versioninfo.txt
+            echo "Release tag read: v%TAG_NAME%"            
             git add build\versioninfo.txt
             git status
             git commit -am "Update versioninfo.txt to reflect release version [skip ci]"

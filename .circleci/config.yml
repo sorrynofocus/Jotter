@@ -72,8 +72,9 @@ jobs:
             echo "Creating release $RELEASE_NAME"
 
             # Create the GitHub release
-            gh release create "v%TAG_NAME%" C:\workspace\release\jotter-release.zip \
-              --title "Release v%TAG_NAME%" \
+            gh release create "v$TAG_NAME" `
+              C:\workspace\release\jotter-release.zip `
+              --title "$RELEASE_NAME" `
               --notes "Automated release via CircleCI"
 
       - run:

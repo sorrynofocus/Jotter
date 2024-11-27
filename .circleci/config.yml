@@ -60,18 +60,14 @@ jobs:
             zip -r C:\workspace\release\jotter-release.zip C:\workspace\bin\x64\Release\net8.0-windows\publishprod
 
       - run:
-          name: Read Version Information
-          command: |
-            set /p TAG_NAME=<C:\workspace\build\versioninfo.txt
-            echo "Release tag will be: v%TAG_NAME%"
-
-      - run:
           name: Create GitHub Release
           command: |
-            RELEASE_NAME="Release v%TAG_NAME%"
+            # Read version from versioninfo.txt
+            $TAG_NAME = (Get-Content C:\workspace\build\versioninfo.txt).Trim()
+            $RELEASE_NAME = "Release v$TAG_NAME"
             echo "Creating release $RELEASE_NAME"
 
-            # Create the GitHub release
+            # Run the GitHub CLI release command
             gh release create "v$TAG_NAME" `
               C:\workspace\release\jotter-release.zip `
               --title "$RELEASE_NAME" `

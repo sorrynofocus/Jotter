@@ -98,6 +98,8 @@ jobs:
             git config --global user.name "SorryNoFocus"
             git config --global user.email "thechriswinters@gmail.com"
 
+             git remote set-url origin https://$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
+
             #Create tag in github to make it exist
             git tag -a "v$TAG_NAME" -m "VErsion v$TAG_NAME"
             Write-Host "*NEW* Github TAG_NAME: '$TAG_NAME'"

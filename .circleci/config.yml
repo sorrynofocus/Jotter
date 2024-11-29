@@ -78,8 +78,11 @@ jobs:
       - run:
           name: Read Version Information
           command: |
-            set /p TAG_NAME=<C:\workspace\build\versioninfo.txt
-            echo "Release tag will be: v%TAG_NAME%"
+            # Read the version from the file 
+            $versionFilePath = ".\versioninfo.txt" 
+            $TAG_NAME = Get-Content -Path $versionFilePath -Raw 
+            # Output the release tag 
+            Write-Output "Detected release from versioninfo: v$TAG_NAME"
 
       - store_artifacts:
           path: C:\workspace\release\jotter-release.zip
@@ -88,8 +91,9 @@ jobs:
       - run:
           name: Create GitHub Release
           command: |
-            RELEASE_NAME="Release v%TAG_NAME%"
-            echo "Creating release $RELEASE_NAME"
+            # Create the release name 
+            $RELEASE_NAME = "Release v$TAG_NAME" 
+            Write-Output "Creating release $RELEASE_NAME"
 
             # Ensure Git context is valid
             git config --global user.name "SorryNoFocus"

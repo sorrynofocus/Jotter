@@ -81,6 +81,10 @@ jobs:
             set /p TAG_NAME=<C:\workspace\build\versioninfo.txt
             echo "Release tag will be: v%TAG_NAME%"
 
+      - store_artifacts:
+          path: C:\workspace\release\jotter-release.zip
+          destination: jotter-release.zip
+
       - run:
           name: Create GitHub Release
           command: |
@@ -96,9 +100,6 @@ jobs:
               --title "Release v%TAG_NAME%" `
               --notes "Automated release via CircleCI"
 
-      - store_artifacts:
-          path: C:\workspace\release\jotter-release.zip
-          destination: jotter-release.zip
 
 workflows:
   build-and-release:

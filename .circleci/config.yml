@@ -95,8 +95,8 @@ jobs:
             Write-Output "Creating release $RELEASE_NAME"
 
             # Ensure Git context is valid
-            git config --global user.name "SorryNoFocus"
-            git config --global user.email "thechriswinters@gmail.com"
+            git config --global user.name "circleci-bot"
+            git config --global user.email "noreply@circleci.com"
 
              git remote set-url origin https://$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
 

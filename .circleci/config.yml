@@ -50,6 +50,7 @@ jobs:
             git push origin HEAD
 
       - persist_to_workspace:
+          name: Saving workspace to transfer to next flow
           root: C:\Users\circleci\project\
           paths:
             - .git
@@ -60,6 +61,7 @@ jobs:
     executor: win/default
     steps:
       - attach_workspace:
+          name: Attaching workspace, unarchiving last...
           at: C:\workspace
 
       - run:
@@ -79,9 +81,8 @@ jobs:
           name: Read Version Information
           command: |
             # Read the version from the file 
-            $versionFilePath = "$CIRCLE_WORKING_DIRECTORY\build\VersionInfo.txt\versioninfo.txt" 
-            $TAG_NAME = Get-Content -Path $versionFilePath -Raw 
-            # Output the release tag 
+            $versionFilePath = "c:\workspace\build\versioninfo.txt"
+            $TAG_NAME = (Get-Content -Path $versionFilePath -Raw).Trim()            # Output the release tag 
             Write-Output "Detected release from versioninfo: v$TAG_NAME"
 
       - store_artifacts:
@@ -99,9 +100,14 @@ jobs:
             git config --global user.name "SorryNoFocus"
             git config --global user.email "thechriswinters@gmail.com"
 
-            # Create the GitHub release
-            gh release create "v%TAG_NAME%" C:\workspace\release\jotter-release.zip `
-              --title "Release v%TAG_NAME%" `
+            #Create tag in github to make it exist
+            git tag -a "v$TAG_NAME" -m "VErsion v$TAG_NAME"
+            Write-Host "*NEW* Github TAG_NAME: '$TAG_NAME'"
+            git push origin "v$TAG_NAME"
+
+            # Create the GitHub release using prevously created tag
+            gh release create "v$TAG_NAME" C:\workspace\release\jotter-release.zip `
+              --title "Release v$TAG_NAME" `
               --notes "Automated release via CircleCI"
 
 

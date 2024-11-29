@@ -77,14 +77,6 @@ jobs:
             mkdir C:\workspace\release\
             zip -r C:\workspace\release\jotter-release.zip C:\workspace\bin\x64\Release\net8.0-windows\publishprod\*.exe
 
-      - run:
-          name: Read Version Information
-          command: |
-            # Read the version from the file 
-            $versionFilePath = "c:\workspace\build\versioninfo.txt"
-            $TAG_NAME = (Get-Content -Path $versionFilePath -Raw).Trim()            # Output the release tag 
-            Write-Output "Detected release from versioninfo: v$TAG_NAME"
-
       - store_artifacts:
           path: C:\workspace\release\jotter-release.zip
           destination: jotter-release.zip
@@ -92,6 +84,12 @@ jobs:
       - run:
           name: Create GitHub Release
           command: |
+            cd "c:\workspace"
+            # Read the version from the file 
+            $versionFilePath = "c:\workspace\build\versioninfo.txt"
+            $TAG_NAME = (Get-Content -Path $versionFilePath -Raw).Trim()
+            Write-Output "Detected release from versioninfo: v$TAG_NAME"
+
             # Create the release name 
             $RELEASE_NAME = "Release v$TAG_NAME" 
             Write-Output "Creating release $RELEASE_NAME"

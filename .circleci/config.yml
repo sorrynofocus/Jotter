@@ -79,7 +79,7 @@ jobs:
           name: Read Version Information
           command: |
             # Read the version from the file 
-            $versionFilePath = ".\versioninfo.txt" 
+            $versionFilePath = "$CIRCLE_WORKING_DIRECTORY\build\VersionInfo.txt\versioninfo.txt" 
             $TAG_NAME = Get-Content -Path $versionFilePath -Raw 
             # Output the release tag 
             Write-Output "Detected release from versioninfo: v$TAG_NAME"

@@ -1,5 +1,5 @@
 ﻿<Project>
-	<Target Name="ManageVersion" BeforeTargets="BeforeBuild">
+	<Target Name="ManageVersion" BeforeTargets="BeforeBuild" Condition="'$(Configuration)' == 'Release'">
 		<PropertyGroup>
 			<!-- File path to store the version -->
 			<VersionFile>$(MSBuildProjectDirectory)\build\VersionInfo.txt</VersionFile>
@@ -80,7 +80,11 @@
 
 			<AssemblyVersion Condition=" '$(VersionSuffix)' != '' ">$(MajorVersion).$(MinorVersion).$(RevisionNumber).0</AssemblyVersion>
 			<FileVersion Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</FileVersion>
+			<!-- The +<hash> suffix is added automatically to InformationalVersion when using .NET Core SDKs and higher when using this line below:. 
 			<InformationalVersion Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</InformationalVersion>
+			We want to match semantec version as File Version: 
+			-->
+			<InformationalVersion Condition=" '$(VersionSuffix)' != '' ">$(MajorVersion).$(MinorVersion).$(RevisionNumber).$(BuildNumber)</InformationalVersion>
 
 			<NeutralLanguage>en</NeutralLanguage>
 			<RepositoryUrl>https://github.com/sorrynofocus</RepositoryUrl>

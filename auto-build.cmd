@@ -8,7 +8,9 @@
 
 @REM Set IS_DEBUG=true to only build DEBUG build. FALSE = release build.
 set IS_DEBUG=false
-set VERBOSE_LEVEL=normal
+@REM Levels for verbosity: 	Quiet Minimal Normal Detailed Diagnostic
+set VERBOSE_LEVEL=quiet
+set DOTNET_CLI_TELEMETRY_OPTOUT=1
 
 set CURDIR=%CD%
 set PRODUCTFILE=Jotter
@@ -43,6 +45,7 @@ if "%IS_DEBUG%" == "true" (
     dotnet publish "%SOLUTIONFILE%" --framework %FRAMEWORK% -r "%RUNTIME_IDENTIFIER%" --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --self-contained true --property:PublishSingleFile=true  --property:IncludeNativeLibrariesForSelfExtract=true --verbosity "%VERBOSE_LEVEL%" --property:PublishDir=%PUBLISHDIR_RELEASE%
     echo.
     echo Product location [RELEASE]  %RUNTIME_IDENTIFIER%-%FRAMEWORK%: %PUBLISHDIR_RELEASE%    
+    @REM CircleCI reports Product location [RELEASE]  win-x64-net8.0-windows: C:\Users\circleci\project\bin\x64\Release\net8.0-windows\publishprod\
 )
 
 

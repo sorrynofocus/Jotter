@@ -3,8 +3,8 @@
 @REM https://github.com/dotnet/designs/blob/main/accepted/2020/single-file/design.md#user-experience
 @REM https://github.com/dotnet/core/issues/5409
 
-    @REM Cannot use --property:PublishTrimmed=true for WPF applications
-    @REM https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/trim-self-contained
+@REM Cannot use --property:PublishTrimmed=true for WPF applications
+@REM https://learn.microsoft.com/en-us/dotnet/core/deploying/trimming/trim-self-contained
 
 @REM Set IS_DEBUG=true to only build DEBUG build. FALSE = release build.
 set IS_DEBUG=false
@@ -36,6 +36,10 @@ if "%IS_DEBUG%" == "true" (
     dotnet build "%SOLUTIONFILE%" --framework %FRAMEWORK% --configuration %CONFIG_DEBUG% --property:Platform=%PLATFORM% --nologo -nodeReuse:true --verbosity "%VERBOSE_LEVEL%"
     dotnet publish "%SOLUTIONFILE%" --framework %FRAMEWORK% -r "%RUNTIME_IDENTIFIER%" --configuration %CONFIG_DEBUG% --property:Platform=%PLATFORM% --self-contained true --property:PublishSingleFile=true  --property:IncludeNativeLibrariesForSelfExtract=true --verbosity "%VERBOSE_LEVEL%" --property:PublishDir=%PUBLISHDIR_DEBUG%
     echo.
+    for /f "tokens=1 delims= " %%a in ('certutil -hashfile "%PUBLISHDIR_DEBUG%\%PRODUCTFILEWIN%" SHA256 ^| findstr /r "^[0-9A-F]"') do (
+    if "%%a" neq "CertUtil:" set HASH=%%a
+    )
+    echo The hash value of %PRODUCTFILE%: %HASH%
     echo Product location [DEBUG]  %RUNTIME_IDENTIFIER%-%FRAMEWORK%: %PUBLISHDIR_DEBUG%
 
 ) else (
@@ -44,6 +48,10 @@ if "%IS_DEBUG%" == "true" (
     dotnet build "%SOLUTIONFILE%" --framework %FRAMEWORK% --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --nologo -nodeReuse:true --verbosity "%VERBOSE_LEVEL%"
     dotnet publish "%SOLUTIONFILE%" --framework %FRAMEWORK% -r "%RUNTIME_IDENTIFIER%" --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --self-contained true --property:PublishSingleFile=true  --property:IncludeNativeLibrariesForSelfExtract=true --verbosity "%VERBOSE_LEVEL%" --property:PublishDir=%PUBLISHDIR_RELEASE%
     echo.
+    for /f "tokens=1 delims= " %%a in ('certutil -hashfile "%PUBLISHDIR_RELEASE%\%PRODUCTFILEWIN%" SHA256 ^| findstr /r "^[0-9A-F]"') do (
+    if "%%a" neq "CertUtil:" set HASH=%%a
+    )
+    echo The hash value of %PRODUCTFILE%: %HASH%
     echo Product location [RELEASE]  %RUNTIME_IDENTIFIER%-%FRAMEWORK%: %PUBLISHDIR_RELEASE%    
 )
 

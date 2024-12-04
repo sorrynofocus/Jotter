@@ -1,5 +1,5 @@
 # Release notes.
-These are general release notes. For release notes history, see `Note.md`
+These are general release notes. For release notes detailed history, see `Note.md`
 
 ### [RELEASE_DESCRIPTION]
 

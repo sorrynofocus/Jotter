@@ -196,6 +196,8 @@
         <Grid x:Name="gridContainsNote" Grid.Row="1" MaxWidth="900" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <RichTextBox x:Name="rchEditNote"
              Width="{Binding ElementName=gridContainsNote}" 
+             FontFamily="Segoe UI"
+             FontWeight="Normal"
              FontSize="16" 
              VerticalScrollBarVisibility="Visible" 
              >

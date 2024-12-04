@@ -163,7 +163,7 @@ namespace Jotter
                                     kvp.Value.Title = textBox.Text;
                                     noteManager.UpdateNoteByIdIndexer(curIdIndexer, newTitle);
                                     noteManager.SaveNotes(jotNotesFilePath);
-                                    //textBox.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+                                    textBox.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
                                     this.Focus();
                                     //the event has been handled
                                     e.Handled = true;

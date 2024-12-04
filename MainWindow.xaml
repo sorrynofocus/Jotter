@@ -267,7 +267,7 @@ Text="{Binding SearchValue,Mode=TwoWay,Delay=500,UpdateSourceTrigger=PropertyCha
 
                             <!-- Note Text preview body-->
                             <!-- setting MaxWidth="400" MinWidth="400" seems to tame the preview text in the textblock. MaxHeight keeps the sentenaces to a preview of 5. -->
-                            <TextBlock x:Name="txtText" Grid.Row="1" Text="{Binding Text}" MaxHeight="100" MaxWidth="400" MinWidth="400" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"  />
+                            <TextBlock x:Name="txtText" FontSize="12" FontWeight="Normal" FontFamily="Segoe UI" Grid.Row="1" Text="{Binding Text}" MaxHeight="100" MaxWidth="400" MinWidth="400" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"  />
 
                         </Grid>
                     </DataTemplate>

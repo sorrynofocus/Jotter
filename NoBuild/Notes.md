@@ -224,7 +224,11 @@ Additions:
 
 
 
---- 
+## 2024.12.03 23h02 (11:02pm)
+- When entering title update on main window for a note, the note title will be updated but the focus should be moved back to the main window.
+- Set default font family to Segoe UI on mainwindow and notetemplate.
+
+-------------------- 
 
 ### BUG AND ANNOYANCES REPORT
 - Re-check timing for note auto-save. If there's no activity, there should be no reason to save or time check.
@@ -240,7 +244,6 @@ Additions:
 - Option to either put in taskbar tray or fully exit. Currently, it fully exits. 
 - In the note manager, over to the far right, top-corner, add a date to note creation.
 - In the notes, there's no Context menu for copy/cut/paste. 
-- On notes, pressing enter may give double return lines.
 - In notes, there's a thin border for the window to adjust. A bottom bar should be added for font bold, italics, etc. The botton bar can be used to move the notes around.
 
 

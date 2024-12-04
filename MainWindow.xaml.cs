@@ -163,7 +163,10 @@ namespace Jotter
                                     kvp.Value.Title = textBox.Text;
                                     noteManager.UpdateNoteByIdIndexer(curIdIndexer, newTitle);
                                     noteManager.SaveNotes(jotNotesFilePath);
-                                    textBox.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+                                    //textBox.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+                                    this.Focus();
+                                    //the event has been handled
+                                    e.Handled = true;
                                     break; 
                                 }
                             }
@@ -453,8 +456,6 @@ namespace Jotter
         //Begin the search after pressing enter.
         private void NoteManagerSearch_KeyUp(object sender, KeyEventArgs e)
         {
-
-
             if (e.Key == Key.Enter)
             {
                 TextBox textBox = sender as TextBox;
@@ -465,14 +466,11 @@ namespace Jotter
                     PerformSearch(NoteManagerSearch.Text);
                 }
             }
-
             else if (NoteManagerSearch.Text.Length == 0 && e.Key == Key.Back || e.Key == Key.Delete)
             {
                 // Clear the search when the textbox is empty and the user presses Backspace
                 ClearSearch();
             }
-            //    //Move focus off the control and to the next available one.
-            //    NoteManagerSearch.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
         }
 
         private void PerformSearch(string searchText)

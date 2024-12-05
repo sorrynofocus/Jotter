@@ -26,6 +26,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
+//using static System.Net.Mime.MediaTypeNames;
 
 namespace Jotter
 {
@@ -76,6 +77,9 @@ namespace Jotter
 
             noteManager = new NoteManager();
             Notes = noteManager.Notes;
+
+            logger.LogInfo($"[mainwindow load] Loaded notes count: {Notes?.Count}");
+
             DataContext = noteManager;
 
             //Initialise the dragging and drop
@@ -84,10 +88,19 @@ namespace Jotter
             MyNotesListView.ItemsSource = Notes;
             MyNotesListView.SelectionChanged += MyNotesListView_SelectionChanged;
 
-            // Attach the Loaded event handler to the Window or TextBox
-            //Loaded += MainWindow_Loaded;
+            // Subscribe to the Loaded event
+            this.Loaded += MainWindow_Loaded;
+        }
 
-
+        /// <summary>
+        /// Event for the main window loaded and in view.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Sort notes by creation date and refresh the MyNotesListView ListView
+            SortNotesList();
         }
 
         //UI if title is changed and the keypress is ENTER
@@ -219,9 +232,15 @@ namespace Jotter
             logger.LogInfo("[Ending action] CreateDirectoryFullAccess");
         }
 
+        /// <summary>
+        /// Event for selecting a note
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void MyNotesListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (MyNotesListView.SelectedItem != null) SelectedNote = (Note)MyNotesListView.SelectedItem;
+            logger.LogInfo($"[selectionchanged] {SelectedNote.Title} selected");
         }
 
         //note updated handler. take out older code. will trace later.
@@ -246,6 +265,7 @@ namespace Jotter
 
                     // Optionally refresh the ListView UI here if necessary
                     UpdateListView();
+                    SortNotesList();
 
                     // Exit the loop once the note is found and updated
                     break;
@@ -254,14 +274,21 @@ namespace Jotter
         }
 
         /// <summary>
-        /// Add a new note to NoteManager, the listview, and open the NoteTemplateEditor to edit.
+        /// Add a new note to NoteManager, the MyNotesListView listview, and 
+        /// open the NoteTemplateEditor to edit.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void AddNote_Click(object sender, RoutedEventArgs e)
         {
             // Create a new note
-            Note newNote = new Note { IdIndexer = noteManager.GenerateID() , Title = "A new note", Text = "Enter a new note here!" };
+            Note newNote = new Note 
+            { 
+                IdIndexer = noteManager.GenerateID(), 
+                Title = "A new note", 
+                Text = "Enter a new note here!",
+                CreatedDate = DateTime.Now 
+            };
 
             // Add the new note to the note manager
             noteManager?.AddUpdateNote(newNote);
@@ -273,6 +300,7 @@ namespace Jotter
 
             // Refresh the list view after the child window is closed
             UpdateListView();
+            SortNotesList();
         }
 
         //Remove a note from the MyNotesListView listview via "-" button
@@ -300,6 +328,7 @@ namespace Jotter
         private void UpdateListView()
         {
             MyNotesListView.Items.Refresh();
+            //TODO, move and test SortNotesList() to this
         }
 
         private void ExitApp_Click(object sender, RoutedEventArgs e)
@@ -352,7 +381,8 @@ namespace Jotter
                 // Is note already open via its IdIndexer?
                 foreach (var window in openNoteWindows)
                 {
-                    if (window.DataContext is Note openedNote && openedNote.IdIndexer == note.IdIndexer)
+                    if (window.DataContext is Note openedNote && 
+                        openedNote.IdIndexer == note.IdIndexer)
                     {
                         noteIsOpen = true;
                         // a'right, then go back to the opened note
@@ -429,7 +459,8 @@ namespace Jotter
         //Once we click elsewhere, reset the search box watermark, or html "placeholder"
         private void NoteManagerSearch_LostFocus(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(NoteManagerSearch.Text) || NoteManagerSearch.Text == "Search...")
+            if (string.IsNullOrWhiteSpace(NoteManagerSearch.Text) 
+                || NoteManagerSearch.Text == "Search...")
             {
                 NoteManagerSearch.Text = "Search...";
 
@@ -495,11 +526,55 @@ namespace Jotter
             MyNotesListView.ItemsSource = Notes;
         }
 
+        /// <summary>
+        /// Sort notes by date creation
+        /// </summary>
+        /// Note:
+        /// Call RefreshNotesList whenever:
+        ///  - A new note is added.
+        ///  - Notes are loaded.
+        ///  - Notes are updated.
+        public void SortNotesList()
+        {
+            if (Notes == null) return;
+
+            // Sort by CreatedDate in descending order (newest first, the seconadry by alpha)
+            List<Note>? sortedNotes = Notes
+                .OrderByDescending(note => note.CreatedDate) 
+                .ThenBy(note => note.Title)
+                .ToList();
+
+            //Notes.Clear();
+            //foreach (var note in sortedNotes)
+            //{
+            //    Notes.Add(note);
+            //}
+
+            // Reorder ObservableCollection using Move
+            for (int i = 0; i < sortedNotes.Count; i++)
+            {
+                var currentNote = sortedNotes[i];
+                var currentIndex = Notes.IndexOf(currentNote);
+
+                if (currentIndex != i)
+                {
+                    Notes.Move(currentIndex, i);
+                }
+            }
+
+            logger.LogInfo("[SortNotesList] After sorting:");
+            foreach (var note in Notes)
+            {
+                logger.LogInfo($"Note: {note.Title}, CreatedDate: {note.CreatedDate}");
+            }
+        }
+
 
         private void UpdateUIWithFilteredNotes(ObservableCollection<Note> notes, string searchText)
         {
             //MyNotesListView.Items.Clear();
-            // System.InvalidOperationException: 'Operation is not valid while ItemsSource is in use. Access and modify elements with ItemsControl.ItemsSource instead.'
+            // System.InvalidOperationException: 'Operation is not valid while ItemsSource is in use.
+            // Access and modify elements with ItemsControl.ItemsSource instead.'
 
             //// Add the filtered notes to the UI
             //foreach (Note note in filteredNotes)
@@ -512,9 +587,8 @@ namespace Jotter
             foreach (Note note in noteManager.Notes)
             {
                 if (note.Title.ToLower().Contains(searchText) || note.Text.ToLower().Contains(searchText))
-                {
-                    filteredNotes.Add(note); // Add the note to the filtered collection
-                }
+                    // Add the note to the filtered collection
+                    filteredNotes.Add(note); 
             }
 
             // Update the bound collection with the filtered notes
@@ -576,7 +650,8 @@ namespace Jotter
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        /// TODO: Using e.Data.GetData(DataFormats.FileDrop) determine if it's a valid file. If not, then don't change the mouse cursor
+        /// TODO: Using e.Data.GetData(DataFormats.FileDrop) determine if it's a valid file. 
+        /// If not, then don't change the mouse cursor
         private void MainWindow_DragEnter(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -603,6 +678,7 @@ namespace Jotter
         /// <param name="e"></param>
         private void MainWindow_Drop(object sender, DragEventArgs e)
         {
+            logger.LogInfo($"Doing action: [MainWindow_Drop]");
             string[] arFiles = (string[])e.Data.GetData(DataFormats.FileDrop);
 
             foreach (string fileItem in arFiles)
@@ -634,9 +710,12 @@ namespace Jotter
                             convertedText = File.ReadAllText(fileItem);
                             AddNewNoteWithText(newNoteTitle, convertedText);
                         }
+                        logger.LogInfo($"[MainWindow_Drop] - resorting...");
+                        SortNotesList();
                     }
                 }
             }
+            logger.LogInfo($"Ending action: [MainWindow_Drop]");
         }
 
         /// <summary>
@@ -736,7 +815,8 @@ namespace Jotter
             //- Update list view.
             Note newNote = new Note { IdIndexer = noteManager.GenerateID(), 
                                       Title = title, 
-                                      Text = text 
+                                      Text = text ,
+                                      CreatedDate = DateTime.Now
                                     };
 
             Notes.Add(newNote);
@@ -777,7 +857,6 @@ namespace Jotter
             settingsWindow.ShowDialog();
             //Application.Current.MainWindow.Left = Window.GetWindow(this).Left;
             //Application.Current.MainWindow.Top = Window.GetWindow(this).Top;
-
 
             // Show MainWindow again and fade in
             this.Opacity = 0;

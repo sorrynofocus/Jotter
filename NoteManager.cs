@@ -35,6 +35,8 @@ namespace com.nobodynoze.notemanager
         private string? title;
         private string? text;
         private bool isDeleted; // New property for soft delete - added in for experimental
+        private DateTime createdDate;
+
 
         //Property change handler - happens when a property changes (in the Note class)
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -103,6 +105,22 @@ namespace com.nobodynoze.notemanager
             }
         }
 
+        /// <summary>
+        /// Date the note was created property.
+        /// </summary>
+        public DateTime CreatedDate
+        {
+            get { return createdDate; }
+            set
+            {
+                if (createdDate != value)
+                {
+                    createdDate = value;
+                    OnPropertyChanged(nameof(CreatedDate));
+                }
+            }
+        }
+
 
         /// <summary>
         /// Snitches to the listeners a property has changed.
@@ -159,26 +177,28 @@ namespace com.nobodynoze.notemanager
 
                         using (FileStream fileStream = new FileStream(filePath, FileMode.Open))
                         {
-                        // return serializer.Deserialize(fileStream) as ObservableCollection<Note>;
-                        ObservableCollection<Note>? loadedNotes = serializer.Deserialize(fileStream) as ObservableCollection<Note>;
+                            // return serializer.Deserialize(fileStream) as ObservableCollection<Note>;
+                            ObservableCollection<Note>? loadedNotes = serializer.Deserialize(fileStream) as ObservableCollection<Note>;
 
-                        if (loadedNotes != null)
-                        {
-                            // Clear the existing dictionary before populating it with new notes
-                            idIndexerNoteMap.Clear();
-
-                            // Populate the dictionary with notes and their IdIndexer values
-                            foreach (Note note in loadedNotes)
+                            if (loadedNotes != null)
                             {
-                                if (note.IdIndexer != null)
+                                idIndexerNoteMap.Clear();
+
+                                // Populate the dictionary with notes and their IdIndexer values
+                                //If you want to set defaults in your notes, do it here!
+                                foreach (Note note in loadedNotes)
                                 {
-                                    idIndexerNoteMap[note.IdIndexer.Value] = note;
+                                    if (note.IdIndexer != null)
+                                        idIndexerNoteMap[note.IdIndexer.Value] = note;
+
+                                    // Check if CreatedDate is missing or not initialized.
+                                    //IF not, assign today's date as a fallback.
+                                    if (note.CreatedDate == default(DateTime))
+                                        note.CreatedDate = DateTime.Now; 
                                 }
                             }
+                            return loadedNotes;
                         }
-
-                        return loadedNotes;
-                    }
                     }
                     catch (Exception? ex)
                     {
@@ -204,12 +224,12 @@ namespace com.nobodynoze.notemanager
                         if (ex.InnerException?.Message.Contains("Unrecognized Guid format") == true ||
                             ex.InnerException?.Message.Contains("invalid XmlNodeType") == true ||
                             ex.Message.Contains("error in XML") == true)
-                        {
-                            MessageBoxResult result = MessageBox.Show(exceptionMessage, "Invalid config!", MessageBoxButton.OK);
+                            {
+                                MessageBoxResult result = MessageBox.Show(exceptionMessage, "Invalid config!", MessageBoxButton.OK);
                         
-                            CreateBackup(filePath);
+                                CreateBackup(filePath);
 
-                        }
+                            }
                             //eh.. return an empty collection
                             return (null);
                     }
@@ -222,29 +242,20 @@ namespace com.nobodynoze.notemanager
         private ObservableCollection<Note> JustExit()
         {
             MessageBox.Show("Failed to load notes. Exiting application.", "Error", MessageBoxButton.OK);
-            Environment.Exit(1); // Exit the application with an error code
-            return new ObservableCollection<Note>(); // This line is added to satisfy the return type
+            Environment.Exit(1); 
+            return new ObservableCollection<Note>(); 
         }
 
         public int GetIndexOfSelectedNoteById(Guid idIndexer)
         {
             if (Notes == null)
-            {
-                // Handle null cases or return a default value
                 return -1;
-            }
 
-            // Iterate through the Notes collection to find the index of the note with the given IdIndexer
             for (int i = 0; i < Notes.Count; i++)
             {
                 if (Notes[i].IdIndexer == idIndexer)
-                {
-                    // Return the index of the note with the given IdIndexer
                     return i;
-                }
             }
-
-            // Return -1 or handle the case where the note with the given IdIndexer is not found
             return -1;
         }
 
@@ -395,7 +406,6 @@ namespace com.nobodynoze.notemanager
         //TODO: Let's see which one better since both seem to work.
 
         public Note UpdatedNote { get; }
-
         public NoteEventArgs(Note updatedNote)
         {
             UpdatedNote = updatedNote;

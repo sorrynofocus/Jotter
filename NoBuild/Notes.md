@@ -57,19 +57,6 @@ The LsitView items also show note data up to a few lines. Future will have a sep
 - Added NoteManager.cs 
 - Added NoteTemplateEditor.xaml and NoteTemplateEditor.xaml.cs
 
-- TODO:
-[Universal]
-- Find all TODOs in code, complete those.
-- Clean up code. It's messy.
-- Move all subscriptions to another file
-- move all utiltiies to another file
-- move all data types; classes, data, etc to another file. 
-- Add a "settings" to the application. See [Settings] below.
-- Change the buttons from text-based ("+" is for add, for example) to image based
-- Test the icons. Icon test in explorer is good. Create final icon in future releases
-- more comments in code. For beginners looking into this, it would help greatly. 
-  
- 
  
 [Settings]
 https://thomaslevesque.com/2008/11/18/wpf-binding-to-application-settings-using-a-markup-extension/
@@ -141,13 +128,6 @@ Tried updating readme with inline base64 image. Looks like github won't support 
 
 ## 2024.03.29 
 Fixed the README to include a ref to screenshot exhibit. 
-
-TODO 
-- Examine previous TODOs. Mark them complete or turn into issues.
-- In NoteManager.cs we added an indexer but the indexer isn't use during CRUD operations. Currently, everything is done by Title look up.
-- ~~In NoteManager.cs, LoadNotes() need desperate try/catches~~ - COMPLETED see [2024.03.31](#2024-03-31) 
-- ~~In NoteManager.cs, examine TODO in NoteEventArgs -> figure out which save is best and combine. -COMPLETED, saving with indexer~~
-
 
 Fixes:
 - If you open a note more than one time, duplicate note will appear. Added functionality to open the note only one time.
@@ -223,27 +203,14 @@ Additions:
 - Improved build version info. See document Build-info.md
 
 
-
 ## 2024.12.03 23h02 (11:02pm)
 - When entering title update on main window for a note, the note title will be updated but the focus should be moved back to the main window.
 - Set default font family to Segoe UI on mainwindow and notetemplate.
 
--------------------- 
-
-### BUG AND ANNOYANCES REPORT
-- Re-check timing for note auto-save. If there's no activity, there should be no reason to save or time check.
-- ~~Opening a note should flow on top of main window, or to the side. User has to move the main window out of the way or click on note to have focus.~~
-
-### FEATURE CREEPS AND TESTING REQUESTS
-- Add date/time stamps. Can use this to see most recent notes (as an option in settings)
-- Add tags. When user adds #{Tag} then let's find similar notes
-- Add search in notes and ~~outside of notes (main window)~~
-- Add coloring bar for notes. This surrounds the notes and sets them apart from others.
-- Add a "favorites" button. 
-- Add a label "grouping". If notes tend to float toward a specific thing, they can be labeled. This is similar to gmail labels in email.
-- Option to either put in taskbar tray or fully exit. Currently, it fully exits. 
-- In the note manager, over to the far right, top-corner, add a date to note creation.
-- In the notes, there's no Context menu for copy/cut/paste. 
-- In notes, there's a thin border for the window to adjust. A bottom bar should be added for font bold, italics, etc. The botton bar can be used to move the notes around.
-
+## 2024.12.04 23h55 (11:55pm)
+- Add date/time stamps to the mainwindow. Date/time is to the left side of the note. 
+- Sort notes by created first, descending down. 
+- Added new file: Feature-Requests-Known-Issues.md in NoBuilds. Moved the known issues and feature requests there. 
+- Cleaned up some comments
+Files updated: MainWindow.xaml, MainWindow.xaml.cs, NoteManager.cs
 

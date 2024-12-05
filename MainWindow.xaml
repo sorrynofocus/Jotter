@@ -253,6 +253,8 @@ Text="{Binding SearchValue,Mode=TwoWay,Delay=500,UpdateSourceTrigger=PropertyCha
 
                 <ListView.ItemTemplate>
                     <DataTemplate>
+                        <!-- chrome of the note block in listview-->
+                        <Border BorderBrush="LightGray" BorderThickness="0 2 0 0">
                         <Grid x:Name="gridSurroundDataTemplate" Margin="5" Background="LightYellow" >
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -260,16 +262,32 @@ Text="{Binding SearchValue,Mode=TwoWay,Delay=500,UpdateSourceTrigger=PropertyCha
                             </Grid.RowDefinitions>
 
                             <!-- Note title header -->
-                            <StackPanel Grid.Row="0">
-                                <!-- <TextBox x:Name="txtTitle" Text="{Binding Title}" Loaded="txtTitle_Loaded" KeyUp="TitleInMainTextBox_KeyUp" FontSize="16" FontWeight="Bold"/> -->
-                                <TextBox x:Name="txtTitle" Text="{Binding Title}" KeyUp="TitleInMainTextBox_KeyUp" FontSize="18" FontWeight="Normal"  BorderThickness="0,0,0,1" FontFamily="Segoe UI Semibold"/> 
+                            <StackPanel Grid.Row="0" Orientation="Horizontal">
+                                <!-- Display Creation Date -->
+                                <!-- Remove ", TargetNullValue=''" if you want ti display a default date. In NoteManager.cs
+                                therre is logic to set to default date, just-in-case. See comment 
+                                "Check if CreatedDate is missing or not initialized" under LoadNotes()
+                                
+                                Different formats:
+                                {0:yyyy-MM-dd HH:mm}
+                                {0:MMM dd yyyy h:mm}
+                                -->
+                                <TextBlock Text="{Binding CreatedDate, StringFormat={}{0:MMM dd yyyy}, TargetNullValue=''}" 
+                                 FontSize="11" Foreground="Gray" VerticalAlignment="Center" Margin="0,0,10,0"/>
+
+                                <!-- Note Title -->
+                                <TextBox x:Name="txtTitle" Text="{Binding Title}" Background="LightYellow" KeyUp="TitleInMainTextBox_KeyUp" 
+                                 FontSize="18" FontWeight="Normal" BorderThickness="0,0,0,0" 
+                                 FontFamily="Segoe UI Semibold" />
                             </StackPanel>
 
                             <!-- Note Text preview body-->
                             <!-- setting MaxWidth="400" MinWidth="400" seems to tame the preview text in the textblock. MaxHeight keeps the sentenaces to a preview of 5. -->
-                            <TextBlock x:Name="txtText" FontSize="12" FontWeight="Normal" FontFamily="Segoe UI" Grid.Row="1" Text="{Binding Text}" MaxHeight="100" MaxWidth="400" MinWidth="400" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"  />
+
+                            <TextBlock x:Name="txtText" FontSize="12" FontWeight="Medium" FontFamily="Segoe UI" Grid.Row="1" Text="{Binding Text}" MaxHeight="100" MaxWidth="400" MinWidth="400" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" />
 
                         </Grid>
+                        </Border>
                     </DataTemplate>
                 </ListView.ItemTemplate>
 

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ArrayOfNote xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Note>
+    <CreatedDate>2024-12-04T23:36:50.589124-07:00</CreatedDate>
     <IdIndexer>c36b2648-67e2-40b5-9821-84672ea7eb8c</IdIndexer>
     <Title>A Better, better Note!</Title>
     <Text>This is just adding data to an existing note

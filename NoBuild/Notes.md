@@ -214,3 +214,5 @@ Additions:
 - Cleaned up some comments
 Files updated: MainWindow.xaml, MainWindow.xaml.cs, NoteManager.cs
 
+## 2024.12.17 6:46pm
+- Mainwindow adjust to stretch notes rather than having a static width.

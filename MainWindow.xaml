@@ -176,7 +176,7 @@
         Header ends with text of the application name
         
         -->
-        <DockPanel Background="#FF333333" FlowDirection="LeftToRight" LastChildFill="False">
+        <DockPanel Grid.Row="0" Background="#FF333333" FlowDirection="LeftToRight" LastChildFill="False">
             <DockPanel DockPanel.Dock="Top"  LastChildFill="False" >
                 <!-- Add/Remove note button -->
                 <Button Style="{DynamicResource ButtonClickTriggerStyle}" Name="btnAddNote" Content="+" FontWeight="Bold" Click="AddNote_Click" DockPanel.Dock="Left" Width="40" Height="40" />
@@ -203,7 +203,6 @@ Text="{Binding SearchValue,Mode=TwoWay,Delay=500,UpdateSourceTrigger=PropertyCha
                      Text="Search..."
                      
                     Tag="Search..."
-                     Grid.Row="1" 
                      Foreground="White" 
                      Background="{DynamicResource Button.MouseOver.Background}" 
                      BorderThickness="0,0,0,1" 
@@ -229,15 +228,10 @@ Text="{Binding SearchValue,Mode=TwoWay,Delay=500,UpdateSourceTrigger=PropertyCha
 
         <!-- Note Content -->
         <!-- if you don't want the background color to bleed into infinite, put back the MaxWidth="500" -->
-        <Grid x:Name="gridContainListView" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
 
-            <!--<Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>-->
 
-            <!--  VirtualizingPanel.ScrollUnit="Pixel" smooth scrolling on .NET 7 and up! -->
-            <ListView Name="MyNotesListView" Grid.Row="2" SelectionMode="Single" ItemsSource="{Binding Notes}" SelectedItem="{Binding SelectedNote}"  ScrollViewer.HorizontalScrollBarVisibility="Hidden" FontFamily="Segoe UI Semibold" VirtualizingPanel.ScrollUnit="Pixel">
+                <!--  VirtualizingPanel.ScrollUnit="Pixel" smooth scrolling on .NET 7 and up! -->
+            <ListView Name="MyNotesListView" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" Grid.Row="1" SelectionMode="Single" ItemsSource="{Binding Notes}" SelectedItem="{Binding SelectedNote}"  ScrollViewer.HorizontalScrollBarVisibility="Hidden" FontFamily="Segoe UI Semibold" VirtualizingPanel.ScrollUnit="Pixel">
                 <ListView.ContextMenu>
                     <ContextMenu Name="ContextOnItem">
                         <MenuItem Name="OpenNote"  Header="Open Note" Click="OpenNote_Click" />
@@ -251,48 +245,66 @@ Text="{Binding SearchValue,Mode=TwoWay,Delay=500,UpdateSourceTrigger=PropertyCha
                     </Style>
                 </ListView.ItemContainerStyle>
 
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <!-- chrome of the note block in listview-->
-                        <Border BorderBrush="LightGray" BorderThickness="0 2 0 0">
-                        <Grid x:Name="gridSurroundDataTemplate" Margin="5" Background="LightYellow" >
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <!-- Chrome for each note block -->
+                    <Border x:Name="NoteBlockChrome"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Top"
+                BorderBrush="LightGray"
+                BorderThickness="0 2 0 0">
+
+                        <!-- Container Grid for note layout -->
+                        <Grid x:Name="gridSurroundDataTemplate"
+                  Margin="5"
+                  Background="LightYellow"
+                  HorizontalAlignment="Stretch">
+
+                            <!-- Define Grid Rows -->
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
+                                <!-- Title row -->
                                 <RowDefinition Height="Auto"/>
+                                <!-- Text preview row -->
                             </Grid.RowDefinitions>
 
-                            <!-- Note title header -->
-                            <StackPanel Grid.Row="0" Orientation="Horizontal">
-                                <!-- Display Creation Date -->
-                                <!-- Remove ", TargetNullValue=''" if you want ti display a default date. In NoteManager.cs
-                                therre is logic to set to default date, just-in-case. See comment 
-                                "Check if CreatedDate is missing or not initialized" under LoadNotes()
-                                
-                                Different formats:
-                                {0:yyyy-MM-dd HH:mm}
-                                {0:MMM dd yyyy h:mm}
-                                -->
-                                <TextBlock Text="{Binding CreatedDate, StringFormat={}{0:MMM dd yyyy}, TargetNullValue=''}" 
-                                 FontSize="11" Foreground="Gray" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <!-- Title and Date Row -->
+                            <StackPanel Orientation="Horizontal" Grid.Row="0" VerticalAlignment="Center">
+                                <!-- Creation Date -->
+                                <TextBlock Text="{Binding CreatedDate, StringFormat={}{0:MMM dd yyyy}, TargetNullValue=''}"
+                               FontSize="11" Foreground="Gray" VerticalAlignment="Center" Margin="0,0,10,0" />
 
-                                <!-- Note Title -->
-                                <TextBox x:Name="txtTitle" Text="{Binding Title}" Background="LightYellow" KeyUp="TitleInMainTextBox_KeyUp" 
-                                 FontSize="18" FontWeight="Normal" BorderThickness="0,0,0,0" 
-                                 FontFamily="Segoe UI Semibold" />
+                                <!-- Title -->
+                                <TextBox x:Name="txtTitle" 
+                             Text="{Binding Title}" 
+                             KeyUp="TitleInMainTextBox_KeyUp" 
+                             FontSize="18" 
+                             FontWeight="Normal" 
+                             BorderThickness="0" 
+                             FontFamily="Segoe UI Semibold" 
+                             Background="LightYellow" 
+                             HorizontalAlignment="Stretch" />
                             </StackPanel>
 
-                            <!-- Note Text preview body-->
-                            <!-- setting MaxWidth="400" MinWidth="400" seems to tame the preview text in the textblock. MaxHeight keeps the sentenaces to a preview of 5. -->
+                            <!-- Text Preview Row -->
+                            <TextBlock x:Name="txtText"
+                           Grid.Row="1"
+                           Text="{Binding Text}"
+                           FontSize="12"
+                           FontWeight="Medium"
+                           FontFamily="Segoe UI"
+                           TextWrapping="Wrap"
+                           TextTrimming="CharacterEllipsis"
+                           MaxHeight="100" 
+                           HorizontalAlignment="Stretch"
+                           Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ListView}}" />
+            </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+                
+        </ListView>
 
-                            <TextBlock x:Name="txtText" FontSize="12" FontWeight="Medium" FontFamily="Segoe UI" Grid.Row="1" Text="{Binding Text}" MaxHeight="100" MaxWidth="400" MinWidth="400" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" />
-
-                        </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-
-            </ListView>
-        </Grid>
 
 
     </Grid>

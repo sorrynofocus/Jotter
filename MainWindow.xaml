@@ -8,7 +8,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Jotter"
         mc:Ignorable="d"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="Manual"
         WindowStyle="None"
         ResizeMode="CanResize"
         BorderBrush="Black"

@@ -29,6 +29,7 @@ namespace com.nobodynoze.notemanager
     /// <summary>
     ///Note class embodies the note data and its properties such as title, index, and body.
     /// </summary>
+    [XmlRoot("ArrayOfNote")]
     public class Note : INotifyPropertyChanged
     {
         private Guid? IdIndex =Guid.Empty;

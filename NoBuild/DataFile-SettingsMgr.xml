@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<JotterConf xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<WindowWidth>548</WindowWidth>
+	<WindowHeight>1090</WindowHeight>
+	<WindowLeft>10</WindowLeft>
+	<WindowTop>52</WindowTop>
+	<IsMaximized>false</IsMaximized>
+	<SaveInterval>3000</SaveInterval>
+	<LogPath />
+	<IsTray>false</IsTray>
+	<Theme>Light</Theme>
+	<IsDateTimeStamp>false</IsDateTimeStamp>
+	<IsDeletionConfirm>true</IsDeletionConfirm>
+	<IsKennyLoggings>false</IsKennyLoggings>
+</JotterConf>

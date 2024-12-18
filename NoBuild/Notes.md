@@ -214,5 +214,14 @@ Additions:
 - Cleaned up some comments
 Files updated: MainWindow.xaml, MainWindow.xaml.cs, NoteManager.cs
 
-## 2024.12.17 6:46pm
-- Mainwindow adjust to stretch notes rather than having a static width.
+## 2024.12.17 - 6pm
+- Adjust mainwindow and notes can stretch
+
+
+## 2024.12.17 - 8:42pm
+- Adding settings
+- Add new file: SettingsMgr.cs to handle loading/saving and handling settings data struct. 
+- MainWindow implementing prototype settings LoadAppSettings() and SaveAppSettings() to start off with saving/loading Mainwindow position
+- Added other settings based off settings.xaml UI. 
+- Added new file under NoBuild: DataFile-SettingsMgr.xml that best describes the settings structure. TODO: Configuration needs to be documented.
+- Prototype saving/loading window position is working.

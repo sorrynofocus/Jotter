@@ -44,10 +44,19 @@ namespace Jotter
         private List<NoteTemplateEditor> openNoteWindows = new List<NoteTemplateEditor>();
         private string SearchValue= "Search...";
 
+        //Settings Manager
+        private SettingsMgr settingsManager;
+
 
         public MainWindow()
         {
             InitializeComponent();
+
+            // Init settings manager
+            settingsManager = new SettingsMgr();
+
+            //TODO VV temp function to TEST the settings manager prototype!!!
+            //LoadAppSettings(settingsManager);
 
             //Start Jotter at bottom left of screen.
             //We can later add this to settings
@@ -56,9 +65,12 @@ namespace Jotter
             //Top right: this.Left = SystemParameters.PrimaryScreenWidth - this.Width and this.top =0
             //bottom right: this.Left = SystemParameters.WorkArea.Width - Width and this.Top = SystemParameters.WorkArea.Height - Height
             //We can additionally record the position of window this.Left and this.Top =(x) for some custom posiiton set prior.
-            WindowStartupLocation = WindowStartupLocation.Manual;
-            this.Left = 0;
-            this.Top = SystemParameters.WorkArea.Height - Height;
+            
+            //WindowStartupLocation = WindowStartupLocation.Manual;
+            //this.Left = 0;
+            //this.Top = SystemParameters.WorkArea.Height - Height;
+            //ABOVE COMMENTED OUT TO TEST WINDOW POS
+            LoadAppSettings(settingsManager.Settings);
 
             logger.LogWritten += LogWrite_Handler;
             logger.LogFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -90,6 +102,48 @@ namespace Jotter
 
             // Subscribe to the Loaded event
             this.Loaded += MainWindow_Loaded;
+        }
+
+
+        private void LoadAppSettings(AppSettings settings)
+        {
+            double screenLeft = SystemParameters.WorkArea.Left;
+            double screenTop = SystemParameters.WorkArea.Top;
+            double screenRight = SystemParameters.WorkArea.Right;
+            double screenBottom = SystemParameters.WorkArea.Bottom;
+
+            // Ensure the window's position is within the screen bounds -no invalid pos.
+            this.Left = Math.Max(screenLeft, Math.Min(settings.WindowLeft, screenRight - this.Width));
+            this.Top = Math.Max(screenTop, Math.Min(settings.WindowTop, screenBottom - this.Height));
+            this.Width = settings.WindowWidth;
+            this.Height = settings.WindowHeight;
+
+            Debug.WriteLine($"WindowLeft: {settings.WindowLeft}, WindowTop: {settings.WindowTop}");
+
+            //Restore maximized state if applicable
+            if (settings.IsMaximized)
+                this.WindowState = WindowState.Maximized;
+
+            //...
+        }
+
+        /// <summary>
+        /// Save the application settings to global config
+        /// </summary>
+        private void SaveAppSettings()
+        {
+            AppSettings settings = settingsManager.Settings;
+
+            // Save window position and size
+            settings.WindowWidth = this.Width;
+            settings.WindowHeight = this.Height;
+            settings.WindowLeft = this.Left;
+            settings.WindowTop = this.Top;
+
+            // Save window state (is maximized)
+            settings.IsMaximized = this.WindowState == WindowState.Maximized;
+
+            settingsManager.SaveSettings();
         }
 
         /// <summary>
@@ -360,6 +414,9 @@ namespace Jotter
             //Get rid of our subscriptions
             MyNotesListView.SelectionChanged -= MyNotesListView_SelectionChanged;
             logger.LogWritten -= LogWrite_Handler;
+
+            //Save the current mainwindow settings before exit
+            SaveAppSettings();
 
             Environment.Exit(0);
         }

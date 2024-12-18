@@ -256,21 +256,35 @@
                     <TextBlock Text="Log path:  " Style="{StaticResource GeneralTextStyle}" VerticalAlignment="Center"/>
                     <TextBox x:Name="TextLogFile" Text="C:\Logs\logfile.txt" Style="{StaticResource FilePathTextStyle}" VerticalAlignment="Center"/>
                 </StackPanel>
-                <Separator Grid.Row="3" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,5"/>
+
+
+
+                <StackPanel Grid.Row="3" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,5" Grid.RowSpan="2">
+                    <TextBlock Text="Enable logging" VerticalAlignment="Center" Margin="210,0,10,0"/>
+                    <CheckBox Width="62" VerticalAlignment="Center"/>
+                </StackPanel>
+
+
+
+
+
+
+                <Separator Grid.Row="4" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,5"/>
 
                 <!-- Application behavior -->
-                <TextBlock Grid.Row="4" Text="Application behavior:" Style="{StaticResource HeaderTextStyle}" Grid.ColumnSpan="2"/>
-                <StackPanel Grid.Row="4" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,33,0,0" Grid.RowSpan="2">
+                <TextBlock Grid.Row="5" Text="Application behavior:" Style="{StaticResource HeaderTextStyle}" Grid.ColumnSpan="2"/>
+                <StackPanel Grid.Row="5" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,33,0,0" Grid.RowSpan="2">
                     <RadioButton Content="Minimize to tray" Margin="8,5,10,5"/>
-                    <RadioButton Content="Fully exit" IsChecked="True" Margin="0,5"/>
+                    <RadioButton Content="Fully exit" IsChecked="True" Margin="0,5,0,0"/>
                 </StackPanel>
 
                 <!-- Appearance -->
-                <Separator Grid.Row="6" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,5"/>
+                <!--<Separator Grid.Row="6" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,30"/>-->
+                
                 <TextBlock Grid.Row="7" Text="Appearance" Style="{StaticResource HeaderTextStyle}" Grid.ColumnSpan="2"/>
 
                 <StackPanel Grid.Row="8" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,32" Grid.RowSpan="2">
-                    <TextBlock Text="Theme: " VerticalAlignment="Center"/>
+                    <TextBlock Text="Theme: " VerticalAlignment="Center" Margin="5,5,0,5"/>
                     <ComboBox SelectedIndex="0" Height="24" Margin="5,5,0,5">
                         <ComboBoxItem>Light Theme</ComboBoxItem>
                         <ComboBoxItem>Dark Theme</ComboBoxItem>
@@ -280,7 +294,7 @@
 
                 <!-- Set number of seconds for auto save -->
                 <StackPanel Grid.Row="9" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,11" Grid.RowSpan="2">
-                    <TextBlock Text="Set number of seconds for auto save: " VerticalAlignment="Center"/>
+                    <TextBlock Text="Set number of seconds for auto save: " VerticalAlignment="Center" Margin="5,5,0,5"/>
                     <ComboBox SelectedIndex="0" Margin="5,5,0,5" Height="25">
                         <ComboBoxItem>Auto [3 seconds]</ComboBoxItem>
                         <ComboBoxItem>25 seconds</ComboBoxItem>
@@ -304,13 +318,13 @@
                 </StackPanel>
 
                 <!-- Logging -->
-                <Separator Grid.Row="14" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,5"/>
+                <!--<Separator Grid.Row="14" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,5"/>
                 <TextBlock Grid.Row="15" Text="Logging" Style="{StaticResource HeaderTextStyle}" Grid.ColumnSpan="2"/>
 
                 <StackPanel Grid.Row="16" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,11" Grid.RowSpan="2">
                     <TextBlock Text="Enable logging" VerticalAlignment="Center"/>
                     <CheckBox Margin="5,5,0,5"/>
-                </StackPanel>
+                </StackPanel>-->
 
                 <!-- Save and Cancel buttons remove these later  - finally have a closing button working
                 Place holders at the moment 

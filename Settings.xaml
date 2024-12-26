@@ -285,9 +285,10 @@
 
                 <StackPanel Grid.Row="8" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,32" Grid.RowSpan="2">
                     <TextBlock Text="Theme: " VerticalAlignment="Center" Margin="5,5,0,5"/>
-                    <ComboBox SelectedIndex="0" Height="24" Margin="5,5,0,5">
+                    <ComboBox x:Name="ThemeSelection" SelectedIndex="0" Height="24" Margin="5,5,0,5" SelectionChanged="cb_ThemeSelectionChanged">
                         <ComboBoxItem>Light Theme</ComboBoxItem>
                         <ComboBoxItem>Dark Theme</ComboBoxItem>
+                        <ComboBoxItem>Default Theme</ComboBoxItem>
                         <ComboBoxItem>Custom Theme</ComboBoxItem>
                     </ComboBox>
                 </StackPanel>

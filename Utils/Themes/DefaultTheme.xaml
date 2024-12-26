@@ -1,0 +1,119 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+
+    <!-- Include Shared Resources -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="SharedResources.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+
+    <!-- General Window -->
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="White" />
+    <SolidColorBrush x:Key="WindowBorderBrush" Color="Black" />
+
+    <!-- Main Grid -->
+    <SolidColorBrush x:Key="MainGridBackgroundBrush" Color="#FFFDFDC7" />
+    <!-- LightYellow -->
+
+    <!-- Header -->
+    <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="#FF333333" />
+    <SolidColorBrush x:Key="HeaderForegroundBrush" Color="White" />
+
+    <!-- Search Box -->
+    <!--<SolidColorBrush x:Key="SearchBoxBackgroundBrush" Color="White" />
+    <SolidColorBrush x:Key="SearchBoxForegroundBrush" Color="Black" />-->
+
+    <!-- ListView Original color #1: #FFFDFDC7, new #FFEB3B -->
+    <SolidColorBrush x:Key="ListViewBackgroundBrush" Color="#FFF59D" />
+    <!-- LightYellow -->
+    <SolidColorBrush x:Key="ListViewForegroundBrush" Color="Black" />
+    
+    <!-- Listview CONTAINER style
+    This is each item of the container. There's a large gap between the note items, 
+    for example and removal of the blue default selector and hover halo effect. 
+    Also, is the visual to elevate the note item as mouseovers happen
+    -->
+    <Style x:Key="MyNotesListViewContainerStyle" TargetType="ListViewItem">
+
+        <!-- When selecting or hovering over, remove the default blue outline
+                            on a listview
+                            -->
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <!-- this is whwere there is a large separation between EACH note item -->
+        <Setter Property="BorderThickness" Value="8" />
+
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListViewItem">
+                    <Border Background="{TemplateBinding Background}" 
+                            BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <ContentPresenter />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <!-- end of removing default blue outline -->
+
+        <Setter Property="Margin" Value="0,0,0,5" />
+        <Setter Property="Effect" Value="{DynamicResource NoteShadowEffect}" />
+
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <!-- Add dynamic margin for elevation from MouseOver 
+                                and add an aplha-male shadow effect
+                                -->
+                <Setter Property="Margin" Value="0,-2,0,8" />
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect ShadowDepth="8" BlurRadius="15" Color="Gray" />
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+
+    <!-- Note Content -->
+    <SolidColorBrush x:Key="ContentBackgroundBrush" Color="#F7DC6F" />
+    <!-- LightYellow -->
+
+    <!-- Note Block blockbackgroundbrush is the border of the note block
+    -this is also known as the "NoteBlockChrome"
+    backgroundinnerbrush is the note block content
+    
+    "Border"
+    NoteBlockBackgroundBrush" Color="#FFE082"
+    Note "body color"
+    NoteBlockBackgroundInnerBrush" Color="#FFF59D"
+    #FFFDE7 -> Good. modern color color
+    #FFF59D -> Older note color
+    NOTE: NoteTitleBackgroundBrush should also match the same color as the body, but a lesser tone.
+    
+    -->
+    <SolidColorBrush x:Key="NoteBlockBackgroundBrush" Color="#FFF524" />
+    <SolidColorBrush x:Key="NoteBlockBackgroundInnerBrush" Color="#FFFDE7" />
+    
+
+    <!-- LightYellow -->
+    <SolidColorBrush x:Key="NoteBlockBorderBrush" Color="#E0D600" />
+    <SolidColorBrush x:Key="NoteDateForegroundBrush" Color="Gray" />
+    <SolidColorBrush x:Key="NoteTitleBackgroundBrush" Color="#FFFFC7" />
+    <SolidColorBrush x:Key="NoteTitleForegroundBrush" Color="Black" />
+    <SolidColorBrush x:Key="NoteTextForegroundBrush" Color="Black" />
+
+    <!-- Drop Shadow Effect Color="#FCFF4D"
+    #FFF921
+    Original:     <DropShadowEffect x:Key="NoteShadowEffect" ShadowDepth="10" BlurRadius="8" Color="#E0D600" />
+    -->
+    <DropShadowEffect x:Key="NoteShadowEffect" ShadowDepth="5" BlurRadius="8" Color="#E0D600" />
+    
+    
+    
+    <!-- NoteTemplateEditor -->
+    <SolidColorBrush x:Key="NoteEditBackgroundBrush" Color="#FFFFC7" />
+    
+
+</ResourceDictionary>

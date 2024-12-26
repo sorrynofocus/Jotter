@@ -225,3 +225,55 @@ Files updated: MainWindow.xaml, MainWindow.xaml.cs, NoteManager.cs
 - Added other settings based off settings.xaml UI. 
 - Added new file under NoBuild: DataFile-SettingsMgr.xml that best describes the settings structure. TODO: Configuration needs to be documented.
 - Prototype saving/loading window position is working.
+
+## 2024-12-18 11:15
+- MAJOR overhaul on UI just for settings and themes! Heavy modification in getting window.resources moved into theme shared resources! 
+  With this new work, re-connecting the UI elements to styles was a _pain!_ 
+- Able to get dark, light, and default mode working. Added new files under /Utils/Themes:
+  DarkTheme.xaml (dark mode theme), DefaultTheme.xaml (default "note" mode theme), LightTheme.xaml (light mode theme), SharedResources.xaml 
+  (shared UI element styles on the MainWindow)
+- Modded the app.xaml to create resource dictionary. 
+- Themes will continue... The Settings Manager UI would need the XAML to be updated. Also need to move SwitchTheme(string themeName)
+  to the /utils/themes under its own .cs file. This way the mainwindow, notetemplate, and settings can all use the theme switcher.
+- Managed to get the Theme settings to work and save/load theme settings by importing settings manager. Need to import logging manager.
+- Moved SwitchTheme() over to settings area. Theme will now change.
+- Side thought: May want to move the date/time on the notes heqader from the left towards the right side.
+
+Notes on themes: This was a challenge. First, create the themes: light and dark mode was created. Under properties sheet, for each theme, 
+make it _as a resource_ so it can be compiled with the project.
+Then, app.xaml was modded to add resource dictionary. Then, function created: SwitchTheme(string themeName) that can switch the themes
+out. When creating themes ALL elements must be touched or the binding will not happen correctly. Previously, I thought a few UI elements
+could not be touched, or modded, but this is untrue. 
+I've discovered if you created a theme and tried to run the application with no interaction, this means an exception happened. 
+Try running bare bones debugging by starting to main. Before main hits, the app.xml will be read in. 
+When that's read in, you'll see defaultthemes.xaml is read in. Before that whole resource has processed you'll see defaulttheme.xaml
+also depends on SharedResources.xaml. Typically a crash will tell you the line number where it failed but you have to trace _which_ 
+file it is. In this case, the SharedResources.xaml is where it could happen.
+
+## 2024-12-20 12:01
+- Themes themes, themes... Just working on adjuting the color to be a bit more modern and easy on eyes.. Trying ot a get a solid 
+  default style and then I'll make then for dark and light mode. No coding now.
+- https://redketchup.io/color-picker is a _great_ tool site.
+- Stopped on tracking down the light blue borderline when mouse hovers over a note. The border is a light blue thin line. 
+  Need to track down. I _see_ it at the _txtTitle_ but the _blueish_ color isn't defined. Not sure where it's at right now.
+
+## 2024-12-23 -> 24 1:01am
+- Working with the ListView.ItemContainerStyle changing the behavior of the border and appearance of being elevated. This was a bit
+  difficult to figure out. Still working with the default theme. Once I get it locked in, I'll move to the dark and light themes clean ups.
+
+## 2024-12-24 -> 10:21pm
+- Still working with themes. Have been moving stuff around to make it more organized. Added better UI mostly for the default theme with better colors 
+  and styles. Added elevated 3-d look for the notes to make it more readable. 
+- Added function in NoteManager.cs -  SearchContext(). This improves the searching in the mainwindow. 
+- Added new functions for the search in NoteTemplateEditor 
+- Select all text on notes title editing.
+- Added theme for notes editor.
+- Stopped on mainwindow private void OpenSelectedNote()) - working on settings of a previously opened note, if possible. We're saving the window pos and dim.All the notes are saved  in the settings manager using the NoteSettings class. 
+
+## 2024-12-25 -> 1:08pm
+- Merry Christmas, but I'm designing. 
+- Large changes in SettingsMgr.cs to handle the note settings, individually. 
+- WHile working in NoiteManager, it was revealed that removing a note, is done by locating a title. The need to move to NoteID is more suggested.
+  Here's the TODO in NoteManager under the RemoveNote() func: TODO -> remove note by ID. Not by title. Create func: RemoveNoteByIdIndex() code 
+  implementation example: noteManager.RemoveNoteByIdIndex(idIndexer.Value);
+- Tested the new NoteSettings functionality for note POS DIM (position/dimension) configuration.

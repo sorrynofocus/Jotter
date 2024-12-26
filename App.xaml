@@ -4,6 +4,12 @@
              xmlns:local="clr-namespace:Jotter"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Utils/Themes/DefaultTheme.xaml" />
+                <!--<ResourceDictionary Source="Utils/Themes/DarkTheme.xaml" />
+                <ResourceDictionary Source="Utils/Themes/LightTheme.xaml" />-->
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

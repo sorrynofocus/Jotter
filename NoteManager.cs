@@ -22,6 +22,10 @@ using System.Diagnostics;
  * Purpose 
  * NoteManager class handles some of the CRUD operations. Currently, the data is XML based.
  * 
+ * TODO: I'm noticing variables are using different casing styles. I should standardize that. 
+ * This whole application has been a large sandbox and throwing around typical variable names 
+ * like title and text instead of noteTitle and noteText.As the application grows, this all 
+ * needs cleaning up.
  */
 
 namespace com.nobodynoze.notemanager
@@ -38,6 +42,13 @@ namespace com.nobodynoze.notemanager
         private bool isDeleted; // New property for soft delete - added in for experimental
         private DateTime createdDate;
 
+        ////Width x Height
+        //public double noteWidth { get; set; } = 450;
+        //public double noteHeight { get; set; } = 600;
+        ////Xpos
+        //public double noteLeft { get; set; } = 100;
+        ////YPos
+        //public double noteTop { get; set; } = 100;
 
         //Property change handler - happens when a property changes (in the Note class)
         public event PropertyChangedEventHandler? PropertyChanged;
@@ -121,6 +132,32 @@ namespace com.nobodynoze.notemanager
                 }
             }
         }
+
+        ///// <summary>
+        ///// Position of the note property on screen.
+        ///// </summary>
+        //public (double Left, double Top) NotePos
+        //{
+        //    get => (noteLeft, noteTop);
+        //    set
+        //    {
+        //        noteLeft = value.Left;
+        //        noteTop = value.Top;
+        //    }
+        //}
+
+        ///// <summary>
+        ///// Dimension of the note property. (grouped property)
+        ///// </summary>
+        //public (double Width, double Height) NoteDim
+        //{
+        //    get => (noteWidth, noteHeight);
+        //    set
+        //    {
+        //        noteWidth = value.Width;
+        //        noteHeight = value.Height;
+        //    }
+        //}
 
 
         /// <summary>
@@ -284,6 +321,10 @@ namespace com.nobodynoze.notemanager
         /// <param name="title"></param>
         public void RemoveNote(string title)
         {
+            //TODO: remove note by ID. Not by title
+            //Create func: RemoveNoteByIdIndex()
+            //noteManager.RemoveNoteByIdIndex(idIndexer.Value);
+
             logger.LogInfo(new List<string> { "[Doing action] RemoveNote", "Deleting selected note." });
 
             Note? noteToRemove = Notes.FirstOrDefault(n => n.Title == title);
@@ -386,6 +427,34 @@ namespace com.nobodynoze.notemanager
             {
                 MessageBox.Show($"Error copying file: {e.Message}", "Error!", MessageBoxButton.OK);
             }
+        }
+
+        /// <summary>
+        /// Searches text for a specific input within a note
+        /// </summary>
+        /// <param name="input">string to input you want to search</param>
+        /// <param name="searchText">the text to search into</param>
+        /// <returns>Returns true is the input is found in searchText, false otherwise.</returns>
+        public bool SearchContext(string? input, string? searchText)
+        {
+            searchText = searchText?.Trim();
+            input = input?.Trim();
+
+            if (string.IsNullOrWhiteSpace(input) || string.IsNullOrWhiteSpace(searchText))
+                return (false);
+
+            string[] wordContext = input.Split(new[] { ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string word in wordContext)
+            {
+                if (word.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return (true);
+
+                if (word.ToLower().Contains(searchText.ToLower()))
+                    return (true);
+            }
+
+            return (false);
         }
 
     } //Internal class NoteManager

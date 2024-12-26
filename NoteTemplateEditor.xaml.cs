@@ -12,6 +12,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 using static Jotter.MainWindow;
 
@@ -35,6 +36,7 @@ namespace Jotter
         //TODO - Settings feature can be set for save delay
         private const int SaveDelayMilliseconds = 25000; 
         private DateTime lastActivityTime;
+        public readonly string UI_TEXTBOX_STR_SEARCH = "Search...";
 
         //Main Note template application child window
         public NoteTemplateEditor(Note note)
@@ -94,7 +96,7 @@ namespace Jotter
         {
             // Set the text of the TextBox (XAML: TextBox Name="StickyNotesTitle")
             // to the note's title
-            StickyNotesTitle.Text = noteTitle;
+            NotesTitle.Text = noteTitle;
 
             //Set the richedit with the note contents
             //XAML RichTextBox x:Name="rchEditNote"
@@ -217,7 +219,7 @@ namespace Jotter
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void StickyNotesTitleTextBox_KeyUp(object sender, KeyEventArgs e)
+        private void NotesTitleTextBox_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter || e.Key == Key.Return) UpdateSelectedNoteTitle();
         }
@@ -227,12 +229,152 @@ namespace Jotter
         /// </summary>
         private void UpdateSelectedNoteTitle()
         {
-            if (SelectedNote != null && SelectedNote.Title != StickyNotesTitle.Text)
-            {
-                SelectedNote.Title = StickyNotesTitle.Text;
-            }
+            if (SelectedNote != null && SelectedNote.Title != NotesTitle.Text)
+                SelectedNote.Title = NotesTitle.Text;
+
             Keyboard.ClearFocus();
         }
 
+        //Once we click elsewhere, reset the search box watermark, or html "placeholder"
+        private void NoteSearch_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(NoteSearch.Text)
+                || NoteSearch.Text == UI_TEXTBOX_STR_SEARCH)
+                NoteSearch.Text = UI_TEXTBOX_STR_SEARCH;
+
+            ResetSpotlights(rchEditNote);
+        }
+
+        //clear the tesxtbox watermark so we can search.
+        private void NoteSearch_GotFocus(object sender, RoutedEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (textBox != null && textBox.Text == UI_TEXTBOX_STR_SEARCH)
+                textBox.Text = string.Empty;
+        }
+
+        private void NoteSearch_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                TextBox textBox = sender as TextBox;
+                if (textBox != null)
+                {
+                    string searchText = textBox.Text.Trim();
+
+                    if (!string.IsNullOrEmpty(searchText))
+                        // Do search and highlight matches
+                        SpotlightSearch(rchEditNote, searchText);
+                }
+            }
+            else if (string.IsNullOrEmpty(NoteSearch.Text) && (e.Key == Key.Back || e.Key == Key.Delete))
+            {
+                // Clear the search when the textbox is empty and the user presses Backspace or Delete
+                NoteSearch.Text = UI_TEXTBOX_STR_SEARCH;
+
+                // Clear highlights in the RichTextBox
+                ResetSpotlights(rchEditNote);
+            }
+        }
+
+
+        /// <summary>
+        /// During a search within a RichEdit, reset the formatting and highlight text we're searching for.
+        /// </summary>
+        /// <param name="richTextBox">Richedit FlowDocument to search into (</param>
+        /// <param name="searchText">string input of text to find</param>
+        private void SpotlightSearch(RichTextBox richTextBox, string searchText)
+        {
+            // Reset all previous spotlights
+            ResetSpotlights(richTextBox);
+
+            if (string.IsNullOrWhiteSpace(searchText))
+                return;
+
+            TextPointer pointer = richTextBox.Document.ContentStart;
+
+            while (pointer != null && pointer.CompareTo(richTextBox.Document.ContentEnd) < 0)
+            {
+                TextRange foundRange = FindTextInRange(pointer, searchText);
+                if (foundRange != null)
+                {
+                    // Did we find? Shine a spotlight on it
+                    foundRange.ApplyPropertyValue(TextElement.BackgroundProperty, Brushes.Yellow);
+
+                    // Move pointer to the end of the found range
+                    pointer = foundRange.End;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Search for text in a FlowDocument/TextBlock and return the TextRange of the found text  
+        /// </summary>
+        /// <param name="startPointer">position in the text container</param>
+        /// <param name="searchText">string input of text to find</param>
+        /// <returns>selection of context between two TextPointer positions</returns>
+        private TextRange FindTextInRange(TextPointer startPointer, string searchText)
+        {
+            TextPointer pointer = startPointer;
+            while (pointer != null)
+            {
+                if (pointer.GetPointerContext(LogicalDirection.Forward) == TextPointerContext.Text)
+                {
+                    string textRun = pointer.GetTextInRun(LogicalDirection.Forward);
+                    int index = textRun.IndexOf(searchText, StringComparison.OrdinalIgnoreCase);
+
+                    if (index >= 0)
+                    {
+                        TextPointer start = pointer.GetPositionAtOffset(index);
+                        TextPointer end = start.GetPositionAtOffset(searchText.Length);
+                        return new TextRange(start, end);
+                    }
+                }
+
+                pointer = pointer.GetNextContextPosition(LogicalDirection.Forward);
+            }
+
+            return (null);
+        }
+
+        /// <summary>
+        /// Clear all highlighting or spotlights of text in a RichTextBox from previous successful finds
+        /// </summary>
+        /// <param name="richTextBox">RichEdit control to reset</param>
+        private void ResetSpotlights(RichTextBox richTextBox)
+        {
+            TextPointer pointer = richTextBox.Document.ContentStart;
+
+            while (pointer != null && pointer.CompareTo(richTextBox.Document.ContentEnd) < 0)
+            {
+                if (pointer.GetPointerContext(LogicalDirection.Forward) == TextPointerContext.Text)
+                {
+                    TextPointer start = pointer;
+                    TextPointer end = pointer.GetNextContextPosition(LogicalDirection.Forward);
+
+                    if (end != null)
+                    {
+                        TextRange range = new TextRange(start, end);
+                        object background = range.GetPropertyValue(TextElement.BackgroundProperty);
+
+                        if (background != null && background.Equals(Brushes.Yellow))
+                            range.ApplyPropertyValue(TextElement.BackgroundProperty, Brushes.Transparent);
+                    }
+                }
+
+                pointer = pointer.GetNextContextPosition(LogicalDirection.Forward);
+            }
+        }
+
+        private void NotesTitle_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (textBox != null)
+                textBox.SelectAll();
+        }
     } //NoteTemplateEditor: Window
 } //Namespace Jotter

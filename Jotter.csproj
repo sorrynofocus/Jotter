@@ -20,11 +20,22 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Page Remove="Utils\Themes\DarkTheme.xaml" />
+    <Page Remove="Utils\Themes\DefaultTheme.xaml" />
+    <Page Remove="Utils\Themes\LightTheme.xaml" />
+    <Page Remove="Utils\Themes\SharedResources.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="build\Icos\gradiant_notebook.ico" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Label="hamburger-menu-icon" Include="build\Icos\hamburger-menu-icon-png-white-11.jpg" />
+    <Resource Include="Utils\Themes\DarkTheme.xaml" />
+    <Resource Include="Utils\Themes\DefaultTheme.xaml" />
+    <Resource Include="Utils\Themes\LightTheme.xaml" />
+    <Resource Include="Utils\Themes\SharedResources.xaml" />
   </ItemGroup>
 
 <PropertyGroup>

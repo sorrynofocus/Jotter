@@ -1,0 +1,44 @@
+﻿<Window x:Class="ColorTester.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Color Tester" Height="650" Width="800">
+    <Grid>
+        <StackPanel>
+            <Rectangle Height="50" Fill="#FFDDDDDD" Stroke="Black" Margin="5">
+                <Rectangle.ToolTip>Button.Static.Background (#FFDDDDDD)</Rectangle.ToolTip>
+            </Rectangle>
+            <Rectangle Height="50" Fill="#FF707070" Stroke="Black" Margin="5">
+                <Rectangle.ToolTip>Button.Static.Border (#FF707070)</Rectangle.ToolTip>
+            </Rectangle>
+            <Rectangle Height="50" Fill="#FF656A6D" Stroke="Black" Margin="5">
+                <Rectangle.ToolTip>Button.MouseOver.Border (#FF656A6D)</Rectangle.ToolTip>
+            </Rectangle>
+            <Rectangle Height="50" Fill="#FFC5CACC" Stroke="Black" Margin="5">
+                <Rectangle.ToolTip>Button.Pressed.Background (#FFC5CACC)</Rectangle.ToolTip>
+            </Rectangle>
+            <Rectangle Height="50" Fill="#FFF4F4F4" Stroke="Black" Margin="5">
+                <Rectangle.ToolTip>Button.Disabled.Background (#FFF4F4F4)</Rectangle.ToolTip>
+            </Rectangle>
+            <Rectangle Height="50" Fill="#FFADB2B5" Stroke="Black" Margin="5">
+                <Rectangle.ToolTip>Button.Disabled.Border (#FFADB2B5)</Rectangle.ToolTip>
+            </Rectangle>
+            <Rectangle Height="50" Fill="#FF838383" Stroke="Black" Margin="5">
+                <Rectangle.ToolTip>Button.Disabled.Foreground (#FF838383)</Rectangle.ToolTip>
+            </Rectangle>
+
+
+            <Rectangle Height="50" Fill="#FFFDFDC7" Stroke="Black" Margin="5">
+                <Rectangle.ToolTip>ListViewBackgroundBrush (#FFFDFDC7)</Rectangle.ToolTip>
+            </Rectangle>
+
+            <Rectangle Height="50" Fill="#F7DC6F" Stroke="Black" Margin="5">
+                <Rectangle.ToolTip>ListViewBackgroundBrush2 (#F7DC6F)</Rectangle.ToolTip>
+            </Rectangle>
+
+            <Rectangle Height="50" Fill="#f1c40f" Stroke="Black" Margin="5">
+                <Rectangle.ToolTip>ListViewBackgroundBrush3 (##f1c40f)</Rectangle.ToolTip>
+            </Rectangle>            
+            
+        </StackPanel>
+    </Grid>
+</Window>

@@ -10,6 +10,9 @@
 * like Sticky notes (personal cloud). Ideally, would like to have this /not/ cloud based, unless 
 * you desire to move the data file to your own cloud based platform.
 * 
+* COMPILE BUG: Sometimes you'll get a compile error saying DragEnter, DragOver, and Drop are  
+* ambiguous. This is because System.Windows.Forms needs to be removed. 
+* 
 * 
 * Map
 * Guid? idIndexer = SelectedNote?.IdIndexer - selected note id
@@ -20,6 +23,8 @@ using com.nobodynoze.notemanager;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Drawing;
+
 //imports for FileStream and XmlSerializer
 using System.IO;
 using System.Net;
@@ -29,9 +34,12 @@ using System.Security.Principal;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+
+
+//using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
-//using static System.Net.Mime.MediaTypeNames;
+
 
 namespace Jotter
 {
@@ -52,11 +60,13 @@ namespace Jotter
         //Settings Manager
         private SettingsMgr settingsManager;
 
+        private System.Windows.Forms.NotifyIcon notifyIcon;
+        
 
         public MainWindow()
         {
             InitializeComponent();
-
+            
             // Init settings manager
             settingsManager = new SettingsMgr();
 
@@ -76,7 +86,6 @@ namespace Jotter
             //this.Top = SystemParameters.WorkArea.Height - Height;
             //ABOVE COMMENTED OUT TO TEST WINDOW POS
             LoadAppSettings(settingsManager.Settings);
-
 
             logger.LogWritten += LogWrite_Handler;
             logger.LogFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -108,7 +117,20 @@ namespace Jotter
 
             // Subscribe to the Loaded event
             this.Loaded += MainWindow_Loaded;
+
+
+
+            //Init NOTIFY TRAY ICON
+            InitializeTrayIcon();
+
+            // Subscribe to StateChanged event
+            this.StateChanged += MainWindow_StateChanged;
+
+
         }
+
+
+
 
         /// <summary>
         /// Load the application settings from global config
@@ -410,38 +432,49 @@ namespace Jotter
 
         private void ExitApp_Click(object sender, RoutedEventArgs e)
         {
-            // Save the notes before exiting the application
-            noteManager?.SaveNotes(jotNotesFilePath);
-
-            //Iter and close all open windows.
-            // Add all opened child windows to the lists of windows to close
-            // The list will contain window data.
-            // Created "windowsToClose" (separate list) to store the child windows
-            // that need to be closed -- then close them outside the foreach loop.
-            // Previously, used a single list "chilDwindow" but the for loop modifies it,
-            // thus getting exception System.InvalidOperationException:
-            // 'Collection was modified; enumeration operation may not execute.'
-            List<NoteTemplateEditor> windowsToClose = new List<NoteTemplateEditor>();
-
-            foreach (NoteTemplateEditor? childWindow in openNoteWindows)
+            if (settingsManager.Settings.IsTray)
             {
-                windowsToClose.Add(childWindow);
+                // Hide MainWindow instead of exiting
+                this.Hide();
+                NotifyIcon.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                // Save the notes before exiting the application
+                noteManager?.SaveNotes(jotNotesFilePath);
+
+                //Iter and close all open windows.
+                // Add all opened child windows to the lists of windows to close
+                // The list will contain window data.
+                // Created "windowsToClose" (separate list) to store the child windows
+                // that need to be closed -- then close them outside the foreach loop.
+                // Previously, used a single list "chilDwindow" but the for loop modifies it,
+                // thus getting exception System.InvalidOperationException:
+                // 'Collection was modified; enumeration operation may not execute.'
+                List<NoteTemplateEditor> windowsToClose = new List<NoteTemplateEditor>();
+
+                foreach (NoteTemplateEditor? childWindow in openNoteWindows)
+                {
+                    windowsToClose.Add(childWindow);
+                }
+
+                // Close all windows from the separate list
+                foreach (NoteTemplateEditor? windowToClose in windowsToClose)
+                {
+                    windowToClose.Close();
+                }
+
+                //Get rid of our subscriptions
+                MyNotesListView.SelectionChanged -= MyNotesListView_SelectionChanged;
+                logger.LogWritten -= LogWrite_Handler;
+
+                //Save the current mainwindow settings before exit
+                SaveAppSettings();
+
+                Environment.Exit(0);
+
             }
 
-            // Close all windows from the separate list
-            foreach (NoteTemplateEditor? windowToClose in windowsToClose)
-            {
-                windowToClose.Close();
-            }
-
-            //Get rid of our subscriptions
-            MyNotesListView.SelectionChanged -= MyNotesListView_SelectionChanged;
-            logger.LogWritten -= LogWrite_Handler;
-
-            //Save the current mainwindow settings before exit
-            SaveAppSettings();
-
-            Environment.Exit(0);
         }
 
         private void AppSettings_Click(object sender, RoutedEventArgs e)
@@ -840,7 +873,7 @@ namespace Jotter
                     //Is null char?
                     if (byteValue == 0) 
                         //Yep, ok, bin file!
-                        return true; 
+                        return (true); 
                 }
             }
             return (false); 
@@ -857,7 +890,7 @@ namespace Jotter
 
             string extension = Path.GetExtension(filePath).ToLower();
             if (extension == ".html" || extension == ".htm")
-                return true;
+                return (true);
 
             //Try peeking into the file, reading a few lines. Look for standard HTML stuff
             try
@@ -870,7 +903,7 @@ namespace Jotter
                     if (content != null &&
                        (content.Contains("<!DOCTYPE html>", StringComparison.OrdinalIgnoreCase) ||
                         content.Contains("<html>", StringComparison.OrdinalIgnoreCase)))
-                        return true;
+                        return (true);
                 }
             }
             catch (Exception ex)
@@ -953,9 +986,7 @@ namespace Jotter
             this.Hide();
 
             // Loaded up the settings!
-            Settings settingsWindow = new Settings();
-            //settingsWindow.Left = Application.Current.MainWindow.Left;
-            //settingsWindow.Top = Application.Current.MainWindow.Top;
+            Settings settingsWindow = new Settings(settingsManager);
             settingsWindow.Left = mainLeft; 
             settingsWindow.Top = mainTop;
             settingsWindow.WindowStartupLocation = WindowStartupLocation.Manual;
@@ -977,11 +1008,17 @@ namespace Jotter
             //Application.Current.MainWindow.Top = mainTop;
         }
 
+        /// <summary>
+        /// Event for the Settings window closed - tries to update mainwindow to restore its location    
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void SettingsWindow_Closed(object sender, EventArgs e)
         {
             if (Application.Current.MainWindow is MainWindow mainWindow)
             {
-                // Update the position of MainWindow based on the closed Settings window
+                // Update the position of MainWindow based on the closed
+                // Settings window
                 if (sender is Settings settingsWindow)
                 {
                     mainWindow.Left = settingsWindow.Left;
@@ -990,5 +1027,65 @@ namespace Jotter
             }
         }
 
-    }
-}
+
+        #region NOTIFY TRAY ICON OPERATIONS
+        private void InitializeTrayIcon()
+        {
+            NotifyIcon.Visibility = Visibility.Visible;
+
+            if (settingsManager.Settings.IsTray)
+                this.StateChanged += MainWindow_StateChanged;
+            else
+                NotifyIcon.Visibility = Visibility.Hidden;
+
+            NotifyIcon.TrayMouseDoubleClick += NotifyIcon_MouseDoubleClick;
+
+            //INstead assigning to event, we can use lambda to do the same thing 
+            //with sender and event args passed in.
+            //NotifyIcon.TrayMouseDoubleClick += (s, e) => ShowMainWindow();
+            // 
+            // private void ShowMainWindow()
+            // {
+            //     this.Show();
+            //     this.WindowState = WindowState.Normal;
+            // }
+        }
+
+
+        private void ShowApplication_Click(object sender, RoutedEventArgs e)
+        {
+            NotifyIcon_MouseDoubleClick(sender, e);
+        }
+
+        // Close the application via notify tray 
+        private void ExitApplication_Click(object sender, RoutedEventArgs e)
+        {
+            SaveAppSettings();
+            Application.Current.Shutdown();
+        }
+
+        //Decide if the notification tray icon should show and how the applicaiton acts
+        //when the main window is minimized.    
+        private void MainWindow_StateChanged(object sender, EventArgs e)
+        {
+            if (WindowState == WindowState.Minimized && settingsManager.Settings.IsTray)
+            {
+                this.Hide();
+                NotifyIcon.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void NotifyIcon_MouseDoubleClick(object sender, EventArgs e)
+        {
+            if (this.Visibility != Visibility.Visible)
+            {
+                this.Show();
+                this.WindowState = WindowState.Normal;
+                this.Activate();
+                NotifyIcon.Visibility = Visibility.Hidden;
+            }
+        }
+        #endregion NOTIFY TRAY ICON OPERATIONS
+
+    } //End of MainWindow class
+} // End of namespace

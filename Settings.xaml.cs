@@ -30,7 +30,8 @@ namespace Jotter
     {
 
         private bool isInitializing = true;
-        private SettingsMgr settingsManager;
+        //private SettingsMgr settingsManager;
+        private readonly SettingsMgr settingsManager;
 
         //public class CustomToggleButton : CheckBox
         //{
@@ -40,11 +41,12 @@ namespace Jotter
         //    }
         //}
 
-        public Settings()
+        //public Settings()
+        public Settings(SettingsMgr sharedSettingsManager)
         {
-
-            settingsManager = new SettingsMgr();
             InitializeComponent();
+            //settingsManager = new SettingsMgr();
+            settingsManager = sharedSettingsManager;
 
             LoadAppSettings(settingsManager.Settings);
 
@@ -160,8 +162,7 @@ namespace Jotter
         //Set the location of the data file in UI at load up
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            TextUserData.Text = Jotter.MainWindow.jotNotesFilePath;
-            TextLogFile.Text = Jotter.MainWindow.logger.LogFile;
+            LoadAppSettings(settingsManager.Settings);
         }
 
         private void TopBorderGrid_MouseDown(object sender, MouseButtonEventArgs e)
@@ -174,6 +175,41 @@ namespace Jotter
         {
             if (settings == null) return;
 
+            //Set UI Logging
+            TextUserData.Text = Jotter.MainWindow.jotNotesFilePath;
+            TextLogFile.Text = Jotter.MainWindow.logger.LogFile;
+
+            //Set the radio button for minmize or full exit
+            bool isTray = settingsManager.Settings.IsTray;
+
+            // Find the radio buttons in the UI and set their state
+            //foreach (var child in LogicalTreeHelper.GetChildren(stackPanel_ExitBehavior))
+            //{
+            //    if (child is RadioButton radioButton)
+            //    {
+            //        //if (isTray && radioButton.Content.ToString() == "Minimize to tray")
+            //        if (isTray && radioButton.Name == "rb_MinimizeToTray")
+            //        {
+            //            radioButton.IsChecked = true;
+            //            settingsManager.Settings.IsTray = true;
+            //            Debug.WriteLine("[DEBUG] MinimizeToTray_Checked fired, IsTray set to true");
+            //        }
+            //        //else if (!isTray && radioButton.Content.ToString() == "Fully exit")
+            //        else if (!isTray && radioButton.Name == "rb_FullExit")
+            //        {
+            //            radioButton.IsChecked = true;
+            //            settingsManager.Settings.IsTray = false;
+            //            Debug.WriteLine("[DEBUG] FullyExit_Checked fired, IsTray set to false");
+            //        }
+            //    }
+            //}
+
+            rb_MinimizeToTray.IsChecked = settings.IsTray;
+            rb_FullExit.IsChecked = !settings.IsTray;
+
+
+
+            //Check the themes
             if (ThemeSelection != null)
             {
                 // Iterate through ComboBox to locate -and- select the matching theme
@@ -236,5 +272,25 @@ namespace Jotter
                     ThemeSelection.SelectedIndex = 0;
             }
         } //cb_ThemeSelectionChanged
+
+        private void CheckedMinimizeToTray(object sender, RoutedEventArgs e)
+        {
+            if (settingsManager?.Settings != null)
+            {
+                settingsManager.Settings.IsTray = true;
+                settingsManager.SaveSettings();
+                Debug.WriteLine("[DEBUG] IsTray set to true and saved.");
+            }
+        }
+
+        private void CheckedFullExit(object sender, RoutedEventArgs e)
+        {
+            if (settingsManager?.Settings != null)
+            {
+                settingsManager.Settings.IsTray = false;
+                settingsManager.SaveSettings();
+                Debug.WriteLine("[DEBUG] IsTray set to false and saved.");
+            }
+        }
     }
 }

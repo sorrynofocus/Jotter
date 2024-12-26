@@ -1,0 +1,48 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+
+    <!-- Include Shared Resources -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="SharedResources.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+
+
+
+
+
+
+    <!-- General Window -->
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#FFFFFFFF" />
+    <!-- White -->
+    <SolidColorBrush x:Key="WindowBorderBrush" Color="#FFCCCCCC" />
+    <!-- Light Gray -->
+
+    <!-- Main Grid -->
+    <SolidColorBrush x:Key="MainGridBackgroundBrush" Color="#FFFAFAFA" />
+    <!-- Almost White -->
+
+    <!-- Header -->
+    <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="#FFE0E0E0" />
+    <SolidColorBrush x:Key="HeaderForegroundBrush" Color="#FF000000" />
+
+    <!-- Search Box -->
+    <SolidColorBrush x:Key="SearchBoxBackgroundBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="SearchBoxForegroundBrush" Color="#FF000000" />
+
+    <!-- ListView -->
+    <SolidColorBrush x:Key="ListViewBackgroundBrush" Color="#FFFAFAFA" />
+    <SolidColorBrush x:Key="ListViewForegroundBrush" Color="#FF000000" />
+
+    <!-- Note Content -->
+    <SolidColorBrush x:Key="ContentBackgroundBrush" Color="#FFFAFAFA" />
+
+    <!-- Note Block -->
+    <SolidColorBrush x:Key="NoteBlockBackgroundBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="NoteBlockBorderBrush" Color="#FFCCCCCC" />
+    <SolidColorBrush x:Key="NoteDateForegroundBrush" Color="#FF999999" />
+    <SolidColorBrush x:Key="NoteTitleBackgroundBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="NoteTitleForegroundBrush" Color="#FF000000" />
+    <SolidColorBrush x:Key="NoteTextForegroundBrush" Color="#FF000000" />
+</ResourceDictionary>

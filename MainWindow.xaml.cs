@@ -9,10 +9,15 @@
 * A note taking application. Wrote this to "learn" WPF some work places don't support applicaitons 
 * like Sticky notes (personal cloud). Ideally, would like to have this /not/ cloud based, unless 
 * you desire to move the data file to your own cloud based platform.
+* 
+* 
+* Map
+* Guid? idIndexer = SelectedNote?.IdIndexer - selected note id
 */
 
 using com.nobodynoze.flogger;
 using com.nobodynoze.notemanager;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 //imports for FileStream and XmlSerializer
@@ -42,7 +47,7 @@ namespace Jotter
 
         //Track opened notes. This is so we don't have open redundant open notes. ^_^
         private List<NoteTemplateEditor> openNoteWindows = new List<NoteTemplateEditor>();
-        private string SearchValue= "Search...";
+        public readonly string UI_TEXTBOX_STR_SEARCH = "Search...";
 
         //Settings Manager
         private SettingsMgr settingsManager;
@@ -72,6 +77,7 @@ namespace Jotter
             //ABOVE COMMENTED OUT TO TEST WINDOW POS
             LoadAppSettings(settingsManager.Settings);
 
+
             logger.LogWritten += LogWrite_Handler;
             logger.LogFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                                            Path.Join(Assembly.GetExecutingAssembly().GetName().Name, "JotterNotes.log"));
@@ -94,7 +100,7 @@ namespace Jotter
 
             DataContext = noteManager;
 
-            //Initialise the dragging and drop
+            //Init the dragging and drop
             InitializeDragDrop();
 
             MyNotesListView.ItemsSource = Notes;
@@ -104,7 +110,10 @@ namespace Jotter
             this.Loaded += MainWindow_Loaded;
         }
 
-
+        /// <summary>
+        /// Load the application settings from global config
+        /// </summary>
+        /// <param name="settings">AppSettings config obj </param>
         private void LoadAppSettings(AppSettings settings)
         {
             double screenLeft = SystemParameters.WorkArea.Left;
@@ -146,6 +155,37 @@ namespace Jotter
             settingsManager.SaveSettings();
         }
 
+
+        /// <summary>
+        /// SAve note settings on gobal config. OpenSelectedNote() uses this in mainwindow
+        /// </summary>
+        /// <param name="noteWindow"></param>
+        /// <param name="noteSettings"></param>
+        private void LoadAppNoteSettings(Window noteWindow, NoteSettings noteSettings)
+        {
+            //MAKE SURE that the XAML for this is set to:
+            // WindowStartupLocation="Manual"
+            // Took awhile to figure out I had WindowStartupLocation="Center" forcing it to 
+            // center on the screen. Faaah!
+            double screenLeft = SystemParameters.WorkArea.Left;
+            double screenTop = SystemParameters.WorkArea.Top;
+            double screenRight = SystemParameters.WorkArea.Right;
+            double screenBottom = SystemParameters.WorkArea.Bottom;
+
+            //The order of positioning is essential because the position (Left and Top) depends on the dimensions.
+            noteWindow.Width = noteSettings.NoteDim.Width;
+            noteWindow.Height = noteSettings.NoteDim.Height;
+
+            // Apply POS, ensuring it's within bounds
+            noteWindow.Left = Math.Max(screenLeft, Math.Min(noteSettings.NotePos.Left, screenRight - noteWindow.Width));
+            noteWindow.Top = Math.Max(screenTop, Math.Min(noteSettings.NotePos.Top, screenBottom - noteWindow.Height));
+
+
+            Debug.WriteLine($"NoteWindowLeft: {noteSettings.NotePos.Left}, NoteWindowTop: {noteSettings.NotePos.Top}");
+            Debug.WriteLine($"NoteWindowWidth: {noteSettings.NoteDim.Width}, NoteWindowHeight: {noteSettings.NoteDim.Height}");
+        }
+
+
         /// <summary>
         /// Event for the main window loaded and in view.
         /// </summary>
@@ -157,28 +197,11 @@ namespace Jotter
             SortNotesList();
         }
 
-        //UI if title is changed and the keypress is ENTER
-        //TODO: not implemented, BUT if user closes mainwindow, the data is saved and retained. 
-        //private void TitleInMainTextBox_KeyUp(object sender, KeyEventArgs e)
-        //{
-        //  if (e.Key == Key.Enter || e.Key == Key.Return)
-        //    {
-        //        // Save changes when Enter or Return key is pressed
-        //        //NOT IMPLEMENTED YET
-        //        TextBox textBox = sender as TextBox;
-        //        if (textBox != null)
-        //        {
-        //            //Get text in ui
-        //            string newTitle = textBox.Text;
-        //            noteManager.GetIndexOfSelectedNoteById(??);
-        //            noteManager.UpdateNoteByIdIndexer(idIndexer, newTitle);
-
-        //        }
-
-        //    }
-        //}
-
-
+        /// <summary>
+        /// Event for updating the title of a note in the main window   
+        /// </summary>
+        /// <param name="sender">reference to the ui obj who sent us</param>
+        /// <param name="e">The key presse invoked</param>
         private void TitleInMainTextBox_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter || e.Key == Key.Return)
@@ -452,8 +475,34 @@ namespace Jotter
                 {
                     //IF it's not open, then go ahead and open it
                     NoteTemplateEditor noteEditor = new NoteTemplateEditor(note);
+
+
+                    //Get the configuration of the the selected note
+                    //If there no confgi, then default it to the right of the application
+                    
+                    //get new "child" window (NoteTemplateEditor) pos relative to the
+                    //main window
+                    
+                    //Spacing between windows
+                    double offset = 60; 
+                    //defaulting to the right of the mainwindow
+                    double childLeft = this.Left + this.Width + offset; 
+                    double childTop = this.Top;
+
+                    //If the note (NoteTEmplateEditor) has invalid screen coords, pos it to the left
+                    if (childLeft + noteEditor.Width > SystemParameters.WorkArea.Right)
+                        childLeft = this.Left - noteEditor.Width - offset;
+
+                    NoteSettings noteSettings = settingsManager.GetNoteConf(note.IdIndexer.Value);
+                    LoadAppNoteSettings(noteEditor, noteSettings);
+                    //END of note configuration pos and dim
+
+
                     //Subscribe to event to handle clean up when the note is closed.
                     noteEditor.Closed += NoteEditor_Closed;
+
+                    //Can you have anon noteEditor.Closed += (s, e) => ? 
+                    
                     //ADDED
                     noteEditor.NoteUpdated += NoteEditor_NoteUpdated;
                     noteEditor.Show();
@@ -470,8 +519,24 @@ namespace Jotter
         // Used by OpenSelectedNote() as a subscriber
         private void NoteEditor_Closed(object sender, EventArgs e)
         {
-            if (sender is NoteTemplateEditor closedEditor)
+            if (sender is NoteTemplateEditor closedEditor && closedEditor.DataContext is Note closedNote)
             {
+                // Save the position and dimensions of the closed note
+                settingsManager.SaveNoteConf(new NoteSettings
+                {
+                    noteID = closedNote.IdIndexer.Value,
+                    NoteDim = new Dimension
+                    {
+                        Width = closedEditor.Width,
+                        Height = closedEditor.Height
+                    },
+                    NotePos = new Position
+                    {
+                        Left = closedEditor.Left,
+                        Top = closedEditor.Top
+                    }
+                });
+
                 // Remove the closed window from the tracking list
                 openNoteWindows.Remove(closedEditor);
             }
@@ -484,6 +549,21 @@ namespace Jotter
         {
             if (MyNotesListView.SelectedItem != null)
             {
+                // Remove note settings
+                //settingsManager.RemoveNoteSettings(noteManager.  note.IdIndexer.Value);
+                Guid? idIndexer = SelectedNote?.IdIndexer;
+
+                if (idIndexer != null)
+                {
+                    //Remove the note settings (POS and DIM) if they exist. 
+                    settingsManager.RemoveNoteConf(idIndexer.Value);
+
+                    //TODO: remove note by ID. Not by title
+                    //Create func: RemoveNoteByIdIndex()
+                    //noteManager.RemoveNoteByIdIndex(idIndexer.Value);
+                }
+
+                //TODO: remove note by ID. Not by title. See above
                 noteManager.RemoveNote(((Note)MyNotesListView.SelectedItem).Title);
                 UpdateListView();
             }
@@ -517,9 +597,9 @@ namespace Jotter
         private void NoteManagerSearch_LostFocus(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(NoteManagerSearch.Text) 
-                || NoteManagerSearch.Text == "Search...")
+                || NoteManagerSearch.Text == UI_TEXTBOX_STR_SEARCH)
             {
-                NoteManagerSearch.Text = "Search...";
+                NoteManagerSearch.Text = UI_TEXTBOX_STR_SEARCH;
 
                 // Reset to show all ntoes
                 MyNotesListView.ItemsSource = Notes;
@@ -530,15 +610,10 @@ namespace Jotter
         private void NoteManagerSearch_GotFocus(object sender, RoutedEventArgs e)
         {
             TextBox textBox = sender as TextBox;
-            if (textBox != null && textBox.Text == "Search...")
+            if (textBox != null && textBox.Text == UI_TEXTBOX_STR_SEARCH)
             {
                 textBox.Text = string.Empty;
             }
-
-            //if (NoteManagerSearch.Text == "Search...")
-            //{
-            //    NoteManagerSearch.Text = string.Empty;
-            //}
         }
 
         //Begin the search after pressing enter.
@@ -568,17 +643,17 @@ namespace Jotter
 
                 foreach (Note note in noteManager.Notes)
                 {
-                    if (note.Title.ToLower().Contains(searchText) || note.Text.ToLower().Contains(searchText))
-                        filteredNotes.Add(note); 
+                    // if (note.Title.ToLower().Contains(searchText) || note.Text.ToLower().Contains(searchText))
+                    if ((note.Title != null && noteManager.SearchContext(note.Title, searchText)) || (note.Text != null && noteManager.SearchContext(note.Text, searchText)))
+                        filteredNotes.Add(note);
                 }
 
-                // Update the UI with filtered notes
-                UpdateUIWithFilteredNotes(filteredNotes, searchText);
+                // Update the bound collection with the filtered notes
+                MyNotesListView.ItemsSource = filteredNotes;
         }
 
         private void ClearSearch()
         {
-            //NoteManagerSearch.Text = "Search...";
             //show all notes
             MyNotesListView.ItemsSource = Notes;
         }
@@ -626,31 +701,6 @@ namespace Jotter
             }
         }
 
-
-        private void UpdateUIWithFilteredNotes(ObservableCollection<Note> notes, string searchText)
-        {
-            //MyNotesListView.Items.Clear();
-            // System.InvalidOperationException: 'Operation is not valid while ItemsSource is in use.
-            // Access and modify elements with ItemsControl.ItemsSource instead.'
-
-            //// Add the filtered notes to the UI
-            //foreach (Note note in filteredNotes)
-            //{
-            //    MyNotesListView.Items.Add(note);
-            //}
-
-            ObservableCollection<Note> filteredNotes = new ObservableCollection<Note>();
-
-            foreach (Note note in noteManager.Notes)
-            {
-                if (note.Title.ToLower().Contains(searchText) || note.Text.ToLower().Contains(searchText))
-                    // Add the note to the filtered collection
-                    filteredNotes.Add(note); 
-            }
-
-            // Update the bound collection with the filtered notes
-            MyNotesListView.ItemsSource = filteredNotes;
-        }
 
         // Drag/Drop handling
         /*

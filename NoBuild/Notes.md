@@ -270,10 +270,13 @@ file it is. In this case, the SharedResources.xaml is where it could happen.
 - Added theme for notes editor.
 - Stopped on mainwindow private void OpenSelectedNote()) - working on settings of a previously opened note, if possible. We're saving the window pos and dim.All the notes are saved  in the settings manager using the NoteSettings class. 
 
-## 2024-12-25 -> 1:08pm
+## 2024-12-25 -> 1:08pm -> 11:43pm
 - Merry Christmas, but I'm designing. 
 - Large changes in SettingsMgr.cs to handle the note settings, individually. 
 - WHile working in NoiteManager, it was revealed that removing a note, is done by locating a title. The need to move to NoteID is more suggested.
   Here's the TODO in NoteManager under the RemoveNote() func: TODO -> remove note by ID. Not by title. Create func: RemoveNoteByIdIndex() code 
   implementation example: noteManager.RemoveNoteByIdIndex(idIndexer.Value);
 - Tested the new NoteSettings functionality for note POS DIM (position/dimension) configuration.
+- Added notify tray icon for application to run in background. Relied on package: https://github.com/hardcodet/wpf-notifyicon
+- Added settings for minimize to tray for fully exit
+- Added mutex for single instance.

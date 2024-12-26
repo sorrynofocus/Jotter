@@ -6,6 +6,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:tb="http://www.hardcodet.net/taskbar"
     xmlns:local="clr-namespace:Jotter"
     mc:Ignorable="d"
     WindowStartupLocation="Manual"
@@ -19,6 +20,10 @@
     Width="450">
 
 
+
+
+
+
     <!-- Window Chrome -->
     <WindowChrome.WindowChrome>
         <WindowChrome     
@@ -28,6 +33,13 @@
         GlassFrameThickness="0">
         </WindowChrome>
     </WindowChrome.WindowChrome>
+
+
+
+
+
+
+
 
     <Grid x:Name="MainGrid" Row="0" Background="{DynamicResource MainGridBackgroundBrush}" MouseDown="Window_MouseDown" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         
@@ -208,6 +220,28 @@
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
+
+            
+            
+            
+            <tb:TaskbarIcon
+                x:Name="NotifyIcon"
+                ToolTipText="Jotter App"
+                IconSource="pack://application:,,,/build/Icos/gradiant_notebook.ico"
+                Visibility="Hidden"
+                DoubleClickCommand="{Binding NotifyIcon_MouseDoubleClick}" >
+                <tb:TaskbarIcon.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Show Jotter" Click="ShowApplication_Click" />
+                        <MenuItem Header="Exit Jotter" Click="ExitApplication_Click" />
+                    </ContextMenu>
+                </tb:TaskbarIcon.ContextMenu>
+            </tb:TaskbarIcon>
+            <!--  WPF pack URI scheme for accessing resources -->
+
+            <!-- NotifyIcon for system tray is managed in the code-behind -->
+
+
         </Grid>
     </Grid>
 </Window>

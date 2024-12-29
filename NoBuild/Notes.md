@@ -280,3 +280,16 @@ file it is. In this case, the SharedResources.xaml is where it could happen.
 - Added notify tray icon for application to run in background. Relied on package: https://github.com/hardcodet/wpf-notifyicon
 - Added settings for minimize to tray for fully exit
 - Added mutex for single instance.
+
+## 2024-12-29 -> 2:30am
+- If note is selected, there needs to be a visual indicator. Added tag #NoteBlockChromeNoteSelected for default, light, and dark themes. 
+  Added data trigger for NoteBlockChrome that if note is selected, color will change based on theme. Kept original tag
+  `Tag #SelectedNoteNoNoteBlockChrome` in `defaultheme.xaml`since experimenting with the note selection.
+- Cleaning up light and dark themes during mouse overs. 
+- Kown "issue": Each opened note does not support themes yet. Main window is the only one. Total burnout!
+- After working with themes, I have come to the conclusion that WPF styles in this project is super disorganized. Cleaning up 
+  the styles will take a large amount of time. WPF can be a nightmare when it comes to this.
+- Added version to settings box
+- Fixed bug when starting Jotter to reset last selected theme
+- Removed Custom theme from settings. Too difficult for that right now.
+- Disabled some UI elements in settings that are not implemented yet.

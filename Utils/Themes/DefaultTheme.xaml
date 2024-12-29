@@ -34,6 +34,13 @@
     for example and removal of the blue default selector and hover halo effect. 
     Also, is the visual to elevate the note item as mouseovers happen
     -->
+
+    <!-- Drop Shadow Effect Color="#FCFF4D"
+    #FFF921
+    Original:     <DropShadowEffect x:Key="NoteShadowEffect" ShadowDepth="10" BlurRadius="8" Color="#E0D600" />
+    -->
+    <DropShadowEffect x:Key="NoteShadowEffect" ShadowDepth="5" BlurRadius="8" Color="#E0D600" />
+
     <Style x:Key="MyNotesListViewContainerStyle" TargetType="ListViewItem">
 
         <!-- When selecting or hovering over, remove the default blue outline
@@ -59,7 +66,6 @@
 
         <Setter Property="Margin" Value="0,0,0,5" />
         <Setter Property="Effect" Value="{DynamicResource NoteShadowEffect}" />
-
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
                 <!-- Add dynamic margin for elevation from MouseOver 
@@ -68,13 +74,33 @@
                 <Setter Property="Margin" Value="0,-2,0,8" />
                 <Setter Property="Effect">
                     <Setter.Value>
-                        <DropShadowEffect ShadowDepth="8" BlurRadius="15" Color="Gray" />
+                         <DropShadowEffect ShadowDepth="8" BlurRadius="15" Color="Gray" /> 
                     </Setter.Value>
                 </Setter>
             </Trigger>
+
+            <!-- Tag #SelectedNoteNoNoteBlockChrome
+            When the note is selected... use IsSelected Trigger
+            This will be use in the defaultviewtheme outside NoteBlockChrome
+            See #NoteBlockChromeNoteSelected as that is used. Commented
+            out that to use this version. The border is slightly larger
+            however. 
+            -->
+            <!--<Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="#FFE082" />
+                --><!-- Highlight Color --><!--
+                <Setter Property="BorderBrush" Value="#FFB74D" />
+                --><!-- Border Color --><!--
+                <Setter Property="BorderThickness" Value="2" />
+            </Trigger>-->
+
         </Style.Triggers>
     </Style>
 
+    
+    <!-- #NoteBlockChromeNoteSelected related to selecting the note -->
+    <SolidColorBrush x:Key="SelectedNoteBackgroundBrush" Color="#FFE082" />
+    <SolidColorBrush x:Key="SelectedNoteBorderBrush" Color="#FFB74D" />
 
     <!-- Note Content -->
     <SolidColorBrush x:Key="ContentBackgroundBrush" Color="#F7DC6F" />
@@ -95,7 +121,6 @@
     -->
     <SolidColorBrush x:Key="NoteBlockBackgroundBrush" Color="#FFF524" />
     <SolidColorBrush x:Key="NoteBlockBackgroundInnerBrush" Color="#FFFDE7" />
-    
 
     <!-- LightYellow -->
     <SolidColorBrush x:Key="NoteBlockBorderBrush" Color="#E0D600" />
@@ -104,16 +129,11 @@
     <SolidColorBrush x:Key="NoteTitleForegroundBrush" Color="Black" />
     <SolidColorBrush x:Key="NoteTextForegroundBrush" Color="Black" />
 
-    <!-- Drop Shadow Effect Color="#FCFF4D"
-    #FFF921
-    Original:     <DropShadowEffect x:Key="NoteShadowEffect" ShadowDepth="10" BlurRadius="8" Color="#E0D600" />
-    -->
-    <DropShadowEffect x:Key="NoteShadowEffect" ShadowDepth="5" BlurRadius="8" Color="#E0D600" />
-    
+  
     
     
     <!-- NoteTemplateEditor -->
     <SolidColorBrush x:Key="NoteEditBackgroundBrush" Color="#FFFFC7" />
-    
+
 
 </ResourceDictionary>

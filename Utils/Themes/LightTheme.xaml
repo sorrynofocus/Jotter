@@ -9,7 +9,9 @@
 
 
 
-
+    <!-- dark tint for dropshadow effect -->
+    <DropShadowEffect x:Key="NoteShadowEffect" ShadowDepth="5" BlurRadius="8" Color="#FF999999" />
+    
 
 
 
@@ -45,4 +47,13 @@
     <SolidColorBrush x:Key="NoteTitleBackgroundBrush" Color="#FFFFFFFF" />
     <SolidColorBrush x:Key="NoteTitleForegroundBrush" Color="#FF000000" />
     <SolidColorBrush x:Key="NoteTextForegroundBrush" Color="#FF000000" />
+
+
+    <!-- #NoteBlockChromeNoteSelected light grey for selection -->
+    <SolidColorBrush x:Key="SelectedNoteBackgroundBrush" Color="#FFF0F0F0" />
+    <!-- #NoteBlockChromeNoteSelected light grey border -->
+    <SolidColorBrush x:Key="SelectedNoteBorderBrush" Color="#FFDDDDDD" />
+    
+
+
 </ResourceDictionary>

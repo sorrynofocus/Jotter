@@ -217,6 +217,18 @@
                             </Grid>
                             <!-- end of gridrow "gridSurroundDataTemplate" -->
                         </Border>
+
+                        <!-- Tag: #NoteBlockChromeNoteSelected
+                        This is the trigger for the selected note 
+                        -->
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListViewItem}}" Value="True">
+                                <Setter TargetName="NoteBlockChrome" Property="BorderBrush" Value="{DynamicResource SelectedNoteBorderBrush}" />
+                                <Setter TargetName="NoteBlockChrome" Property="BorderThickness" Value="2" />
+                                <Setter TargetName="NoteBlockChrome" Property="Background" Value="{DynamicResource SelectedNoteBackgroundBrush}" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>

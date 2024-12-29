@@ -7,11 +7,12 @@
         <ResourceDictionary Source="SharedResources.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
+    <!-- Light grey dropshadow under note -->
+    <DropShadowEffect x:Key="NoteShadowEffect" ShadowDepth="5" BlurRadius="8" Color="#FF424242" />
 
-
-
-
-
+    
+    <!-- trying to voerride mouse  over note so we see static dropshadow -->
+    <SolidColorBrush x:Key="Button.MouseOver.Background1" Color="White"  />
 
 
     <!-- General Window -->
@@ -53,10 +54,19 @@
     <!-- Medium Gray -->
     <SolidColorBrush x:Key="NoteDateForegroundBrush" Color="#FFAAAAAA" />
     <!-- Light Gray -->
-    <SolidColorBrush x:Key="NoteTitleBackgroundBrush" Color="#FF1E1E1E" />
+    <SolidColorBrush x:Key="NoteTitleBackgroundBrush" Color="#FF505050" />
     <!-- Same as WindowBackground -->
     <SolidColorBrush x:Key="NoteTitleForegroundBrush" Color="#FFFFFFFF" />
     <!-- White -->
     <SolidColorBrush x:Key="NoteTextForegroundBrush" Color="#FFFFFFFF" />
     <!-- White -->
+
+
+
+    <!-- #NoteBlockChromeNoteSelected dark grey for selected note origin: #FF424242-->
+    <SolidColorBrush x:Key="SelectedNoteBackgroundBrush" Color="#FF424242" />
+    <!--#NoteBlockChromeNoteSelected Light grey border -->
+    <SolidColorBrush x:Key="SelectedNoteBorderBrush" Color="#FFBDBDBD" />
+    
+
 </ResourceDictionary>

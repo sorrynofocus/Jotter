@@ -261,7 +261,7 @@
 
                 <StackPanel Grid.Row="3" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,5" Grid.RowSpan="2">
                     <TextBlock Text="Enable logging" VerticalAlignment="Center" Margin="210,0,10,0"/>
-                    <CheckBox Width="62" VerticalAlignment="Center"/>
+                    <CheckBox Width="62" VerticalAlignment="Center" IsChecked="True" IsEnabled="False"/>
                 </StackPanel>
 
 
@@ -301,7 +301,7 @@
                 <!-- Set number of seconds for auto save -->
                 <StackPanel Grid.Row="9" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,11" Grid.RowSpan="2">
                     <TextBlock Text="Set number of seconds for auto save: " VerticalAlignment="Center" Margin="5,5,0,5"/>
-                    <ComboBox SelectedIndex="0" Margin="5,5,0,5" Height="25">
+                    <ComboBox SelectedIndex="0" Margin="5,5,0,5" Height="25" IsEnabled="False">
                         <ComboBoxItem>Auto [3 seconds]</ComboBoxItem>
                         <ComboBoxItem>25 seconds</ComboBoxItem>
                         <ComboBoxItem>45 seconds</ComboBoxItem>
@@ -315,12 +315,12 @@
 
                 <StackPanel Grid.Row="11" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,33,0,0" Grid.RowSpan="2">
                     <TextBlock Text="Add date/time stamps to notes: " VerticalAlignment="Center"/>
-                    <CheckBox Margin="5,5,0,5"/>
+                    <CheckBox Margin="5,5,0,5" IsChecked="True" IsEnabled="False"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="12" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,28,0,0" Grid.RowSpan="2">
                     <TextBlock Text="Confirm deletion of notes: " VerticalAlignment="Center"/>
-                    <CheckBox Margin="5,5,0,5" IsChecked="True" />
+                    <CheckBox Margin="5,5,0,5" IsChecked="True" IsEnabled="False" />
                 </StackPanel>
 
                 <!-- Logging -->
@@ -336,7 +336,13 @@
                 Place holders at the moment 
                 -->
                 <Separator Grid.Row="17" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,5"/>
-                <StackPanel Grid.Row="18" Orientation="Horizontal" Grid.ColumnSpan="2" Grid.RowSpan="4">
+
+                <StackPanel Grid.Row="19" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,28,0,0" Grid.RowSpan="2">
+                    <TextBlock Text="Version: " VerticalAlignment="Center"/>
+                    <TextBlock x:Name="VersionTextBlock" Text="???" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="20" Orientation="Horizontal" Grid.ColumnSpan="2" Grid.RowSpan="4">
                     <!--<Button Content="Save" Style="{StaticResource ButtonStyle}"/>
                     <Button Content="Cancel" Style="{StaticResource ButtonStyle}"/>-->
                 </StackPanel>

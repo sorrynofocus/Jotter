@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -113,7 +114,7 @@ namespace Jotter
         //    return (true);
         //}
 
-        private void SwitchTheme(string themeName)
+        public void SwitchTheme(string themeName)
         {
             try
             {
@@ -178,6 +179,8 @@ namespace Jotter
             //Set UI Logging
             TextUserData.Text = Jotter.MainWindow.jotNotesFilePath;
             TextLogFile.Text = Jotter.MainWindow.logger.LogFile;
+
+            VersionTextBlock.Text = GetJotterVersion(); 
 
             //Set the radio button for minmize or full exit
             bool isTray = settingsManager.Settings.IsTray;
@@ -291,6 +294,15 @@ namespace Jotter
                 settingsManager.SaveSettings();
                 Debug.WriteLine("[DEBUG] IsTray set to false and saved.");
             }
+        }
+
+        static string GetJotterVersion()
+        {
+            string filePath = Assembly.GetExecutingAssembly().Location;
+
+            var versionInfo = FileVersionInfo.GetVersionInfo(filePath);
+
+            return (versionInfo.FileVersion);
         }
     }
 }

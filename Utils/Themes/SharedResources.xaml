@@ -178,4 +178,13 @@ Using {DynamicResource} makes sure runtime theme switch dynamically.
 		<Setter Property="Width" Value="10" />
 	</Style>
 
+
+    <SolidColorBrush x:Key="SelectedNoteBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="SelectedNoteBorderBrush" Color="#CCCCCC" />
+
+
+    <!-- dropshadow effect color-->
+    <!--<DropShadowEffect x:Key="NoteShadowEffectDefault" ShadowDepth="5" BlurRadius="8" Color="Gray" />-->
+
+
 </ResourceDictionary>

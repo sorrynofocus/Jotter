@@ -130,7 +130,51 @@ namespace Jotter
         }
 
 
+        /// <summary>
+        /// Switch Themes
+        /// </summary>
+        /// <param name="themeName">LightTheme, DarkTheme, DefaultTheme.</param>
+        /// TODO :This function is REDUNDANT! Put into a utils file as this is essentially the 
+        /// same as the one in settings.xaml.cs
+        public void SwitchTheme(string themeName)
+        {
+            try
+            {
+                var resourceUri = new Uri(@$"/Utils/Themes/{themeName}.xaml", UriKind.RelativeOrAbsolute);
+                var resourceDictionary = new ResourceDictionary() { Source = resourceUri };
 
+                var existingDictionaries = Application.Current.Resources.MergedDictionaries.ToList();
+                foreach (var dictionary in existingDictionaries)
+                {
+                    Application.Current.Resources.MergedDictionaries.Remove(dictionary);
+                }
+
+                Application.Current.Resources.MergedDictionaries.Add(resourceDictionary);
+
+                Debug.WriteLine($"Theme applied successfully: {themeName}");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to apply theme: {themeName}. Error: {ex.Message}");
+                MessageBox.Show($"The theme \"{themeName}\" could not be applied. Falling back to the default theme.", "Theme Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+                // Apply default theme as fallback
+                try
+                {
+                    var defaultUri = new Uri("/Utils/Themes/DefaultTheme.xaml", UriKind.RelativeOrAbsolute);
+                    var defaultDictionary = new ResourceDictionary() { Source = defaultUri };
+
+                    Application.Current.Resources.MergedDictionaries.Clear();
+                    Application.Current.Resources.MergedDictionaries.Add(defaultDictionary);
+
+                    Debug.WriteLine("Default theme applied as fallback.");
+                }
+                catch (Exception fallbackEx)
+                {
+                    Debug.WriteLine($"Failed to apply default theme. Error: {fallbackEx.Message}");
+                }
+            }
+        }
 
         /// <summary>
         /// Load the application settings from global config
@@ -154,6 +198,34 @@ namespace Jotter
             //Restore maximized state if applicable
             if (settings.IsMaximized)
                 this.WindowState = WindowState.Maximized;
+
+
+            //Themes!
+            string selectedTheme = settings.Theme;  
+
+            switch (selectedTheme)
+            {
+                case "Light Theme":
+                    SwitchTheme("LightTheme");
+                    settingsManager.Settings.Theme = selectedTheme;
+                    settingsManager.SaveSettings();
+                    break;
+                case "Dark Theme":
+                    SwitchTheme("DarkTheme");
+                    settingsManager.Settings.Theme = selectedTheme;
+                    settingsManager.SaveSettings();
+                    break;
+                case "Default Theme":
+                    SwitchTheme("DefaultTheme");
+                    settingsManager.Settings.Theme = selectedTheme;
+                    settingsManager.SaveSettings();
+                    break;
+                case "Custom Theme":
+                    SwitchTheme("CustomTheme");
+                    settingsManager.Settings.Theme = selectedTheme;
+                    settingsManager.SaveSettings();
+                    break;
+            }
 
             //...
         }

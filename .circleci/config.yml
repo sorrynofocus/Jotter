@@ -91,6 +91,18 @@ jobs:
             $templateFilePath = "c:\workspace\NoBuild\release-notes.md"
             $releaseNotesFilePath = "c:\workspace\NoBuild\release-notes-final.md"
             
+            Write-Output "notesFilePath: $templateFilePath"
+            Write-Output "templateFilePath: $templateFilePath"
+            Write-Output "releaseNotesFilePath: $releaseNotesFilePath"  
+
+            #Store the variable in a file for later use. CircleCi run steps don't persist variables.
+            @"
+            notesFilePath=$notesFilePath            
+            templateFilePath=$templateFilePath
+            releaseNotesFilePath=$releaseNotesFilePath
+            "@ | Set-Content -Path "c:\workspace\env-vars.txt"
+
+            Write-Output "Vars saved to c:\workspace\env-vars.txt"
 
             # Read Notes.md and extract the latest entry
             # Regex to capture from the separator or end of file back to the previous markdown header
@@ -169,8 +181,23 @@ jobs:
       - run:
           name: Create GitHub Release
           command: |
+           # Read in the env vars we stored earlier
+            $envVars = Get-Content -Path "c:\workspace\env-vars.txt"
+            foreach ($line in $envVars) {
+                # Split key and value
+                $key, $value = $line -split '=', 2
+                Set-Variable -Name $key -Value $value
+            }
+
+            Write-Output "notesFilePath: $templateFilePath"
+            Write-Output "templateFilePath: $templateFilePath"
+            Write-Output "releaseNotesFilePath: $releaseNotesFilePath"              
+
+
+           #Get backt o our .git location! 
            Set-Location "c:\workspace"
-           Get-ChildItem -Recurse -Force | Select-Object FullName
+           #Get-ChildItem -Recurse -Force | Select-Object FullName
+
             # # #Read the version from the file
             $versionFilePath = "c:\workspace\build\versioninfo.txt"
             $TAG_NAME = (Get-Content -Path $versionFilePath -Raw).Trim()

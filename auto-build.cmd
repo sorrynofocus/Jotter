@@ -32,9 +32,9 @@ echo "Starting %SOLUTIONFILE% build..."
 
 if "%IS_DEBUG%" == "true" (
     echo RUNNING DEBUG BUILD...
-    dotnet clean "%SOLUTIONFILE%" --configuration %CONFIG_DEBUG% --property:Platform=%PLATFORM% --nologo --verbosity "%VERBOSE_LEVEL%"
-    dotnet build "%SOLUTIONFILE%" --framework %FRAMEWORK% --configuration %CONFIG_DEBUG% --property:Platform=%PLATFORM% --nologo -nodeReuse:true --verbosity "%VERBOSE_LEVEL%"
-    dotnet publish "%SOLUTIONFILE%" --framework %FRAMEWORK% -r "%RUNTIME_IDENTIFIER%" --configuration %CONFIG_DEBUG% --property:Platform=%PLATFORM% --self-contained true --property:PublishSingleFile=true  --property:IncludeNativeLibrariesForSelfExtract=true --verbosity "%VERBOSE_LEVEL%" --property:PublishDir=%PUBLISHDIR_DEBUG%
+    dotnet clean "%SOLUTIONFILE%" --property:dotNetBuildCmd="clean" --configuration %CONFIG_DEBUG% --property:Platform=%PLATFORM% --nologo --verbosity "%VERBOSE_LEVEL%"
+    dotnet build "%SOLUTIONFILE%" --property:dotNetBuildCmd="build" --framework %FRAMEWORK% --configuration %CONFIG_DEBUG% --property:Platform=%PLATFORM% --nologo -nodeReuse:true --verbosity "%VERBOSE_LEVEL%"
+    dotnet publish "%SOLUTIONFILE%" --property:dotNetBuildCmd="publish" --framework %FRAMEWORK% -r "%RUNTIME_IDENTIFIER%" --configuration %CONFIG_DEBUG% --property:Platform=%PLATFORM% --self-contained true --property:PublishSingleFile=true  --property:IncludeNativeLibrariesForSelfExtract=true --verbosity "%VERBOSE_LEVEL%" --property:PublishDir=%PUBLISHDIR_DEBUG%
     echo.
     for /f "tokens=1 delims= " %%a in ('certutil -hashfile "%PUBLISHDIR_DEBUG%\%PRODUCTFILEWIN%" SHA256 ^| findstr /r "^[0-9A-F]"') do (
     if "%%a" neq "CertUtil:" set HASH=%%a
@@ -44,14 +44,15 @@ if "%IS_DEBUG%" == "true" (
 
 ) else (
     echo RUNNING RELEASE BUILD...
-    dotnet clean "%SOLUTIONFILE%" --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --nologo --verbosity "%VERBOSE_LEVEL%"
-    dotnet build "%SOLUTIONFILE%" --framework %FRAMEWORK% --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --nologo -nodeReuse:true --verbosity "%VERBOSE_LEVEL%"
-    dotnet publish "%SOLUTIONFILE%" --framework %FRAMEWORK% -r "%RUNTIME_IDENTIFIER%" --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --self-contained true --property:PublishSingleFile=true  --property:IncludeNativeLibrariesForSelfExtract=true --verbosity "%VERBOSE_LEVEL%" --property:PublishDir=%PUBLISHDIR_RELEASE%
+    dotnet clean "%SOLUTIONFILE%" --property:dotNetBuildCmd="clean" --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --nologo --verbosity "%VERBOSE_LEVEL%"
+    dotnet build "%SOLUTIONFILE%" --property:dotNetBuildCmd="build" --framework %FRAMEWORK% --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --nologo -nodeReuse:true --verbosity "%VERBOSE_LEVEL%"
+    dotnet publish "%SOLUTIONFILE%" --property:dotNetBuildCmd="publish" --framework %FRAMEWORK% -r "%RUNTIME_IDENTIFIER%" --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --self-contained true --property:PublishSingleFile=true  --property:IncludeNativeLibrariesForSelfExtract=true --verbosity "%VERBOSE_LEVEL%" --property:PublishDir=%PUBLISHDIR_RELEASE%
     echo.
-    for /f "tokens=1 delims= " %%a in ('certutil -hashfile "%PUBLISHDIR_RELEASE%\%PRODUCTFILEWIN%" SHA256 ^| findstr /r "^[0-9A-F]"') do (
+    echo Getting hash value of %PUBLISHDIR_RELEASE%%PRODUCTFILEWIN%
+    for /f "tokens=1 delims= " %%a in ('certutil -hashfile "%PUBLISHDIR_RELEASE%%PRODUCTFILEWIN%" SHA256 ^| findstr /r "^[0-9A-F]"') do (
     if "%%a" neq "CertUtil:" set HASH=%%a
     )
-    echo The hash value of %PRODUCTFILE%: %HASH%
+    echo The hash value of %PRODUCTFILE%: %HASH% - %PUBLISHDIR_RELEASE%%PRODUCTFILEWIN%.hash
     echo Product location [RELEASE]  %RUNTIME_IDENTIFIER%-%FRAMEWORK%: %PUBLISHDIR_RELEASE%    
 )
 

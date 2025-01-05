@@ -313,3 +313,10 @@ file it is. In this case, the SharedResources.xaml is where it could happen.
 
 ---
 
+## 2024-01-05 -> 3:475am
+- Bug in versioninfo in settings. Still working on, but added logging since the compiled process could not attach for debugging
+- small autobuild output changes.
+
+---
+
+

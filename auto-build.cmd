@@ -36,6 +36,9 @@ if "%IS_DEBUG%" == "true" (
     dotnet build "%SOLUTIONFILE%" --property:dotNetBuildCmd="build" --framework %FRAMEWORK% --configuration %CONFIG_DEBUG% --property:Platform=%PLATFORM% --nologo -nodeReuse:true --verbosity "%VERBOSE_LEVEL%"
     dotnet publish "%SOLUTIONFILE%" --property:dotNetBuildCmd="publish" --framework %FRAMEWORK% -r "%RUNTIME_IDENTIFIER%" --configuration %CONFIG_DEBUG% --property:Platform=%PLATFORM% --self-contained true --property:PublishSingleFile=true  --property:IncludeNativeLibrariesForSelfExtract=true --verbosity "%VERBOSE_LEVEL%" --property:PublishDir=%PUBLISHDIR_DEBUG%
     echo.
+    dir %PUBLISHDIR_DEBUG%
+    ping 127.0.0.1 -n 5 -w 1000 > NUL
+    echo Getting hash value of %PUBLISHDIR_DEBUG%%PRODUCTFILEWIN%   
     for /f "tokens=1 delims= " %%a in ('certutil -hashfile "%PUBLISHDIR_DEBUG%\%PRODUCTFILEWIN%" SHA256 ^| findstr /r "^[0-9A-F]"') do (
     if "%%a" neq "CertUtil:" set HASH=%%a
     )
@@ -48,6 +51,8 @@ if "%IS_DEBUG%" == "true" (
     dotnet build "%SOLUTIONFILE%" --property:dotNetBuildCmd="build" --framework %FRAMEWORK% --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --nologo -nodeReuse:true --verbosity "%VERBOSE_LEVEL%"
     dotnet publish "%SOLUTIONFILE%" --property:dotNetBuildCmd="publish" --framework %FRAMEWORK% -r "%RUNTIME_IDENTIFIER%" --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --self-contained true --property:PublishSingleFile=true  --property:IncludeNativeLibrariesForSelfExtract=true --verbosity "%VERBOSE_LEVEL%" --property:PublishDir=%PUBLISHDIR_RELEASE%
     echo.
+    dir %PUBLISHDIR_RELEASE%
+    ping 127.0.0.1 -n 5 -w 1000 > NUL
     echo Getting hash value of %PUBLISHDIR_RELEASE%%PRODUCTFILEWIN%
     for /f "tokens=1 delims= " %%a in ('certutil -hashfile "%PUBLISHDIR_RELEASE%%PRODUCTFILEWIN%" SHA256 ^| findstr /r "^[0-9A-F]"') do (
     if "%%a" neq "CertUtil:" set HASH=%%a

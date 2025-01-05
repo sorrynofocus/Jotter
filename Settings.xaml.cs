@@ -34,6 +34,8 @@ namespace Jotter
         //private SettingsMgr settingsManager;
         private readonly SettingsMgr settingsManager;
 
+        Logger logger = Jotter.MainWindow.logger;
+
         //public class CustomToggleButton : CheckBox
         //{
         //    public CustomToggleButton()
@@ -48,6 +50,13 @@ namespace Jotter
             InitializeComponent();
             //settingsManager = new SettingsMgr();
             settingsManager = sharedSettingsManager;
+
+
+
+            logger.LogFile = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                                           System.IO.Path.Join(Assembly.GetExecutingAssembly().GetName().Name, "JotterNotes.log"));
+            logger.EnableDTStamps = true;
+
 
             LoadAppSettings(settingsManager.Settings);
 
@@ -174,13 +183,20 @@ namespace Jotter
 
         public void LoadAppSettings(AppSettings settings)
         {
+            logger.LogInfo("[Doing action] Settings- LoadAppSettings");
+
             if (settings == null) return;
 
             //Set UI Logging
             TextUserData.Text = Jotter.MainWindow.jotNotesFilePath;
             TextLogFile.Text = Jotter.MainWindow.logger.LogFile;
 
-            VersionTextBlock.Text = GetJotterVersion(); 
+            logger.LogInfo("[Doing action] Settings- GetJotterVersion started");
+            VersionTextBlock.Text = GetJotterVersion();
+
+            logger.LogInfo("[Doing action] Settings- GetJotterVersion finished");
+
+
 
             //Set the radio button for minmize or full exit
             bool isTray = settingsManager.Settings.IsTray;
@@ -227,7 +243,7 @@ namespace Jotter
                 }
             }
 
-
+            logger.LogInfo("[Ending action] Settings- LoadAppSettings");
 
         }
 
@@ -298,11 +314,23 @@ namespace Jotter
 
         static string GetJotterVersion()
         {
-            string filePath = Assembly.GetExecutingAssembly().Location;
+            //string filePath = Assembly.GetExecutingAssembly().Location;
 
-            var versionInfo = FileVersionInfo.GetVersionInfo(filePath);
+            //var versionInfo = FileVersionInfo.GetVersionInfo(filePath);
 
-            return (versionInfo.FileVersion);
+            //return (versionInfo.FileVersion);
+
+            string appVersion = string.Empty;   
+
+
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            if (assembly.GetName().Version != null)
+            {
+                appVersion = assembly.GetName().Version.ToString();
+            }
+
+            return (appVersion);
+
         }
     }
 }

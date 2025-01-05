@@ -209,10 +209,19 @@ jobs:
               --title "Release v$TAG_NAME" `
               --notes-file $releaseNotesFilePath `
 
+
 workflows:
   build-and-release:
     jobs:
-      - build
+      - build:
+          filters:
+            branches:
+              only:
+                - main
       - release:
           requires:
             - build
+          filters:
+            branches:
+              only:
+                - main            

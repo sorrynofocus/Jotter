@@ -1,6 +1,10 @@
 # Use the latest 2.1 version of CircleCI pipeline process engine.
 # See: https://circleci.com/docs/configuration-reference
+# Location: https://app.circleci.com/pipelines/github/sorrynofocus/Jotter
 #
+# Running locally? Install docker and run:
+# circleci local execute Jotter --branch main 
+
 version: 2.1
 
 orbs:
@@ -21,8 +25,8 @@ jobs:
             # Install Chocolatey package manager and dependencies
             choco install gh zip -y 
             # Verify installations
-            where gh 
-            where zip
+            Get-Command gh 
+            Get-Command zip
 
       - run:
           name: Set up build environment
@@ -51,11 +55,15 @@ jobs:
 
       - persist_to_workspace:
           name: Saving workspace to transfer to next flow
+          # `root` specifies the root directory in the workspace where the files will be saved
           root: C:\Users\circleci\project\
+          #`paths` - an array of file paths or directories (relative to root dir) saved to the workspace
           paths:
             - .git
             - bin\x64\Release\net8.0-windows\publishprod
             - build\versioninfo.txt
+            - NoBuild\Notes.md
+            - NoBuild\release-notes.md
 
   release:
     executor: win/default
@@ -65,51 +73,141 @@ jobs:
           at: C:\workspace
 
       - run:
-          name: Install Additional Dependencies (GitHub CLI and zip)
+          name: Install Additional Dependencies and verify tree
           command: |
             choco install gh zip -y 
             where zip
+            Get-ChildItem -Recurse -Force | Select-Object FullName
+
+
+      # Generate release notes from notes.md. 
+      - run:
+          name: Generate Release Notes with Notes.md Content
+          command: |
+            Set-Location "c:\workspace"
+
+            # File paths
+            $notesFilePath = "c:\workspace\release\notes.md"
+            $templateFilePath = "c:\workspace\release\release-notes.md"
+            $releaseNotesFilePath = "c:\workspace\release\release-notes-final.md"
+            
+
+            # Read Notes.md and extract the latest entry
+            # Regex to capture from the separator or end of file back to the previous markdown header
+
+            # ^\s{0,3}##.*\n([\s\S]*?)^\s{0,3}---
+            # ^\s{0,3}##.*\n([\s\S]*?)(^\s{0,3}---|\z)
+            # ^\s{0,3}##.*\n([\s\S]*?)^\s{0,3}(---|\z)
+
+            # Read the entire content of the notes file
+            try {
+              $notesContent = Get-Content -Path $notesFilePath -Raw
+              if (-not $notesContent) {
+                  Write-Error "The notes file is empty or could not be read."
+                  exit 1
+              }
+            } catch {
+              Write-Error "Failed to read the notes file: $_"
+              exit 1
+            }
+
+            # Debugging: Output the first few characters of the file for verification
+            Write-Output "First 100 characters of notes.md for debugging:"
+            Write-Output $notesContent.Substring(0, [Math]::Min(100, $notesContent.Length))
+
+            # Regular expression to match all entries
+            $entryPattern = '##\s.*?\n([\s\S]*?)(?=\n##|\z)'
+
+            # Match all entries and select the last one
+            $allMatches = [regex]::Matches($notesContent, $entryPattern)
+            if ($allMatches.Count -eq 0) {
+              Write-Error "No entries found in the notes file. Please verify the file structure and regex."
+              exit 1
+            }
+
+            # Get the last match
+            $lastMatch = $allMatches[$allMatches.Count - 1]
+
+            # Combine the header and content for the last entry
+            $lastEntry = $lastMatch.Groups[0].Value.Trim()
+
+            # Debugging: Display the extracted last entry
+            Write-Output "Extracted last entry:"
+            Write-Output $lastEntry
+
+            # debug for further inspection
+            # $outputFilePath = "C:\workspace\last-entry.md"
+            # Set-Content -Path $outputFilePath -Value $lastEntry
+            # Write-Output "Last entry saved to $outputFilePath"
 
       - run:
           name: Prepare release
           command: |
             echo Creating release archive
             mkdir C:\workspace\release\
-            zip -r C:\workspace\release\jotter-release.zip C:\workspace\bin\x64\Release\net8.0-windows\publishprod\*.exe
+            cd C:\workspace\bin\x64\Release\net8.0-windows\publishprod
+
+            # Generate file hash using certutil
+            $outputFilePath = "C:\workspace\release\Jotter.exe"
+            $hashFilePath = "C:\workspace\release\Jotter.exe.hash"
+            
+            $hashOutput = certutil -hashfile $outputFilePath SHA256
+            $fileHash = ($hashOutput | Where-Object { $_ -match "^[0-9A-F]{64}$" }).Trim()
+            
+            # Save the hash to jotter.exe.hash. Read this in later for the release notes.
+            $fileHash | Set-Content -Path $hashFilePath
+            Write-Output "Generated SHA256 hash: $fileHash"
+
+            #zip -r C:\workspace\release\jotter-release.zip C:\workspace\bin\x64\Release\net8.0-windows\publishprod\*.exe
+            zip C:\workspace\release\jotter-release.zip Jotter.exe Jotter.exe.hash
 
       - store_artifacts:
+          name: Artifacts storage
           path: C:\workspace\release\jotter-release.zip
           destination: jotter-release.zip
 
       - run:
           name: Create GitHub Release
           command: |
-            cd "c:\workspace"
-            # Read the version from the file 
+            # # #Read the version from the file
             $versionFilePath = "c:\workspace\build\versioninfo.txt"
             $TAG_NAME = (Get-Content -Path $versionFilePath -Raw).Trim()
             Write-Output "Detected release from versioninfo: v$TAG_NAME"
 
-            # Create the release name 
-            $RELEASE_NAME = "Release v$TAG_NAME" 
+            # Create the release name
+            $RELEASE_NAME = "Release v$TAG_NAME"
             Write-Output "Creating release $RELEASE_NAME"
 
             # Ensure Git context is valid
             git config --global user.name "circleci-bot"
             git config --global user.email "noreply@circleci.com"
+            git remote set-url origin https://$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
 
-             git remote set-url origin https://$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
-
-            #Create tag in github to make it exist
-            git tag -a "v$TAG_NAME" -m "VErsion v$TAG_NAME"
-            Write-Host "*NEW* Github TAG_NAME: '$TAG_NAME'"
+            # Create tag in GitHub
+            git tag -a "v$TAG_NAME" -m "Version v$TAG_NAME"
+            Write-Host "*NEW* GitHub TAG_NAME: '$TAG_NAME'"
             git push origin "v$TAG_NAME"
 
-            # Create the GitHub release using prevously created tag
+            # Prepare release notes by reading the template and replacing placeholders  
+            $releaseNotesTemplate = Get-Content -Path $templateFilePath -Raw
+            $releaseNotes = $releaseNotesTemplate `
+            -replace '\[RELEASE_SUMMARY\]', $commitMessage `
+            -replace '\[RELEASE_CONTENT\]', $lastEntry `
+            -replace '\[PRODUCT_RELEASE_HASH\]', "``$fileHash``"
+
+            # Write the release notes to a file 
+            $releaseNotes | Set-Content -Path $releaseNotesFilePath
+            Write-Output "Release notes prepared."
+
+            # Print output for debugging and verification
+            Write-Output "Release notes written to $releaseNotesFilePath"
+            Write-Output "[DEBUG] Latest notes extracted from Notes.md:"
+            Write-Output $lastEntry      
+
+            # Create the GitHub release using the generated release notes
             gh release create "v$TAG_NAME" C:\workspace\release\jotter-release.zip `
               --title "Release v$TAG_NAME" `
-              --notes "Automated release via CircleCI"
-
+              --notes-file $releaseNotesFilePath `
 
 workflows:
   build-and-release:

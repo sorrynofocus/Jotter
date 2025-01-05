@@ -1,7 +1,8 @@
 # Release notes.
-These are general release notes. For release notes detailed history, see `Note.md`
+These are general release notes generate by the build. For release notes detailed history, see `Notes.md`
 
-### [RELEASE_DESCRIPTION]
+### Release Summary
+[RELEASE_SUMMARY]
 
 [RELEASE_CONTENT]
 

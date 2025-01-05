@@ -1,10 +1,16 @@
 ﻿<Project>
-	<Target Name="ManageVersion" BeforeTargets="BeforeBuild" Condition="'$(Configuration)' == 'Release'">
+	<Target Name="ManageVersion" BeforeTargets="BeforeBuild" Condition="'$(Configuration)' == 'Release' and '$(dotNetBuildCmd)' == 'build'">
 		<PropertyGroup>
 			<!-- File path to store the version -->
 			<VersionFile>$(MSBuildProjectDirectory)\build\VersionInfo.txt</VersionFile>
 			<!-- Default version if the file does not exist -->
 			<DefaultVersion>1.0.0.0</DefaultVersion>
+
+			<!-- pass in the dotnet command to the property. 
+			the property is passed in from the command line as follows: property:dotNetBuildCmd="build" to signify
+		    dotnet command was 'build' and not  'publish' or 'clean'
+			-->
+		    <dotNetBuildCmd Condition="'$(dotNetBuildCmd)' == ''">default</dotNetBuildCmd>
 		</PropertyGroup>
 
 		<!-- Ensure the version file exists -->
@@ -15,8 +21,9 @@
 			<Output TaskParameter="Lines" PropertyName="CurrentVersion" />
 		</ReadLinesFromFile>
 
-		<!-- Log the current version from the file -->
-		<Message Text="Current version read from file: $(CurrentVersion)" Importance="High" />
+		<!-- Log the current version from the file and current passed in dotnet command property passed in -->
+		<Message Importance="High" Text="dotNetBuildCmd property passed in: $(dotNetBuildCmd)" />
+		<Message Importance="High" Text="Current Version read from file: (before increment): $(CurrentVersion)" />
 
 		<!-- Parse the version components -->
 		<PropertyGroup>

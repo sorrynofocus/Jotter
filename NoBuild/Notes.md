@@ -250,6 +250,9 @@ When that's read in, you'll see defaultthemes.xaml is read in. Before that whole
 also depends on SharedResources.xaml. Typically a crash will tell you the line number where it failed but you have to trace _which_ 
 file it is. In this case, the SharedResources.xaml is where it could happen.
 
+---
+
+
 ## 2024-12-20 12:01
 - Themes themes, themes... Just working on adjuting the color to be a bit more modern and easy on eyes.. Trying ot a get a solid 
   default style and then I'll make then for dark and light mode. No coding now.
@@ -257,9 +260,13 @@ file it is. In this case, the SharedResources.xaml is where it could happen.
 - Stopped on tracking down the light blue borderline when mouse hovers over a note. The border is a light blue thin line. 
   Need to track down. I _see_ it at the _txtTitle_ but the _blueish_ color isn't defined. Not sure where it's at right now.
 
+---
+
 ## 2024-12-23 -> 24 1:01am
 - Working with the ListView.ItemContainerStyle changing the behavior of the border and appearance of being elevated. This was a bit
   difficult to figure out. Still working with the default theme. Once I get it locked in, I'll move to the dark and light themes clean ups.
+
+---
 
 ## 2024-12-24 -> 10:21pm
 - Still working with themes. Have been moving stuff around to make it more organized. Added better UI mostly for the default theme with better colors 
@@ -269,6 +276,8 @@ file it is. In this case, the SharedResources.xaml is where it could happen.
 - Select all text on notes title editing.
 - Added theme for notes editor.
 - Stopped on mainwindow private void OpenSelectedNote()) - working on settings of a previously opened note, if possible. We're saving the window pos and dim.All the notes are saved  in the settings manager using the NoteSettings class. 
+
+---
 
 ## 2024-12-25 -> 1:08pm -> 11:43pm
 - Merry Christmas, but I'm designing. 
@@ -280,6 +289,8 @@ file it is. In this case, the SharedResources.xaml is where it could happen.
 - Added notify tray icon for application to run in background. Relied on package: https://github.com/hardcodet/wpf-notifyicon
 - Added settings for minimize to tray for fully exit
 - Added mutex for single instance.
+
+---
 
 ## 2024-12-29 -> 2:30am
 - If note is selected, there needs to be a visual indicator. Added tag #NoteBlockChromeNoteSelected for default, light, and dark themes. 
@@ -293,3 +304,12 @@ file it is. In this case, the SharedResources.xaml is where it could happen.
 - Fixed bug when starting Jotter to reset last selected theme
 - Removed Custom theme from settings. Too difficult for that right now.
 - Disabled some UI elements in settings that are not implemented yet.
+
+---
+
+## 2024-12-31 -> 3:05am
+- Improved auto-build.cmd to fix hash calc and circleci build for release. 
+- automated release notes via templates. 
+
+---
+

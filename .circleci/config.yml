@@ -87,9 +87,9 @@ jobs:
             Set-Location "c:\workspace"
 
             # File paths
-            $notesFilePath = "c:\workspace\release\notes.md"
-            $templateFilePath = "c:\workspace\release\release-notes.md"
-            $releaseNotesFilePath = "c:\workspace\release\release-notes-final.md"
+            $notesFilePath = "c:\workspace\NoBuild\notes.md"
+            $templateFilePath = "c:\workspace\NoBuild\release-notes.md"
+            $releaseNotesFilePath = "c:\workspace\NoBuild\release-notes-final.md"
             
 
             # Read Notes.md and extract the latest entry

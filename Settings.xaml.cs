@@ -36,6 +36,10 @@ namespace Jotter
 
         Logger logger = Jotter.MainWindow.logger;
 
+        //Prop3erties for binding to textbox -logs
+        public string txtUserData { get; set; } = "C:\\Jotter\\userdata.xml";
+        public string txtLogFile { get; set; } = "C:\\Jotter\\logfile.log";
+
         //public class CustomToggleButton : CheckBox
         //{
         //    public CustomToggleButton()
@@ -48,14 +52,10 @@ namespace Jotter
         public Settings(SettingsMgr sharedSettingsManager)
         {
             InitializeComponent();
+            DataContext = this;
+
             //settingsManager = new SettingsMgr();
             settingsManager = sharedSettingsManager;
-
-
-
-            logger.LogFile = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                                           System.IO.Path.Join(Assembly.GetExecutingAssembly().GetName().Name, "JotterNotes.log"));
-            logger.EnableDTStamps = true;
 
 
             LoadAppSettings(settingsManager.Settings);
@@ -154,6 +154,11 @@ namespace Jotter
                     Application.Current.Resources.MergedDictionaries.Clear();
                     Application.Current.Resources.MergedDictionaries.Add(defaultDictionary);
 
+                    ThemeSelection.SelectedItem = "Default Theme";
+                    settingsManager.Settings.Theme = "Default Theme";
+                    settingsManager.SaveSettings();
+                    logger.LogError("[SwitchTheme] Default theme applied as fallback.");   
+
                     Debug.WriteLine("Default theme applied as fallback.");
                 }
                 catch (Exception fallbackEx)
@@ -166,6 +171,11 @@ namespace Jotter
 
         private void CloseSettings_Click(object sender, RoutedEventArgs e)
         {
+            // Update log settings 
+            settingsManager.Settings.LogPath = txtLogFile;
+            logger.LogFile = txtLogFile;
+            settingsManager.SaveSettings();
+
             this.Close();
         }
 
@@ -183,13 +193,26 @@ namespace Jotter
 
         public void LoadAppSettings(AppSettings settings)
         {
-            logger.LogInfo("[Doing action] Settings- LoadAppSettings");
-
             if (settings == null) return;
 
-            //Set UI Logging
-            TextUserData.Text = Jotter.MainWindow.jotNotesFilePath;
-            TextLogFile.Text = Jotter.MainWindow.logger.LogFile;
+            //Get log file path 
+            if ((settingsManager.Settings.LogPath != string.Empty) || (settingsManager.Settings.LogPath != null))
+                logger.LogFile = settingsManager.Settings.LogPath;
+            else
+                logger.LogFile = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                                               System.IO.Path.Join(Assembly.GetExecutingAssembly().GetName().Name, "JotterNotes.log"));
+
+            logger.EnableDTStamps = true;
+            logger.LogInfo("[Doing action] Settings- LoadAppSettings");
+
+
+
+            //Set UI Logging into bound properties to the textbox in UI
+            txtUserData = Jotter.MainWindow.jotNotesFilePath ?? "C:\\MyApp\\SaveFile";
+            txtLogFile = settingsManager.Settings.LogPath ?? "C:\\Logs\\logfile.txt";
+            //TextUserData.Text = Jotter.MainWindow.jotNotesFilePath;
+            //TextLogFile.Text = Jotter.MainWindow.logger.LogFile;
+
 
             logger.LogInfo("[Doing action] Settings- GetJotterVersion started");
             VersionTextBlock.Text = GetJotterVersion();
@@ -243,13 +266,30 @@ namespace Jotter
                 }
             }
 
+            //Check the save technique
+            if (AutoSave != null)
+            {
+                foreach (ComboBoxItem item in AutoSave.Items)
+                {
+                    if (int.TryParse(item.Tag?.ToString(), out int tagValue) && tagValue == settings.SaveInterval)
+                    {
+                        AutoSave.SelectedItem = item;
+                        break;
+                    }
+                }
+            }
+
+
+
             logger.LogInfo("[Ending action] Settings- LoadAppSettings");
 
         }
 
+        //Event when a theme has been selected
         private void cb_ThemeSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-
+            //Catch here because all selections will change when window is brought up.
+            //Therefore, settings Manager will not be init'd yet.
             if (isInitializing) return;
 
             if (sender is ComboBox comboBox)
@@ -291,6 +331,22 @@ namespace Jotter
                     ThemeSelection.SelectedIndex = 0;
             }
         } //cb_ThemeSelectionChanged
+
+
+        //Event when autosave value has been selected
+        private void cb_AutoSaveValChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (isInitializing) return;
+
+            if (AutoSave.SelectedItem is ComboBoxItem selectedItem &&
+                int.TryParse(selectedItem.Tag?.ToString(), out int tagValue))
+            {
+                settingsManager.Settings.SaveInterval = tagValue; 
+                settingsManager.SaveSettings();
+            }
+        }//cb_ThemeSelectionChanged
+
+
 
         private void CheckedMinimizeToTray(object sender, RoutedEventArgs e)
         {

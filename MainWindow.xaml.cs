@@ -88,8 +88,19 @@ namespace Jotter
             LoadAppSettings(settingsManager.Settings);
 
             logger.LogWritten += LogWrite_Handler;
-            logger.LogFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                                           Path.Join(Assembly.GetExecutingAssembly().GetName().Name, "JotterNotes.log"));
+            
+            //Get log path custom or not
+            if ((settingsManager.Settings.LogPath != string.Empty) || (settingsManager.Settings.LogPath != null))
+                logger.LogFile = settingsManager.Settings.LogPath;
+            else
+            {
+                logger.LogFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                                               Path.Join(Assembly.GetExecutingAssembly().GetName().Name, "JotterNotes.log"));
+                //Turn logging off if no path..
+                //logger.EnableLogger = false;
+                //TODO: Add code in log handler to check if log file is empty, then turn off logging.   
+            }
+
             logger.EnableDTStamps = true;
 
             //Dir has to be created first before any log written. Access error appears if logging first.

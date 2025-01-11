@@ -313,10 +313,24 @@ file it is. In this case, the SharedResources.xaml is where it could happen.
 
 ---
 
-## 2024-01-05 -> 3:475am
+## 2025-01-05 -> 3:475am
 - Bug in versioninfo in settings. Still working on, but added logging since the compiled process could not attach for debugging
 - small autobuild output changes.
 
 ---
 
+## 2025-01-06 -> 7:20am
+- Fixing default theme fallback, removing custom theme
+- Fixing loading log settings. Saving has not been completed. 
+- Connecting auto save intervals to settings. created in settings cb_AutoSaveValChanged() * STOPPED ON NoteTemaplteEditor.cs line 53
+
+---
+
+## 2025-01-011 -> 7:20am
+- Continuing from above status. 
+- Changing year in statuses to 2025.
+- log settings are able to save and switch to new log from settings.
+- light testing on loading of settings and saving for logfile.
+
+---
 

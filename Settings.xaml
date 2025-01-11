@@ -250,11 +250,19 @@
                 <TextBlock Grid.Row="0" Text="General Settings" Style="{StaticResource HeaderTextStyle}" Grid.ColumnSpan="2"/>
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,36" Grid.RowSpan="2">
                     <TextBlock Text="User data: " Style="{StaticResource GeneralTextStyle}" VerticalAlignment="Center"/>
-                    <TextBox x:Name="TextUserData" Text="C:\MyApp\SaveFile" Style="{StaticResource FilePathTextStyle}" VerticalAlignment="Center" IsReadOnly="False"/>
+                    <TextBox x:Name="TextUserData" 
+                             Text="{Binding txtUserData, Mode=TwoWay, UpdateSourceTrigger=LostFocus, TargetNullValue=C:\MyApp\SaveFile}" 
+                             Style="{StaticResource FilePathTextStyle}" 
+                             VerticalAlignment="Center" 
+                             IsReadOnly="False"/>
                 </StackPanel>
+
                 <StackPanel Grid.Row="2" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,11" Grid.RowSpan="2">
                     <TextBlock Text="Log path:  " Style="{StaticResource GeneralTextStyle}" VerticalAlignment="Center"/>
-                    <TextBox x:Name="TextLogFile" Text="C:\Logs\logfile.txt" Style="{StaticResource FilePathTextStyle}" VerticalAlignment="Center"/>
+                    <TextBox x:Name="TextLogFile" 
+                             Text="{Binding txtLogFile, Mode=TwoWay, UpdateSourceTrigger=LostFocus, TargetNullValue=C:\Logs\logfile.txt}" 
+                             Style="{StaticResource FilePathTextStyle}" 
+                             VerticalAlignment="Center"/>
                 </StackPanel>
 
 
@@ -294,18 +302,20 @@
                         <ComboBoxItem>Light Theme</ComboBoxItem>
                         <ComboBoxItem>Dark Theme</ComboBoxItem>
                         <ComboBoxItem>Default Theme</ComboBoxItem>
-                        <ComboBoxItem>Custom Theme</ComboBoxItem>
+                        <!--<ComboBoxItem>Custom Theme</ComboBoxItem>-->
                     </ComboBox>
                 </StackPanel>
 
-                <!-- Set number of seconds for auto save -->
+                <!-- Set number of seconds for auto save 
+                Adding a Tag property to each cb item stores the value we select:
+                -->
                 <StackPanel Grid.Row="9" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,11" Grid.RowSpan="2">
                     <TextBlock Text="Set number of seconds for auto save: " VerticalAlignment="Center" Margin="5,5,0,5"/>
-                    <ComboBox SelectedIndex="0" Margin="5,5,0,5" Height="25" IsEnabled="False">
-                        <ComboBoxItem>Auto [3 seconds]</ComboBoxItem>
-                        <ComboBoxItem>25 seconds</ComboBoxItem>
-                        <ComboBoxItem>45 seconds</ComboBoxItem>
-                        <ComboBoxItem>60 seconds</ComboBoxItem>
+                    <ComboBox x:Name="AutoSave" SelectedIndex="0" Margin="5,5,0,5" Height="25" IsEnabled="True" SelectionChanged="cb_AutoSaveValChanged">
+                        <ComboBoxItem Tag="3">Auto [3 seconds]</ComboBoxItem>
+                        <ComboBoxItem Tag="25">25 seconds</ComboBoxItem>
+                        <ComboBoxItem Tag="45">45 seconds</ComboBoxItem>
+                        <ComboBoxItem Tag="60">60 seconds</ComboBoxItem>
                     </ComboBox>
                 </StackPanel>
 

@@ -45,12 +45,19 @@ jobs:
             # ---------------------------------------------------------
             # IMPORTANT:
             # The checkout key is read-only, so pushing must use HTTPS.
-            # This switches the remote to use the GitHub token.
+            # This switches the remote to use a GitHub PAT stored in CircleCI.
             # ---------------------------------------------------------
             git config --global user.name "SorryNoFocus"
             git config --global user.email "thechriswinters@gmail.com"
 
-            git remote set-url origin https://x-access-token:$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
+            if (-not $env:GITHUB_TOKEN) {
+              throw "CircleCI env var GITHUB_TOKEN is not set."
+            }
+            if (-not $env:GITHUB_USERNAME) {
+              throw "CircleCI env var GITHUB_USERNAME is not set."
+            }
+
+            git remote set-url origin https://$env:GITHUB_USERNAME:$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
 
             $versionFilePath = "build\VersionInfo.txt"
             Write-Output "Committing updated $versionFilePath to the repository"
@@ -224,7 +231,14 @@ jobs:
             # ---------------------------------------------------------
             git config --global user.name "circleci-bot"
             git config --global user.email "noreply@circleci.com"
-            git remote set-url origin https://x-access-token:$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
+            if (-not $env:GITHUB_TOKEN) {
+              throw "CircleCI env var GITHUB_TOKEN is not set."
+            }
+            if (-not $env:GITHUB_USERNAME) {
+              throw "CircleCI env var GITHUB_USERNAME is not set."
+            }
+
+            git remote set-url origin https://$env:GITHUB_USERNAME:$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
 
             # Create tag in GitHub
             git tag -a "v$TAG_NAME" -m "Version v$TAG_NAME"

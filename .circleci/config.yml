@@ -14,8 +14,13 @@ jobs:
   build:
     executor: win/default
     steps:
+      # ---------------------------------------------------------
+      # CHECKOUT
+      # Uses CircleCI's Checkout SSH Key (read-only) — best practice.
+      # No add_ssh_keys step needed anymore.
+      # ---------------------------------------------------------
       - checkout
-      
+
       - run:
           name: Install Additional Dependencies (GitHub CLI and zip)
           command: |
@@ -37,11 +42,20 @@ jobs:
       - run:
           name: Commit and Push Updated Version
           command: |
+            # ---------------------------------------------------------
+            # IMPORTANT:
+            # The checkout key is read-only, so pushing must use HTTPS.
+            # This switches the remote to use the GitHub token.
+            # ---------------------------------------------------------
             git config --global user.name "SorryNoFocus"
             git config --global user.email "thechriswinters@gmail.com"
+
+            git remote set-url origin https://$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
+
             Write-Output "Committing updated versioninfo.txt to the repository"
             set /p TAG_NAME=<build\versioninfo.txt
             Write-Output "Release tag read: v$TAG_NAME"
+
             git add build\versioninfo.txt
             git status
             git commit -am "Update versioninfo.txt to reflect release version [skip ci]"
@@ -72,8 +86,9 @@ jobs:
             choco install gh zip -y 
             where zip
 
-
-      # Generate release notes from notes.md. 
+      # ---------------------------------------------------------
+      # Generate release notes from notes.md.
+      # ---------------------------------------------------------
       - run:
           name: Generate Release Notes with Notes.md Content
           command: |
@@ -125,6 +140,7 @@ jobs:
 
             # Match all entries and select the last one
             $allMatches = [regex]::Matches($notesContent, $entryPattern)
+
             if ($allMatches.Count -eq 0) {
               Write-Error "No entries found in the notes file. Please verify the file structure and regex."
               exit 1
@@ -163,9 +179,9 @@ jobs:
             $fileHash | Set-Content -Path $hashFilePath
             Write-Output "Generated SHA256 hash: $fileHash"
 
-            #zip -r C:\workspace\release\jotter-release.zip C:\workspace\bin\x64\Release\net8.0-windows\publishprod\*.exe
-            zip C:\workspace\release\jotter-release.zip C:\workspace\bin\x64\Release\net8.0-windows\publishprod\Jotter.exe C:\workspace\bin\x64\Release\net8.0-windows\publishprod\Jotter.exe.hash
-
+            zip C:\workspace\release\jotter-release.zip `
+              C:\workspace\bin\x64\Release\net8.0-windows\publishprod\Jotter.exe `
+              C:\workspace\bin\x64\Release\net8.0-windows\publishprod\Jotter.exe.hash
 
       - run:
           name: Create GitHub Release
@@ -196,7 +212,9 @@ jobs:
             $RELEASE_NAME = "Release v$TAG_NAME"
             Write-Output "Creating release $RELEASE_NAME"
 
-            # Ensure Git context is valid
+            # ---------------------------------------------------------
+            # Switch to HTTPS for pushing tags (SSH is read-only)
+            # ---------------------------------------------------------
             git config --global user.name "circleci-bot"
             git config --global user.email "noreply@circleci.com"
             git remote set-url origin https://$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
@@ -207,7 +225,6 @@ jobs:
             git push origin "v$TAG_NAME"
 
             # Prepare release notes by reading the template and replacing placeholders  
-
             # Read the commit message from the last commit
             try {
               $commitMessage = git log -1 --pretty=format:"%s"
@@ -221,20 +238,33 @@ jobs:
             $lastEntry = Get-Content -Path "C:\workspace\last-entry.md" -Raw  
             #do same for file hash
             $fileHash = Get-Content -Path "C:\workspace\bin\x64\Release\net8.0-windows\publishprod\Jotter.exe.hash" -Raw  
-
             #Get the last commit (but not the skip ci for checking in versioninfo.txt)  
             $commitHash = git log --format="%H" --skip=1 -n 1
             Write-Output "Previous commit hash: $commitHash"
 
-
             $releaseNotesTemplate = Get-Content -Path $templateFilePath -Raw
             $releaseNotes = $releaseNotesTemplate `
-            -replace '\[RELEASE_SUMMARY\]', $commitMessage `
-            -replace '\[RELEASE_CONTENT\]', $lastEntry `
-            -replace '\[RELEASE_GITHUB_COMMIT\]', $commitHash `
-            -replace '\[PRODUCT_RELEASE_HASH\]', "``$fileHash``"
+              -replace '
 
-            # Write the release notes to a file 
+\[RELEASE_SUMMARY\]
+
+', $commitMessage `
+              -replace '
+
+\[RELEASE_CONTENT\]
+
+', $lastEntry `
+              -replace '
+
+\[RELEASE_GITHUB_COMMIT\]
+
+', $commitHash `
+              -replace '
+
+\[PRODUCT_RELEASE_HASH\]
+
+', "``$fileHash``"
+
             $releaseNotes | Set-Content -Path $releaseNotesFilePath
             Write-Output "Release notes prepared."
 
@@ -247,7 +277,7 @@ jobs:
             Write-Output "Github release URL..."
             gh release create "v$TAG_NAME" C:\workspace\release\jotter-release.zip `
               --title "Release v$TAG_NAME" `
-              --notes-file $releaseNotesFilePath `
+              --notes-file $releaseNotesFilePath
 
       - store_artifacts:
           name: Artifacts storage
@@ -268,4 +298,4 @@ workflows:
           filters:
             branches:
               only:
-                - main            
+                - main

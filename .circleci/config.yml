@@ -50,16 +50,23 @@ jobs:
             git config --global user.name "SorryNoFocus"
             git config --global user.email "thechriswinters@gmail.com"
 
-            git remote set-url origin https://$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
+            git remote set-url origin https://x-access-token:$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
 
-            Write-Output "Committing updated versioninfo.txt to the repository"
-            set /p TAG_NAME=<build\versioninfo.txt
+            $versionFilePath = "build\VersionInfo.txt"
+            Write-Output "Committing updated $versionFilePath to the repository"
+            $TAG_NAME = (Get-Content -Path $versionFilePath -Raw).Trim()
             Write-Output "Release tag read: v$TAG_NAME"
 
-            git add build\versioninfo.txt
+            git add $versionFilePath
             git status
-            git commit -am "Update versioninfo.txt to reflect release version [skip ci]"
-            git push origin HEAD
+
+            git diff --cached --quiet
+            if ($LASTEXITCODE -eq 0) {
+              Write-Output "No staged changes detected for $versionFilePath. Skipping commit and push."
+            } else {
+              git commit -m "Update versioninfo.txt to reflect release version [skip ci]"
+              git push origin HEAD:main
+            }
 
       - persist_to_workspace:
           name: Saving workspace to transfer to next flow
@@ -69,7 +76,7 @@ jobs:
           paths:
             - .git
             - bin\x64\Release\net8.0-windows\publishprod
-            - build\versioninfo.txt
+            - build\VersionInfo.txt
             - NoBuild\Notes.md
             - NoBuild\release-notes.md
 
@@ -204,7 +211,7 @@ jobs:
            #Get-ChildItem -Recurse -Force | Select-Object FullName
 
             # # #Read the version from the file
-            $versionFilePath = "c:\workspace\build\versioninfo.txt"
+            $versionFilePath = "c:\workspace\build\VersionInfo.txt"
             $TAG_NAME = (Get-Content -Path $versionFilePath -Raw).Trim()
             Write-Output "Detected release from versioninfo: v$TAG_NAME"
 
@@ -217,7 +224,7 @@ jobs:
             # ---------------------------------------------------------
             git config --global user.name "circleci-bot"
             git config --global user.email "noreply@circleci.com"
-            git remote set-url origin https://$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
+            git remote set-url origin https://x-access-token:$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
 
             # Create tag in GitHub
             git tag -a "v$TAG_NAME" -m "Version v$TAG_NAME"

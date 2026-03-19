@@ -398,3 +398,16 @@ file it is. In this case, the SharedResources.xaml is where it could happen.
 
     Manual check: open `Settings` on a clean/default run and confirm `User data` shows `%LOCALAPPDATA%\Jotter`.
 
+## 2026-03-19 -> 10:07am
+
+- CircleCI build failures. Fix script
+
+  Rid ssh keys and configured CirclCI for automatic deploy keys.
+
+  Three problems in `config.yml`: it was using `cmd.exe` syntax inside a PowerShell CircleCI step, it referenced `build\versioninfo.txt` even though the tracked file is actually `build\VersionInfo.txt`, and it was pushing with a token URL format that can fall back to an interactive auth prompt.
+
+  The commit step now:
+   reads the version with PowerShell-native `Get-Content`
+   stages the correctly-cased `build\VersionInfo.txt`
+   skips commit/push cleanly when nothing is staged
+   pushes with `https://x-access-token:$env:GITHUB_TOKEN@github.com/...` to avoid hanging on credentials

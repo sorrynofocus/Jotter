@@ -244,26 +244,12 @@ jobs:
 
             $releaseNotesTemplate = Get-Content -Path $templateFilePath -Raw
             $releaseNotes = $releaseNotesTemplate `
-              -replace '
+            -replace '\[RELEASE_SUMMARY\]', $commitMessage `
+            -replace '\[RELEASE_CONTENT\]', $lastEntry `
+            -replace '\[RELEASE_GITHUB_COMMIT\]', $commitHash `
+            -replace '\[PRODUCT_RELEASE_HASH\]', "``$fileHash``"
 
-\[RELEASE_SUMMARY\]
-
-', $commitMessage `
-              -replace '
-
-\[RELEASE_CONTENT\]
-
-', $lastEntry `
-              -replace '
-
-\[RELEASE_GITHUB_COMMIT\]
-
-', $commitHash `
-              -replace '
-
-\[PRODUCT_RELEASE_HASH\]
-
-', "``$fileHash``"
+            # Write the release notes to a file 
 
             $releaseNotes | Set-Content -Path $releaseNotesFilePath
             Write-Output "Release notes prepared."
@@ -277,7 +263,7 @@ jobs:
             Write-Output "Github release URL..."
             gh release create "v$TAG_NAME" C:\workspace\release\jotter-release.zip `
               --title "Release v$TAG_NAME" `
-              --notes-file $releaseNotesFilePath
+              --notes-file $releaseNotesFilePath `
 
       - store_artifacts:
           name: Artifacts storage

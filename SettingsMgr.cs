@@ -37,6 +37,11 @@ namespace Jotter
         //Log path
         public string LogPath { get; set; } = string.Empty;
 
+        //Data path
+        //This will also depend on class SettingsMgr() -> SettingsFilePath and NoteSettingsFilePath 
+        public string DataPath { get; set; } = string.Empty;
+
+
         //Fully exit or minimized to tray? 
         public bool IsTray { get; set; } = false;
 
@@ -138,21 +143,27 @@ namespace Jotter
     /// </summary>
     public class SettingsMgr
     {
+        public const string NotesFileName = "JotterNotes.xml";
+        public const string NoteSettingsFileName = "JotterNoteSettings.xml";
+
+        public static string DefaultDataDirectory => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Jotter"
+        );
+
         /// <summary>
         /// Jotter application settings file path
         /// </summary>
-        private static string SettingsFilePath => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Jotter", "JotterSettings.xml"
-        );
+        private static string SettingsFilePath => Path.Combine(DefaultDataDirectory, "JotterSettings.xml");
 
         /// <summary>
         /// Jotter note settings file path  
         /// </summary>
-        private static string NoteSettingsFilePath => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Jotter", "JotterNoteSettings.xml"
-        );
+        private string NoteSettingsFilePath => GetNoteSettingsFilePath(Settings);
+
+        public static string CurrentDataFilePath { get; private set; } = GetDefaultDataFilePath();
+
+        public static string CurrentNoteSettingsFilePath { get; private set; } = GetDefaultNoteSettingsFilePath();
 
         /// <summary>
         /// Settings - property of the application settings.
@@ -171,6 +182,52 @@ namespace Jotter
         {
             LoadSettings();
             LoadNoteSettings();
+        }
+
+        public string DataFilePath => GetDataFilePath(Settings);
+
+        public string NoteSettingsDataFilePath => GetNoteSettingsFilePath(Settings);
+
+        public static string GetDefaultDataFilePath()
+        {
+            return (Path.Combine(DefaultDataDirectory, NotesFileName));
+        }
+
+        public static string GetDefaultNoteSettingsFilePath()
+        {
+            return (Path.Combine(DefaultDataDirectory, NoteSettingsFileName));
+        }
+
+        public static string GetDataFilePath(AppSettings? settings)
+        {
+            if (!string.IsNullOrWhiteSpace(settings?.DataPath))
+            {
+                string configuredPath = settings.DataPath.Trim();
+
+                if (string.Equals(Path.GetExtension(configuredPath), ".xml", StringComparison.OrdinalIgnoreCase))
+                    return (configuredPath);
+
+                return (Path.Combine(configuredPath, NotesFileName));
+            }
+
+            return (GetDefaultDataFilePath());
+        }
+
+        public static string GetNoteSettingsFilePath(AppSettings? settings)
+        {
+            string dataFilePath = GetDataFilePath(settings);
+            string? dataDirectory = Path.GetDirectoryName(dataFilePath);
+
+            if (string.IsNullOrWhiteSpace(dataDirectory))
+                dataDirectory = DefaultDataDirectory;
+
+            return (Path.Combine(dataDirectory, NoteSettingsFileName));
+        }
+
+        private void SyncCurrentPaths()
+        {
+            CurrentDataFilePath = GetDataFilePath(Settings);
+            CurrentNoteSettingsFilePath = GetNoteSettingsFilePath(Settings);
         }
 
         /// <summary>
@@ -197,6 +254,11 @@ namespace Jotter
             else
                 //Defaults
                 Settings = new AppSettings(); 
+
+            if (string.IsNullOrWhiteSpace(Settings.DataPath))
+                Settings.DataPath = DefaultDataDirectory;
+
+            SyncCurrentPaths();
         }
 
         /// <summary>
@@ -211,6 +273,7 @@ namespace Jotter
         {
             try
             {
+                SyncCurrentPaths();
                 string appPathLoc = Path.GetDirectoryName(SettingsFilePath);
                 if (!Directory.Exists(appPathLoc))
                     Directory.CreateDirectory(appPathLoc);
@@ -274,6 +337,34 @@ namespace Jotter
             {
                 MessageBox.Show($"Error saving note settings: {ex.Message}");
             }
+        }
+
+        public void RelocateDataFiles(string newDirectory)
+        {
+            if (string.IsNullOrWhiteSpace(newDirectory))
+                return;
+
+            string currentDataFilePath = DataFilePath;
+            string currentNoteSettingsFilePath = NoteSettingsDataFilePath;
+            string newDataFilePath = Path.Combine(newDirectory, NotesFileName);
+            string newNoteSettingsFilePath = Path.Combine(newDirectory, NoteSettingsFileName);
+
+            if (!Directory.Exists(newDirectory))
+                Directory.CreateDirectory(newDirectory);
+
+            if (!string.Equals(currentDataFilePath, newDataFilePath, StringComparison.OrdinalIgnoreCase))
+            {
+                if (File.Exists(currentDataFilePath))
+                    File.Copy(currentDataFilePath, newDataFilePath, true);
+
+                if (File.Exists(currentNoteSettingsFilePath))
+                    File.Copy(currentNoteSettingsFilePath, newNoteSettingsFilePath, true);
+            }
+
+            Settings.DataPath = newDirectory;
+            SyncCurrentPaths();
+            SaveSettings();
+            SaveNoteSettings();
         }
 
         /// <summary>

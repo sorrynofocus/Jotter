@@ -3,7 +3,7 @@ using System.Data;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System;
-using System.Runtime.InteropServices;
+
 
 
 namespace Jotter
@@ -13,7 +13,7 @@ namespace Jotter
     /// </summary>
     public partial class App : Application
     {
-        private static Mutex mutex;
+        private static Mutex? mutex;
 
         public static class NativeMethods
         {

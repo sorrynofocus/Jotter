@@ -58,6 +58,9 @@ namespace com.nobodynoze.flogger
         //Private string to define log file
         private static string sLogFile = string.Empty;
 
+        //Enable or disable file logging.
+        private bool bEnableLogger = false;
+
         //Enable data time stamp during printing of log.
         private bool bEnableDTStamp = false;
 
@@ -96,6 +99,15 @@ namespace com.nobodynoze.flogger
             //Expression-bodied member 
             get => sLogFile;
             set { sLogFile = value; }
+        }
+
+        /// <summary>
+        /// Property enable logger
+        /// </summary>
+        public bool EnableLogger
+        {
+            get => bEnableLogger;
+            set { bEnableLogger = value; }
         }
 
         /// <summary>
@@ -231,6 +243,9 @@ namespace com.nobodynoze.flogger
         public void WriteLog(string sLogMsg, LogDifficultyLvl LogDiffLvl)
         {
             ///Let's do the file logging...
+
+            if (!EnableLogger)
+                return;
 
             //Check if logfile is null, if it is, return
             if (string.IsNullOrEmpty(LogFile))

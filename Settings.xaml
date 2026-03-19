@@ -165,8 +165,8 @@
             <Setter Property="FontFamily" Value="Consolas"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="MinWidth" Value="300"/>
-            <Setter Property="MaxWidth" Value="300"/>
             <!--<Setter Property="IsReadOnly" Value="True"/>-->
             <!-- Blue color for file paths -->
         </Style>
@@ -199,7 +199,7 @@
     <Grid x:Name="GlobalSettingsGrid" Grid.Row="0" >
         
         <!-- Close Button -->
-        <Grid x:Name="TopBorderGrid" MouseDown="TopBorderGrid_MouseDown" Grid.Row="1" Background="#FF333333" MaxWidth="700" >
+        <Grid x:Name="TopBorderGrid" MouseDown="TopBorderGrid_MouseDown" Grid.Row="1" Background="#FF333333" HorizontalAlignment="Stretch" >
             <TextBlock Name="StickyNotesSettingsTitle" Style="{StaticResource SettingsTitle}"/>
             <Button x:Name="CloseSettings" Click="CloseSettings_Click" Style="{StaticResource CloseButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="3"/>
         </Grid>
@@ -248,29 +248,54 @@
 
                 <!-- General Settings -->
                 <TextBlock Grid.Row="0" Text="General Settings" Style="{StaticResource HeaderTextStyle}" Grid.ColumnSpan="2"/>
-                <StackPanel Grid.Row="1" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,36" Grid.RowSpan="2">
-                    <TextBlock Text="User data: " Style="{StaticResource GeneralTextStyle}" VerticalAlignment="Center"/>
-                    <TextBox x:Name="TextUserData" 
+                <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,0,0,11">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="User data: " Style="{StaticResource GeneralTextStyle}" VerticalAlignment="Center"/>
+                    <TextBox Grid.Column="1" x:Name="TextUserData" 
                              Text="{Binding txtUserData, Mode=TwoWay, UpdateSourceTrigger=LostFocus, TargetNullValue=C:\MyApp\SaveFile}" 
                              Style="{StaticResource FilePathTextStyle}" 
                              VerticalAlignment="Center" 
-                             IsReadOnly="False"/>
-                </StackPanel>
+                             IsReadOnly="False"
+                             LostFocus="TextUserData_LostFocus"/>
+                    <Button Grid.Column="2" x:Name="btnBrowseUserData" Content="Browse..." Margin="8,2,0,2" Click="btnBrowseUserData_Click"/>
+                </Grid>
 
-                <StackPanel Grid.Row="2" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,11" Grid.RowSpan="2">
-                    <TextBlock Text="Log path:  " Style="{StaticResource GeneralTextStyle}" VerticalAlignment="Center"/>
-                    <TextBox x:Name="TextLogFile" 
+                <Grid Grid.Row="2" Grid.ColumnSpan="2" Margin="0,0,0,11">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Log path:  " Style="{StaticResource GeneralTextStyle}" VerticalAlignment="Center"/>
+                    <TextBox Grid.Column="1" x:Name="TextLogFile" 
                              Text="{Binding txtLogFile, Mode=TwoWay, UpdateSourceTrigger=LostFocus, TargetNullValue=C:\Logs\logfile.txt}" 
                              Style="{StaticResource FilePathTextStyle}" 
-                             VerticalAlignment="Center"/>
-                </StackPanel>
+                             VerticalAlignment="Center"
+                             LostFocus="TextLogFile_LostFocus"/>
+                </Grid>
 
 
 
-                <StackPanel Grid.Row="3" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,5" Grid.RowSpan="2">
-                    <TextBlock Text="Enable logging" VerticalAlignment="Center" Margin="210,0,10,0"/>
-                    <CheckBox Width="62" VerticalAlignment="Center" IsChecked="True" IsEnabled="False"/>
-                </StackPanel>
+                <Grid Grid.Row="3" Grid.ColumnSpan="2" Margin="0,0,0,5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left">
+                            <TextBlock Text="Enable logging" VerticalAlignment="Center" Margin="5,0,10,0"/>
+                            <CheckBox x:Name="chkEnableLogging" Width="62" VerticalAlignment="Center" IsChecked="True" Checked="chkEnableLogging_Checked" Unchecked="chkEnableLogging_Unchecked"/>
+                        </StackPanel>
+                        <Button Grid.Row="1" x:Name="btnOpenLog" Content="Open log" Width="80" HorizontalAlignment="Left" Margin="5,6,0,0" Click="btnOpenLog_Click" Visibility="Collapsed"/>
+                    </Grid>
+                </Grid>
 
 
 
@@ -325,12 +350,12 @@
 
                 <StackPanel Grid.Row="11" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,33,0,0" Grid.RowSpan="2">
                     <TextBlock Text="Add date/time stamps to notes: " VerticalAlignment="Center"/>
-                    <CheckBox Margin="5,5,0,5" IsChecked="True" IsEnabled="False"/>
+                    <CheckBox x:Name="chkDateTimeStamp" Margin="5,5,0,5" IsChecked="True" Checked="chkDateTimeStamp_Checked" Unchecked="chkDateTimeStamp_Unchecked"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="12" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,28,0,0" Grid.RowSpan="2">
                     <TextBlock Text="Confirm deletion of notes: " VerticalAlignment="Center"/>
-                    <CheckBox Margin="5,5,0,5" IsChecked="True" IsEnabled="False" />
+                    <CheckBox x:Name="chkDeletionConfirm" Margin="5,5,0,5" IsChecked="True" Checked="chkDeletionConfirm_Checked" Unchecked="chkDeletionConfirm_Unchecked" />
                 </StackPanel>
 
                 <!-- Logging -->

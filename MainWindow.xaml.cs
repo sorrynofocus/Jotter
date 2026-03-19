@@ -34,6 +34,7 @@ using System.Security.Principal;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.ComponentModel;
 
 
 //using System.Windows.Forms;
@@ -43,15 +44,15 @@ using System.Windows.Media.Animation;
 
 namespace Jotter
 {
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        public static string jotNotesFilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                                                              Path.Join(Assembly.GetExecutingAssembly().GetName().Name, "JotterNotes.xml"));
+        public static string jotNotesFilePath => SettingsMgr.CurrentDataFilePath;
         public static Logger logger = new Logger();
+        private Visibility noteDateVisibility = Visibility.Collapsed;
         public ObservableCollection<Note> Notes { get; set; }
         public NoteManager? noteManager;
-        public Note SelectedNote { get; set; }
-        private NoteTemplateEditor noteEditor;
+        public Note? SelectedNote { get; set; }
+        //private NoteTemplateEditor noteEditor;
 
         //Track opened notes. This is so we don't have open redundant open notes. ^_^
         private List<NoteTemplateEditor> openNoteWindows = new List<NoteTemplateEditor>();
@@ -60,7 +61,22 @@ namespace Jotter
         //Settings Manager
         private SettingsMgr settingsManager;
 
-        private System.Windows.Forms.NotifyIcon notifyIcon;
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public Visibility NoteDateVisibility
+        {
+            get => noteDateVisibility;
+            set
+            {
+                if (noteDateVisibility != value)
+                {
+                    noteDateVisibility = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(NoteDateVisibility)));
+                }
+            }
+        }
+
+        //private System.Windows.Forms.NotifyIcon notifyIcon;
         
 
         public MainWindow()
@@ -90,7 +106,7 @@ namespace Jotter
             logger.LogWritten += LogWrite_Handler;
             
             //Get log path custom or not
-            if ((settingsManager.Settings.LogPath != string.Empty) || (settingsManager.Settings.LogPath != null))
+            if (!string.IsNullOrWhiteSpace(settingsManager.Settings.LogPath))
                 logger.LogFile = settingsManager.Settings.LogPath;
             else
             {
@@ -101,11 +117,14 @@ namespace Jotter
                 //TODO: Add code in log handler to check if log file is empty, then turn off logging.   
             }
 
+            logger.EnableLogger = settingsManager.Settings.IsKennyLoggings;
             logger.EnableDTStamps = true;
 
             //Dir has to be created first before any log written. Access error appears if logging first.
             //We may get rid of this in favor of a customized location. Future TODO?
-            CreateDirectoryFullAccess(Path.GetDirectoryName(jotNotesFilePath));
+            string? directoryPath = Path.GetDirectoryName(jotNotesFilePath);
+            if (directoryPath != null)
+                CreateDirectoryFullAccess(directoryPath);
 
             logger.LogInfo(new List<string> { " ", "------------------------------------------" });
             logger.LogInfo("[Doing action] Started up the generator!");
@@ -114,11 +133,11 @@ namespace Jotter
                            Path.Join(Assembly.GetExecutingAssembly().GetName().Name, "JotterNotes.log")));
 
             noteManager = new NoteManager();
-            Notes = noteManager.Notes;
+            Notes = noteManager.Notes ?? [];
 
             logger.LogInfo($"[mainwindow load] Loaded notes count: {Notes?.Count}");
 
-            DataContext = noteManager;
+            DataContext = this;
 
             //Init the dragging and drop
             InitializeDragDrop();
@@ -210,6 +229,8 @@ namespace Jotter
             if (settings.IsMaximized)
                 this.WindowState = WindowState.Maximized;
 
+            NoteDateVisibility = settings.IsDateTimeStamp ? Visibility.Visible : Visibility.Collapsed;
+
 
             //Themes!
             string selectedTheme = settings.Theme;  
@@ -300,6 +321,12 @@ namespace Jotter
         {
             // Sort notes by creation date and refresh the MyNotesListView ListView
             SortNotesList();
+            UpdateDateStampVisibility();
+        }
+
+        private void UpdateDateStampVisibility()
+        {
+            NoteDateVisibility = settingsManager.Settings.IsDateTimeStamp ? Visibility.Visible : Visibility.Collapsed;
         }
 
         /// <summary>
@@ -421,8 +448,16 @@ namespace Jotter
         /// <param name="e"></param>
         private void MyNotesListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (MyNotesListView.SelectedItem != null) SelectedNote = (Note)MyNotesListView.SelectedItem;
-            logger.LogInfo($"[selectionchanged] {SelectedNote.Title} selected");
+            //  When the selected note is removed, WPF clears the selection and 
+            // MyNotesListView_SelectionChanged still tries to log SelectedNote.Title, 
+            // which can be null at that moment. Else it!
+            if (MyNotesListView.SelectedItem != null)
+            {
+                SelectedNote = (Note)MyNotesListView.SelectedItem;
+                logger.LogInfo($"[selectionchanged] {SelectedNote.Title} selected");
+            }
+            else
+                SelectedNote = null;
         }
 
         //note updated handler. take out older code. will trace later.
@@ -663,11 +698,19 @@ namespace Jotter
         /// </summary>
         private void DeleteSelectedNote()
         {
-            if (MyNotesListView.SelectedItem != null)
+            if (MyNotesListView.SelectedItem is Note selectedNote)
             {
+                if (settingsManager.Settings.IsDeletionConfirm)
+                {
+                    MessageBoxResult deleteConfirm = MessageBox.Show("Delete the selected note?", "Confirm deletion", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                    if (deleteConfirm != MessageBoxResult.Yes)
+                        return;
+                }
+
                 // Remove note settings
                 //settingsManager.RemoveNoteSettings(noteManager.  note.IdIndexer.Value);
-                Guid? idIndexer = SelectedNote?.IdIndexer;
+                Guid? idIndexer = selectedNote.IdIndexer;
 
                 if (idIndexer != null)
                 {
@@ -680,7 +723,7 @@ namespace Jotter
                 }
 
                 //TODO: remove note by ID. Not by title. See above
-                noteManager.RemoveNote(((Note)MyNotesListView.SelectedItem).Title);
+                noteManager.RemoveNote(selectedNote.Title);
                 UpdateListView();
             }
         }
@@ -1058,6 +1101,9 @@ namespace Jotter
             // Save the current positions of MainWindow
             double mainLeft = Application.Current.MainWindow.Left;
             double mainTop = Application.Current.MainWindow.Top;
+            double mainWidth = this.ActualWidth > 0 ? this.ActualWidth : this.Width;
+            double mainHeight = this.ActualHeight > 0 ? this.ActualHeight : this.Height;
+            WindowState mainWindowState = this.WindowState;
 
             // Fade out MainWindow
             DoubleAnimation fadeOutAnimation = new DoubleAnimation(0, TimeSpan.FromSeconds(0.2));
@@ -1070,9 +1116,15 @@ namespace Jotter
 
             // Loaded up the settings!
             Settings settingsWindow = new Settings(settingsManager);
+            settingsWindow.Width = mainWidth;
+            settingsWindow.Height = mainHeight;
             settingsWindow.Left = mainLeft; 
             settingsWindow.Top = mainTop;
             settingsWindow.WindowStartupLocation = WindowStartupLocation.Manual;
+
+            if (mainWindowState == WindowState.Maximized)
+                settingsWindow.WindowState = WindowState.Maximized;
+
             settingsWindow.Closed += SettingsWindow_Closed;
 
             settingsWindow.ShowDialog();
@@ -1096,8 +1148,10 @@ namespace Jotter
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void SettingsWindow_Closed(object sender, EventArgs e)
+        private void SettingsWindow_Closed(object? sender, EventArgs e)
         {
+            UpdateDateStampVisibility();
+
             if (Application.Current.MainWindow is MainWindow mainWindow)
             {
                 // Update the position of MainWindow based on the closed
@@ -1149,7 +1203,7 @@ namespace Jotter
 
         //Decide if the notification tray icon should show and how the applicaiton acts
         //when the main window is minimized.    
-        private void MainWindow_StateChanged(object sender, EventArgs e)
+        private void MainWindow_StateChanged(object? sender, EventArgs e)
         {
             if (WindowState == WindowState.Minimized && settingsManager.Settings.IsTray)
             {

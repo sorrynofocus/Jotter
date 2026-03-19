@@ -173,7 +173,7 @@
                                     </Grid.RowDefinitions>
 
                                     <!-- date of created note -->
-                                    <TextBlock Text="{Binding CreatedDate, 
+                                    <TextBlock x:Name="txtCreatedDate" Text="{Binding CreatedDate, 
                                             StringFormat={}{0:MMM dd yyyy}, 
                                             TargetNullValue=''}" 
                                         FontSize="11" 
@@ -181,7 +181,8 @@
                                         VerticalAlignment="Center" 
                                         HorizontalAlignment="Right" 
                                         Grid.Row="0" 
-                                        Margin="0,0,32,2" />
+                                        Margin="0,0,32,2"
+                                        Visibility="{Binding DataContext.NoteDateVisibility, RelativeSource={RelativeSource AncestorType=Window}}" />
                                     <!-- Margin of the date from the vertical scrollbar
                                         and the top right corner o fthe title.
                                         -->

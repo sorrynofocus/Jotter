@@ -15,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Xml.Serialization;
+using System.IO;
 
 /*
  * examepl toggle in XAML
@@ -171,9 +172,16 @@ namespace Jotter
 
         private void CloseSettings_Click(object sender, RoutedEventArgs e)
         {
-            // Update log settings 
-            settingsManager.Settings.LogPath = txtLogFile;
-            logger.LogFile = txtLogFile;
+            ApplyDataPathChange();
+            ApplyLogPathChange();
+            settingsManager.Settings.IsKennyLoggings = chkEnableLogging.IsChecked == true;
+            settingsManager.Settings.IsDateTimeStamp = chkDateTimeStamp.IsChecked == true;
+            settingsManager.Settings.IsDeletionConfirm = chkDeletionConfirm.IsChecked == true;
+
+            //settingsManager.Settings.DataPath is the variable in class AppSettings()
+            //Adding in 3/24/2025 but need to add code for reloading and figuring out the note settings for the new data path.
+            //settingsManager.Settings.DataPath = txtUserData;    
+            logger.EnableLogger = settingsManager.Settings.IsKennyLoggings;
             settingsManager.SaveSettings();
 
             this.Close();
@@ -196,20 +204,27 @@ namespace Jotter
             if (settings == null) return;
 
             //Get log file path 
-            if ((settingsManager.Settings.LogPath != string.Empty) || (settingsManager.Settings.LogPath != null))
+            if (!string.IsNullOrWhiteSpace(settingsManager.Settings.LogPath))
                 logger.LogFile = settingsManager.Settings.LogPath;
             else
                 logger.LogFile = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                                                System.IO.Path.Join(Assembly.GetExecutingAssembly().GetName().Name, "JotterNotes.log"));
 
+            logger.EnableLogger = settings.IsKennyLoggings;
             logger.EnableDTStamps = true;
             logger.LogInfo("[Doing action] Settings- LoadAppSettings");
 
 
 
             //Set UI Logging into bound properties to the textbox in UI
-            txtUserData = Jotter.MainWindow.jotNotesFilePath ?? "C:\\MyApp\\SaveFile";
-            txtLogFile = settingsManager.Settings.LogPath ?? "C:\\Logs\\logfile.txt";
+            txtUserData = System.IO.Path.GetDirectoryName(settingsManager.DataFilePath) ?? SettingsMgr.DefaultDataDirectory;
+            txtLogFile = !string.IsNullOrWhiteSpace(settingsManager.Settings.LogPath)
+                ? settingsManager.Settings.LogPath
+                : logger.LogFile;
+            chkEnableLogging.IsChecked = settings.IsKennyLoggings;
+            chkDateTimeStamp.IsChecked = settings.IsDateTimeStamp;
+            chkDeletionConfirm.IsChecked = settings.IsDeletionConfirm;
+            UpdateOpenLogButton();
             //TextUserData.Text = Jotter.MainWindow.jotNotesFilePath;
             //TextLogFile.Text = Jotter.MainWindow.logger.LogFile;
 
@@ -366,6 +381,182 @@ namespace Jotter
                 settingsManager.SaveSettings();
                 Debug.WriteLine("[DEBUG] IsTray set to false and saved.");
             }
+        }
+
+        private void chkEnableLogging_Checked(object sender, RoutedEventArgs e)
+        {
+            if (isInitializing || settingsManager?.Settings == null)
+                return;
+
+            ApplyLogPathChange();
+            settingsManager.Settings.IsKennyLoggings = true;
+            logger.EnableLogger = true;
+            settingsManager.SaveSettings();
+            UpdateOpenLogButton();
+        }
+
+        private void chkEnableLogging_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (isInitializing || settingsManager?.Settings == null)
+                return;
+
+            settingsManager.Settings.IsKennyLoggings = false;
+            logger.EnableLogger = false;
+            settingsManager.SaveSettings();
+            UpdateOpenLogButton();
+        }
+
+        private void TextLogFile_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (settingsManager?.Settings == null)
+                return;
+
+            ApplyLogPathChange();
+        }
+
+        private void TextUserData_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (settingsManager?.Settings == null)
+                return;
+
+            ApplyDataPathChange();
+        }
+
+        private void btnBrowseUserData_Click(object sender, RoutedEventArgs e)
+        {
+            string initialDirectory = GetUserDataDirectoryFromInput(TextUserData.Text);
+
+            using (var folderDialog = new System.Windows.Forms.FolderBrowserDialog())
+            {
+                folderDialog.InitialDirectory = Directory.Exists(initialDirectory)
+                    ? initialDirectory
+                    : System.IO.Path.GetDirectoryName(settingsManager.DataFilePath) ?? initialDirectory;
+                folderDialog.ShowNewFolderButton = true;
+
+                if (folderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    txtUserData = System.IO.Path.Combine(folderDialog.SelectedPath, SettingsMgr.NotesFileName);
+                    TextUserData.Text = txtUserData;
+                    ApplyDataPathChange();
+                }
+            }
+        }
+
+        private void btnOpenLog_Click(object sender, RoutedEventArgs e)
+        {
+            string logPath = !string.IsNullOrWhiteSpace(txtLogFile) ? txtLogFile.Trim() : logger.LogFile;
+
+            if (!File.Exists(logPath))
+            {
+                UpdateOpenLogButton();
+                return;
+            }
+
+            ProcessStartInfo startInfo = new ProcessStartInfo
+            {
+                FileName = "notepad.exe",
+                Arguments = $"\"{logPath}\"",
+                UseShellExecute = true
+            };
+
+            Process.Start(startInfo);
+        }
+
+        private void chkDateTimeStamp_Checked(object sender, RoutedEventArgs e)
+        {
+            if (isInitializing || settingsManager?.Settings == null)
+                return;
+
+            settingsManager.Settings.IsDateTimeStamp = true;
+            settingsManager.SaveSettings();
+        }
+
+        private void chkDateTimeStamp_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (isInitializing || settingsManager?.Settings == null)
+                return;
+
+            settingsManager.Settings.IsDateTimeStamp = false;
+            settingsManager.SaveSettings();
+        }
+
+        private void chkDeletionConfirm_Checked(object sender, RoutedEventArgs e)
+        {
+            if (isInitializing || settingsManager?.Settings == null)
+                return;
+
+            settingsManager.Settings.IsDeletionConfirm = true;
+            settingsManager.SaveSettings();
+        }
+
+        private void chkDeletionConfirm_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (isInitializing || settingsManager?.Settings == null)
+                return;
+
+            settingsManager.Settings.IsDeletionConfirm = false;
+            settingsManager.SaveSettings();
+        }
+
+        private void ApplyLogPathChange()
+        {
+            string newLogPath = txtLogFile?.Trim() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(newLogPath))
+            {
+                UpdateOpenLogButton();
+                return;
+            }
+
+            bool wasLoggingEnabled = logger.EnableLogger;
+            logger.EnableLogger = false;
+
+            string? logDirectory = System.IO.Path.GetDirectoryName(newLogPath);
+            if (!string.IsNullOrWhiteSpace(logDirectory) && !Directory.Exists(logDirectory))
+                Directory.CreateDirectory(logDirectory);
+
+            txtLogFile = newLogPath;
+            settingsManager.Settings.LogPath = newLogPath;
+            logger.LogFile = newLogPath;
+            logger.EnableLogger = settingsManager.Settings.IsKennyLoggings;
+            settingsManager.SaveSettings();
+
+            if (!wasLoggingEnabled && !settingsManager.Settings.IsKennyLoggings)
+                logger.EnableLogger = false;
+
+            UpdateOpenLogButton();
+        }
+
+        private void ApplyDataPathChange()
+        {
+            string userDataInput = TextUserData.Text?.Trim() ?? string.Empty;
+            string newDirectory = GetUserDataDirectoryFromInput(userDataInput);
+
+            if (string.IsNullOrWhiteSpace(newDirectory))
+                return;
+
+            settingsManager.RelocateDataFiles(newDirectory);
+            txtUserData = System.IO.Path.GetDirectoryName(settingsManager.DataFilePath) ?? SettingsMgr.DefaultDataDirectory;
+            TextUserData.Text = txtUserData;
+        }
+
+        private string GetUserDataDirectoryFromInput(string? userDataInput)
+        {
+            string normalizedInput = userDataInput?.Trim() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(normalizedInput))
+                return (System.IO.Path.GetDirectoryName(settingsManager.DataFilePath) ?? string.Empty);
+
+            if (string.Equals(System.IO.Path.GetExtension(normalizedInput), ".xml", StringComparison.OrdinalIgnoreCase))
+                return (System.IO.Path.GetDirectoryName(normalizedInput) ?? string.Empty);
+
+            return (normalizedInput);
+        }
+
+        private void UpdateOpenLogButton()
+        {
+            string logPath = !string.IsNullOrWhiteSpace(txtLogFile) ? txtLogFile.Trim() : logger.LogFile;
+            btnOpenLog.Visibility = File.Exists(logPath) ? Visibility.Visible : Visibility.Collapsed;
         }
 
         static string GetJotterVersion()

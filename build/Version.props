@@ -78,8 +78,8 @@
 			<Company>Nobody Noze</Company>
 			<RootNamespace>Jotter.Core</RootNamespace>
 			<Copyright>Copyright © $([System.DateTime]::Now.ToString("yyyy"))</Copyright>
-			<Description>Note taking app Mike would appreciate</Description>
-			<AssemblyTitle>Note taking app Mike would appreciate</AssemblyTitle>
+			<Description>Jotter Note Taking Application</Description>
+			<AssemblyTitle>Jotter Note</AssemblyTitle>
 			<AssemblyName>Jotter</AssemblyName>
 
 			<!-- Combine for full semantic version -->
@@ -94,7 +94,7 @@
 			<InformationalVersion Condition=" '$(VersionSuffix)' != '' ">$(MajorVersion).$(MinorVersion).$(RevisionNumber).$(BuildNumber)</InformationalVersion>
 
 			<NeutralLanguage>en</NeutralLanguage>
-			<RepositoryUrl>https://github.com/sorrynofocus</RepositoryUrl>
+			<RepositoryUrl>https://github.com/sorrynofocus/Jotter</RepositoryUrl>
 			<RepositoryType>git</RepositoryType>
 		</PropertyGroup>
 	</Target>

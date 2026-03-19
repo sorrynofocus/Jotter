@@ -334,3 +334,67 @@ file it is. In this case, the SharedResources.xaml is where it could happen.
 
 ---
 
+## 2025-03-24 -> 7:19pm
+ 	- DataPath to class AppSettings() in SettingsMgr.cs. This will be used to store the data path for the notes. However, this will 
+      also affect class SettingsMgr() -> SettingsFilePath and NoteSettingsFilePath because if the DataPath changes and the settings 
+      reflect it, then SettingsFilePath and NoteSettingsFilePath will need to be updated (_they_ are hardcoded)
+      I believe what needs to be done is the following:
+        - In the path of Jotter, create a "default Jotter" folder and keep all the settings and notes in there. If the notes change,
+        then create a new folder with the new set of notes and its settings. 
+        - Have an option to "Open existing Notes" rather than using textbox to just modify the path. A textblock _should_ give a
+        status of where the data is. 
+
+---
+
+## 2026-03-18 -> 7:49pm
+- Wired the logging toggle end to end.
+
+  The checkbox in Settings.xaml is now active, and Settings.xaml.cs saves/loads `AppSettings.IsKennyLoggings` through the existing `SettingsMgr` XML flow. On startup, MainWindow.xaml.cs now reads that setting and applies it to the shared logger, and also fixed the log-path checks to use `IsNullOrWhiteSpace` so the default path fallback works correctly when no custom path is stored.
+
+  The logger itself now has a real enable switch in Utils/Logging/LogHandler.cs, and [WriteLog](Utils/Logging/LogHandler.cs) returns immediately when logging is off. That means existing `logger.LogInfo(...)` calls can stay as-is, but nothing gets written unless the setting is enabled.
+
+  `dotnet build Jotter.sln` passes. There are still pre-existing nullable warnings in the project, but no new build errors from this change.
+  
+- Wired `IsDateTimeStamp` through the same settings flow.
+
+  In Settings.xaml I named and enabled the checkbox as `chkDateTimeStamp`, and in Settings.xaml.cs it now loads, saves, and updates `settingsManager.Settings.IsDateTimeStamp` on checked/unchecked.
+
+  On the main window side, the created-date text in MainWindow.xaml now binds its `Visibility` to a window property, and MainWindow.xaml.cs updates that property from `IsDateTimeStamp` during startup and again when Settings closes. So `off` collapses the date, and `on` shows it.
+
+- Applied the deletion-confirmation setting end to end.
+
+  In Settings.xaml the disabled checkbox is now active as `chkDeletionConfirm`, and Settings.xaml.cs now loads, saves, and updates `settingsManager.Settings.IsDeletionConfirm`.
+
+  In MainWindow.xaml.cs `DeleteSelectedNote()` now checks that setting before removing a note. If confirmations are enabled, the app shows a Yes/No prompt; if disabled, deletion proceeds directly.
+
+  `dotnet build Jotter.sln` passes. Existing nullable warnings are still there, but eh.. It'll do.
+
+
+- Settings window opens at the Main window’s current size and position.
+
+  In MainWindow.xaml.cs, `TransitionToSettings()` now copies the Main window’s current `Width`, `Height`, `Left`, and `Top` onto the Settings window before `ShowDialog()`. If the Main window is maximized, the Settings window now opens maximized too.   That should also let the Settings UI reflow naturally, since the window is larger before the XAML renders. 
+
+  Also, changed  x:Name="TopBorderGrid" ...  HorizontalAlignment="Stretch" >. Previously it had a MaxWidth of 700, but this was causing the settings window to be small and not reflow correctly. 
+
+- Data path settings, implemented the user-data relocation flow.
+
+    `DataPath` still stores the full path to `JotterNotes.xml`, but the app now treats that as the anchor directory for both files. In SettingsMgr.cs, path helpers were added so `JotterNotes.xml` and `JotterNoteSettings.xml` always keep their fixed filenames in the same folder, and `RelocateDataFiles(...)` now creates the target directory if needed, copies both files into it, updates `Settings.DataPath`, and saves settings.
+
+    In the UI, Settings.xaml now has a `Browse...` button at the end of the `User data` textbox, and Settings.xaml.cs now applies user-data path changes on `LostFocus` or browse selection. If the user types a directory, the app uses that directory. If they type a full `.xml` filename, the directory is used but the filename is normalized back to `JotterNotes.xml` so the paired `JotterNoteSettings.xml` stays reliable.
+
+    Updated MainWindow.xaml.cs to read the current notes file path from `SettingsMgr`, so the new location is respected at runtime. 
+
+    Testing...
+    1. Open Settings and pick a new folder with `Browse...`. (fix that UI later)
+    2. Confirm the textbox becomes `...\JotterNotes.xml`.
+    3. Confirm both `JotterNotes.xml` and `JotterNoteSettings.xml` appear in that folder.
+    4. Restart Jotter and verify notes still load normally.
+
+    `DataPath` now defaults to `%LOCALAPPDATA%\Jotter`.
+
+    Updated SettingsMgr.cs so a blank `DataPath` is initialized to the Jotter folder instead of the full `JotterNotes.xml` filename. It’s also backward-compatible now: if an older settings file still stores a full `.xml` path, the app will keep honoring it; if it stores a directory, the app resolves `JotterNotes.xml` and `JotterNoteSettings.xml` from that folder.
+
+    Updated Settings.xaml.cs so the `User data` textbox shows the directory path, which matches the folder-browse behavior better.
+
+    Manual check: open `Settings` on a clean/default run and confirm `User data` shows `%LOCALAPPDATA%\Jotter`.
+

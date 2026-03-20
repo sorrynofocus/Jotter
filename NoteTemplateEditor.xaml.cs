@@ -102,6 +102,10 @@ namespace Jotter
             //XAML RichTextBox x:Name="rchEditNote"
             rchEditNote.Document.Blocks.Clear();
             rchEditNote.Document.Blocks.Add(new Paragraph(new Run(noteContents)));
+
+            // Apply the current theme's editor text color to the loaded document.
+            TextRange documentRange = new TextRange(rchEditNote.Document.ContentStart, rchEditNote.Document.ContentEnd);
+            documentRange.ApplyPropertyValue(TextElement.ForegroundProperty, FindResource("NoteEditForegroundBrush"));
         }
 
         //Update the current note with the text from the richedit. We are ready to process it...

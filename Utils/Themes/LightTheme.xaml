@@ -47,6 +47,8 @@
     <SolidColorBrush x:Key="NoteTitleBackgroundBrush" Color="#FFFFFFFF" />
     <SolidColorBrush x:Key="NoteTitleForegroundBrush" Color="#FF000000" />
     <SolidColorBrush x:Key="NoteTextForegroundBrush" Color="#FF000000" />
+    <SolidColorBrush x:Key="NoteEditBackgroundBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="NoteEditForegroundBrush" Color="#FF000000" />
 
 
     <!-- #NoteBlockChromeNoteSelected light grey for selection -->

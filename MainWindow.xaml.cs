@@ -168,42 +168,16 @@ namespace Jotter
         /// same as the one in settings.xaml.cs
         public void SwitchTheme(string themeName)
         {
-            try
+            if (ThemeSkinManager.ApplyTheme(themeName, out string appliedTheme, out string validationMessage))
             {
-                var resourceUri = new Uri(@$"/Utils/Themes/{themeName}.xaml", UriKind.RelativeOrAbsolute);
-                var resourceDictionary = new ResourceDictionary() { Source = resourceUri };
-
-                var existingDictionaries = Application.Current.Resources.MergedDictionaries.ToList();
-                foreach (var dictionary in existingDictionaries)
-                {
-                    Application.Current.Resources.MergedDictionaries.Remove(dictionary);
-                }
-
-                Application.Current.Resources.MergedDictionaries.Add(resourceDictionary);
-
+                settingsManager.Settings.Theme = appliedTheme;
                 Debug.WriteLine($"Theme applied successfully: {themeName}");
+                return;
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Failed to apply theme: {themeName}. Error: {ex.Message}");
-                MessageBox.Show($"The theme \"{themeName}\" could not be applied. Falling back to the default theme.", "Theme Error", MessageBoxButton.OK, MessageBoxImage.Warning);
 
-                // Apply default theme as fallback
-                try
-                {
-                    var defaultUri = new Uri("/Utils/Themes/DefaultTheme.xaml", UriKind.RelativeOrAbsolute);
-                    var defaultDictionary = new ResourceDictionary() { Source = defaultUri };
-
-                    Application.Current.Resources.MergedDictionaries.Clear();
-                    Application.Current.Resources.MergedDictionaries.Add(defaultDictionary);
-
-                    Debug.WriteLine("Default theme applied as fallback.");
-                }
-                catch (Exception fallbackEx)
-                {
-                    Debug.WriteLine($"Failed to apply default theme. Error: {fallbackEx.Message}");
-                }
-            }
+            Debug.WriteLine($"Failed to apply theme: {themeName}. Error: {validationMessage}");
+            MessageBox.Show($"The theme \"{themeName}\" could not be applied. Falling back to the default theme.", "Theme Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            settingsManager.Settings.Theme = appliedTheme;
         }
 
         /// <summary>
@@ -212,6 +186,8 @@ namespace Jotter
         /// <param name="settings">AppSettings config obj </param>
         private void LoadAppSettings(AppSettings settings)
         {
+            ThemeSkinManager.EnsureCustomThemeTemplateExists();
+
             double screenLeft = SystemParameters.WorkArea.Left;
             double screenTop = SystemParameters.WorkArea.Top;
             double screenRight = SystemParameters.WorkArea.Right;
@@ -235,29 +211,8 @@ namespace Jotter
             //Themes!
             string selectedTheme = settings.Theme;  
 
-            switch (selectedTheme)
-            {
-                case "Light Theme":
-                    SwitchTheme("LightTheme");
-                    settingsManager.Settings.Theme = selectedTheme;
-                    settingsManager.SaveSettings();
-                    break;
-                case "Dark Theme":
-                    SwitchTheme("DarkTheme");
-                    settingsManager.Settings.Theme = selectedTheme;
-                    settingsManager.SaveSettings();
-                    break;
-                case "Default Theme":
-                    SwitchTheme("DefaultTheme");
-                    settingsManager.Settings.Theme = selectedTheme;
-                    settingsManager.SaveSettings();
-                    break;
-                case "Custom Theme":
-                    SwitchTheme("CustomTheme");
-                    settingsManager.Settings.Theme = selectedTheme;
-                    settingsManager.SaveSettings();
-                    break;
-            }
+            SwitchTheme(selectedTheme);
+            settingsManager.SaveSettings();
 
             //...
         }

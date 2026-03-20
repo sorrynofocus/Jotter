@@ -9,7 +9,9 @@
         AllowsTransparency="False"
         WindowStyle="None"
         ResizeMode="NoResize"
-        BorderBrush="Black"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        BorderBrush="{DynamicResource WindowBorderBrush}"
+        Foreground="{DynamicResource NoteTextForegroundBrush}"
         BorderThickness="5"
         Height="600" 
         Width="420"
@@ -23,8 +25,6 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type CheckBox}">
                         <ControlTemplate.Resources>
-                            <SolidColorBrush x:Key="fillBrush">LightBlue</SolidColorBrush>
-                            <SolidColorBrush x:Key="borderBrush">Gray</SolidColorBrush>
                         </ControlTemplate.Resources>
                         <Grid Background="Transparent" SnapsToDevicePixels="True" Height="18">
                             <Grid.ColumnDefinitions>
@@ -69,7 +69,8 @@
                        IsHitTestVisible="False" Margin="1,1,-4,3">
                                     <Rectangle.Style>
                                         <Style TargetType="{x:Type Rectangle}">
-                                            <Setter Property="Fill" Value="White"/>
+                                            <Setter Property="Fill" Value="{DynamicResource ListViewBackgroundBrush}"/>
+                                            <Setter Property="Stroke" Value="{DynamicResource WindowBorderBrush}"/>
                                         </Style>
                                     </Rectangle.Style>
                                 </Rectangle>
@@ -82,8 +83,8 @@
                      HorizontalAlignment="Left" Margin="3,3,0,5">
                                     <Ellipse.Style>
                                         <Style TargetType="Ellipse">
-                                            <Setter Property="Fill" Value="White"/>
-                                            <Setter Property="Stroke" Value="White"/>
+                                            <Setter Property="Fill" Value="{DynamicResource ListViewBackgroundBrush}"/>
+                                            <Setter Property="Stroke" Value="{DynamicResource ListViewBackgroundBrush}"/>
                                         </Style>
                                     </Ellipse.Style>
                                 </Ellipse>
@@ -91,30 +92,30 @@
                             <ContentPresenter x:Name="contentPresenter" ContentTemplate="{TemplateBinding ContentTemplate}" Grid.Column="1" ContentStringFormat="{TemplateBinding ContentStringFormat}" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
                                 <ContentPresenter.Content>
                                     <!-- ON/OFF text here-->
-                                    <TextBlock Text="{TemplateBinding Tag}" FontFamily="Segoe UI Semibold" Margin="8,1,0,0" FontSize="11"/>
+                                    <TextBlock Text="{TemplateBinding Tag}" FontFamily="Segoe UI Semibold" Margin="8,1,0,0" FontSize="11" Foreground="{DynamicResource NoteTextForegroundBrush}"/>
                                 </ContentPresenter.Content>
                             </ContentPresenter>
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Stroke" TargetName="line" Value="DarkGray"/>
-                                <Setter Property="Stroke" TargetName="spot" Value="DarkGray"/>
+                                <Setter Property="Stroke" TargetName="line" Value="{DynamicResource SelectedNoteBorderBrush}"/>
+                                <Setter Property="Stroke" TargetName="spot" Value="{DynamicResource SelectedNoteBorderBrush}"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity"  Value=".5"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Stroke" TargetName="line" Value="Black"/>
-                                <Setter Property="Stroke" TargetName="spot" Value="Black"/>
+                                <Setter Property="Stroke" TargetName="line" Value="{DynamicResource WindowBorderBrush}"/>
+                                <Setter Property="Stroke" TargetName="spot" Value="{DynamicResource WindowBorderBrush}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter Property="Fill" TargetName="line" Value="LightGray"/>
-                                <Setter Property="Fill" TargetName="spot" Value="Black"/>
-                                <Setter Property="Stroke" TargetName="spot" Value="LightGray"/>
+                                <Setter Property="Fill" TargetName="line" Value="{DynamicResource SelectedNoteBackgroundBrush}"/>
+                                <Setter Property="Fill" TargetName="spot" Value="{DynamicResource HeaderBackgroundBrush}"/>
+                                <Setter Property="Stroke" TargetName="spot" Value="{DynamicResource SelectedNoteBackgroundBrush}"/>
                                 <Setter Property="Tag" Value="ON" />
                             </Trigger>
                             <Trigger Property="IsChecked" Value="False">
-                                <Setter Property="Fill" TargetName="line" Value="Black"/>
+                                <Setter Property="Fill" TargetName="line" Value="{DynamicResource HeaderBackgroundBrush}"/>
                                 <Setter Property="Tag" Value="OFF" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -126,7 +127,7 @@
         <!-- Style for the headers -->
         <Style TargetType="TextBlock" x:Key="SettingsTitle">
             <Setter Property="Text" Value="Jotter" />
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource HeaderForegroundBrush}"/>
             <Setter Property="FontSize" Value="20"/>
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Padding" Value="5,2,2,7"/>
@@ -138,18 +139,26 @@
             <Setter Property="Margin" Value="5,10,0,5"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="Foreground" Value="{DynamicResource NoteTextForegroundBrush}"/>
         </Style>
 
         <Style TargetType="TextBlock" x:Key="GeneralTextStyle">
             <Setter Property="Margin" Value="5,10,0,10"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="Foreground" Value="{DynamicResource NoteTextForegroundBrush}"/>
+        </Style>
+
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{DynamicResource NoteTextForegroundBrush}"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="12"/>
         </Style>
 
         <!-- Style for the separators -->
         <Style TargetType="Separator" x:Key="SeparatorStyle">
             <Setter Property="Margin" Value="0,5,0,5"/>
-            <Setter Property="Foreground" Value="#FFDDDDDD"/>
+            <Setter Property="Foreground" Value="{DynamicResource WindowBorderBrush}"/>
         </Style>
 
         <!-- Style for the buttons -->
@@ -164,7 +173,9 @@
             <Setter Property="Margin" Value="5,2,0,2"/>
             <Setter Property="FontFamily" Value="Consolas"/>
             <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Foreground" Value="{DynamicResource NoteTextForegroundBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource ListViewBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource WindowBorderBrush}"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="MinWidth" Value="300"/>
             <!--<Setter Property="IsReadOnly" Value="True"/>-->
@@ -174,14 +185,14 @@
         <Style x:Key="CloseButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="25"/>
             <Setter Property="Height" Value="25"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Background" Value="#FF6B6B6B"/>
+            <Setter Property="Foreground" Value="{DynamicResource HeaderForegroundBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource HeaderBackgroundBrush}"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Grid Background="{TemplateBinding Background}">
-                            <TextBlock Text="X" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <TextBlock Text="X" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
@@ -199,7 +210,7 @@
     <Grid x:Name="GlobalSettingsGrid" Grid.Row="0" >
         
         <!-- Close Button -->
-        <Grid x:Name="TopBorderGrid" MouseDown="TopBorderGrid_MouseDown" Grid.Row="1" Background="#FF333333" HorizontalAlignment="Stretch" >
+        <Grid x:Name="TopBorderGrid" MouseDown="TopBorderGrid_MouseDown" Grid.Row="1" Background="{DynamicResource HeaderBackgroundBrush}" HorizontalAlignment="Stretch" >
             <TextBlock Name="StickyNotesSettingsTitle" Style="{StaticResource SettingsTitle}"/>
             <Button x:Name="CloseSettings" Click="CloseSettings_Click" Style="{StaticResource CloseButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="3"/>
         </Grid>
@@ -214,7 +225,7 @@
         away, I had made changes to "fix" a problem in cache. Ended up closing VS2022 and restarting to get it to behave after clean builds.
         So... yeah, settings UI grid layouts may need to get re-done.
         -->
-        <ScrollViewer x:Name="ScrollViewerMain" VerticalScrollBarVisibility="Auto" Margin="0,35,0,0" Background="WhiteSmoke">
+        <ScrollViewer x:Name="ScrollViewerMain" VerticalScrollBarVisibility="Auto" Margin="0,35,0,0" Background="{DynamicResource WindowBackgroundBrush}">
 
             <Grid Margin="15">
                 <Grid.ColumnDefinitions>
@@ -259,7 +270,7 @@
                              Text="{Binding txtUserData, Mode=TwoWay, UpdateSourceTrigger=LostFocus, TargetNullValue=C:\MyApp\SaveFile}" 
                              Style="{StaticResource FilePathTextStyle}" 
                              VerticalAlignment="Center" 
-                             IsReadOnly="False"
+                             IsReadOnly="True"
                              LostFocus="TextUserData_LostFocus"/>
                     <Button Grid.Column="2" x:Name="btnBrowseUserData" Content="Browse..." Margin="8,2,0,2" Click="btnBrowseUserData_Click"/>
                 </Grid>
@@ -311,31 +322,16 @@
                 DataContext = settingsManager;
                 -->
                 <TextBlock Grid.Row="5" Text="Application behavior:" Style="{StaticResource HeaderTextStyle}" Grid.ColumnSpan="2"/>
-                <StackPanel x:Name="stackPanel_ExitBehavior" Grid.Row="5" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,33,0,0" Grid.RowSpan="2">
+                <StackPanel x:Name="stackPanel_ExitBehavior" Grid.Row="5" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,45,0,0" Grid.RowSpan="2">
                     <RadioButton x:Name="rb_MinimizeToTray" Content="Minimize to tray" IsChecked="False" Margin="8,5,10,5" Checked="CheckedMinimizeToTray" GroupName="ExitBehavior"/>
                     <RadioButton x:Name="rb_FullExit" Content="Fully exit" IsChecked="True" Margin="0,5,0,0" Checked="CheckedFullExit" GroupName="ExitBehavior"/>
-                </StackPanel>
-
-                <!-- Appearance -->
-                <!--<Separator Grid.Row="6" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,30"/>-->
-                
-                <TextBlock Grid.Row="7" Text="Appearance" Style="{StaticResource HeaderTextStyle}" Grid.ColumnSpan="2"/>
-
-                <StackPanel Grid.Row="8" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,32" Grid.RowSpan="2">
-                    <TextBlock Text="Theme: " VerticalAlignment="Center" Margin="5,5,0,5"/>
-                    <ComboBox x:Name="ThemeSelection" SelectedIndex="0" Height="24" Margin="5,5,0,5" SelectionChanged="cb_ThemeSelectionChanged">
-                        <ComboBoxItem>Light Theme</ComboBoxItem>
-                        <ComboBoxItem>Dark Theme</ComboBoxItem>
-                        <ComboBoxItem>Default Theme</ComboBoxItem>
-                        <!--<ComboBoxItem>Custom Theme</ComboBoxItem>-->
-                    </ComboBox>
                 </StackPanel>
 
                 <!-- Set number of seconds for auto save 
                 Adding a Tag property to each cb item stores the value we select:
                 -->
-                <StackPanel Grid.Row="9" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,11" Grid.RowSpan="2">
-                    <TextBlock Text="Set number of seconds for auto save: " VerticalAlignment="Center" Margin="5,5,0,5"/>
+                <StackPanel Grid.Row="6" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,50,0,8">
+                    <TextBlock Text="Set number of seconds for auto save: " Style="{StaticResource GeneralTextStyle}" VerticalAlignment="Center" Margin="5,8,0,5"/>
                     <ComboBox x:Name="AutoSave" SelectedIndex="0" Margin="5,5,0,5" Height="25" IsEnabled="True" SelectionChanged="cb_AutoSaveValChanged">
                         <ComboBoxItem Tag="3">Auto [3 seconds]</ComboBoxItem>
                         <ComboBoxItem Tag="25">25 seconds</ComboBoxItem>
@@ -344,16 +340,31 @@
                     </ComboBox>
                 </StackPanel>
 
+                <!-- Themes -->
+                <Separator Grid.Row="7" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,5"/>
+                
+                <TextBlock Grid.Row="8" Text="Themes" Style="{StaticResource HeaderTextStyle}" Grid.ColumnSpan="2"/>
+
+                <StackPanel Grid.Row="9" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,11">
+                    <TextBlock Text="Theme: " Style="{StaticResource GeneralTextStyle}" VerticalAlignment="Center" Margin="5,5,0,5"/>
+                    <ComboBox x:Name="ThemeSelection" SelectedIndex="0" Height="24" Margin="5,5,0,5" SelectionChanged="cb_ThemeSelectionChanged">
+                        <ComboBoxItem>Light Theme</ComboBoxItem>
+                        <ComboBoxItem>Dark Theme</ComboBoxItem>
+                        <ComboBoxItem>Default Theme</ComboBoxItem>
+                    </ComboBox>
+                    <Button x:Name="btnOpenThemesFolder" Content="Open folder" Margin="8,5,0,5" Click="btnOpenThemesFolder_Click" Visibility="Collapsed"/>
+                </StackPanel>
+
                 <!-- Note Options -->
                 <Separator Grid.Row="10" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,5"/>
                 <TextBlock Grid.Row="11" Text="Note Options" Style="{StaticResource HeaderTextStyle}" Grid.ColumnSpan="2"/>
 
-                <StackPanel Grid.Row="11" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,33,0,0" Grid.RowSpan="2">
+                <StackPanel Grid.Row="11" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,45,0,0" Grid.RowSpan="2">
                     <TextBlock Text="Add date/time stamps to notes: " VerticalAlignment="Center"/>
                     <CheckBox x:Name="chkDateTimeStamp" Margin="5,5,0,5" IsChecked="True" Checked="chkDateTimeStamp_Checked" Unchecked="chkDateTimeStamp_Unchecked"/>
                 </StackPanel>
 
-                <StackPanel Grid.Row="12" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,28,0,0" Grid.RowSpan="2">
+                <StackPanel Grid.Row="12" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,45,0,0" Grid.RowSpan="2">
                     <TextBlock Text="Confirm deletion of notes: " VerticalAlignment="Center"/>
                     <CheckBox x:Name="chkDeletionConfirm" Margin="5,5,0,5" IsChecked="True" Checked="chkDeletionConfirm_Checked" Unchecked="chkDeletionConfirm_Unchecked" />
                 </StackPanel>

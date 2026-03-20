@@ -411,3 +411,10 @@ file it is. In this case, the SharedResources.xaml is where it could happen.
    stages the correctly-cased `build\VersionInfo.txt`
    skips commit/push cleanly when nothing is staged
    pushes with `https://x-access-token:$env:GITHUB_TOKEN@github.com/...` to avoid hanging on credentials
+
+## 2026-03-19 -> 11:30pm 
+
+  - Version info finally fixed (well, locally). Fix was make publish also see the resolved version, moving the version-property calculation so it is available to both build and publish. the flow is the same:
+  build still increments and writes build\VersionInfo.txt
+  both build and publish now read the resolved version back from VersionInfo.txt
+  AssemblyVersion, FileVersion, and InformationalVersion are stamped from that resolved value

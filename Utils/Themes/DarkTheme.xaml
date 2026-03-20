@@ -60,6 +60,8 @@
     <!-- White -->
     <SolidColorBrush x:Key="NoteTextForegroundBrush" Color="#FFFFFFFF" />
     <!-- White -->
+    <SolidColorBrush x:Key="NoteEditBackgroundBrush" Color="#FF2E2E2E" />
+    <SolidColorBrush x:Key="NoteEditForegroundBrush" Color="#FFFFFFFF" />
 
 
 

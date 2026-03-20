@@ -56,7 +56,7 @@
 
 		<!-- Combine the version -->
 		<PropertyGroup>
-			<FinalVersion>$(MajorVersion).$(MinorVersion).$(RevisionNumber).$(BuildNumber)</FinalVersion>
+			<FinalVersion>$(FileMajorVersion).$(FileMinorVersion).$(FileRevision).$(BuildNumber)</FinalVersion>
 		</PropertyGroup>
 
 		<!-- Log the final version -->
@@ -67,6 +67,28 @@
             File="$(VersionFile)"
             Lines="$(FinalVersion)"
             Overwrite="true" />
+	</Target>
+
+	<Target Name="LoadResolvedVersion" BeforeTargets="BeforeBuild" Condition="'$(Configuration)' == 'Release' and ('$(dotNetBuildCmd)' == 'build' or '$(dotNetBuildCmd)' == 'publish')">
+		<PropertyGroup>
+			<VersionFile>$(MSBuildProjectDirectory)\build\VersionInfo.txt</VersionFile>
+			<DefaultVersion>1.0.0.0</DefaultVersion>
+		</PropertyGroup>
+
+		<Exec Command="if not exist $(VersionFile) echo $(DefaultVersion) > $(VersionFile)" />
+
+		<ReadLinesFromFile File="$(VersionFile)">
+			<Output TaskParameter="Lines" PropertyName="ResolvedVersion" />
+		</ReadLinesFromFile>
+
+		<Message Importance="High" Text="Resolved Version loaded from file: $(ResolvedVersion)" />
+
+		<PropertyGroup>
+			<ResolvedMajorVersion>$([MSBuild]::ValueOrDefault($([System.String]::Copy($(ResolvedVersion)).Split('.')[0]), '0'))</ResolvedMajorVersion>
+			<ResolvedMinorVersion>$([MSBuild]::ValueOrDefault($([System.String]::Copy($(ResolvedVersion)).Split('.')[1]), '0'))</ResolvedMinorVersion>
+			<ResolvedRevision>$([MSBuild]::ValueOrDefault($([System.String]::Copy($(ResolvedVersion)).Split('.')[2]), '0'))</ResolvedRevision>
+			<ResolvedBuildNumber>$([MSBuild]::ValueOrDefault($([System.String]::Copy($(ResolvedVersion)).Split('.')[3]), '0'))</ResolvedBuildNumber>
+		</PropertyGroup>
 	</Target>
 
 	<Target Name="AddAdditionalReferences" BeforeTargets="ResolveAssemblyReferences">
@@ -83,15 +105,18 @@
 			<AssemblyName>Jotter</AssemblyName>
 
 			<!-- Combine for full semantic version -->
-			<VersionSuffix>$(FinalVersion)</VersionSuffix>
+			<VersionSuffix Condition="'$(ResolvedVersion)' != ''">$(ResolvedVersion)</VersionSuffix>
+			<VersionSuffix Condition="'$(ResolvedVersion)' == ''">$(FinalVersion)</VersionSuffix>
 
-			<AssemblyVersion Condition=" '$(VersionSuffix)' != '' ">$(MajorVersion).$(MinorVersion).$(RevisionNumber).0</AssemblyVersion>
+			<AssemblyVersion Condition=" '$(VersionSuffix)' != '' and '$(ResolvedVersion)' != '' ">$(ResolvedMajorVersion).$(ResolvedMinorVersion).$(ResolvedRevision).0</AssemblyVersion>
+			<AssemblyVersion Condition=" '$(VersionSuffix)' != '' and '$(ResolvedVersion)' == '' ">$(FileMajorVersion).$(FileMinorVersion).$(FileRevision).0</AssemblyVersion>
 			<FileVersion Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</FileVersion>
 			<!-- The +<hash> suffix is added automatically to InformationalVersion when using .NET Core SDKs and higher when using this line below:. 
 			<InformationalVersion Condition=" '$(VersionSuffix)' != '' ">$(VersionSuffix)</InformationalVersion>
 			We want to match semantec version as File Version: 
 			-->
-			<InformationalVersion Condition=" '$(VersionSuffix)' != '' ">$(MajorVersion).$(MinorVersion).$(RevisionNumber).$(BuildNumber)</InformationalVersion>
+			<InformationalVersion Condition=" '$(VersionSuffix)' != '' and '$(ResolvedVersion)' != '' ">$(ResolvedMajorVersion).$(ResolvedMinorVersion).$(ResolvedRevision).$(ResolvedBuildNumber)</InformationalVersion>
+			<InformationalVersion Condition=" '$(VersionSuffix)' != '' and '$(ResolvedVersion)' == '' ">$(FileMajorVersion).$(FileMinorVersion).$(FileRevision).$(BuildNumber)</InformationalVersion>
 
 			<NeutralLanguage>en</NeutralLanguage>
 			<RepositoryUrl>https://github.com/sorrynofocus/Jotter</RepositoryUrl>

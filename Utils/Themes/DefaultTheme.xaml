@@ -134,6 +134,7 @@
     
     <!-- NoteTemplateEditor -->
     <SolidColorBrush x:Key="NoteEditBackgroundBrush" Color="#FFFFC7" />
+    <SolidColorBrush x:Key="NoteEditForegroundBrush" Color="Black" />
 
 
 </ResourceDictionary>

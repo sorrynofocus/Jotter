@@ -418,3 +418,9 @@ file it is. In this case, the SharedResources.xaml is where it could happen.
   build still increments and writes build\VersionInfo.txt
   both build and publish now read the resolved version back from VersionInfo.txt
   AssemblyVersion, FileVersion, and InformationalVersion are stamped from that resolved value
+
+## 2026-03-20 -> 12:01am
+
+  - Immediate fix for settings displaying version info for application. 
+When opening Settings Manager, application crashes. Logs  and event viewer 
+points to getting version info. 

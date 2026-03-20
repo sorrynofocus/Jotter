@@ -692,18 +692,38 @@ namespace Jotter
         /// <returns>Resolved application version string for the Settings footer.</returns>
         static string GetJotterVersion()
         {
-            string filePath = Assembly.GetExecutingAssembly().Location;
-            FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(filePath);
+            Assembly assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
 
-            if (!string.IsNullOrWhiteSpace(versionInfo.FileVersion))
-                return (versionInfo.FileVersion);
+            try
+            {
+                string? filePath = Environment.ProcessPath;
 
-            if (!string.IsNullOrWhiteSpace(versionInfo.ProductVersion))
-                return (versionInfo.ProductVersion);
+                if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+                    filePath = assembly.Location;
 
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            return (assembly.GetName().Version?.ToString() ?? string.Empty);
+                if (!string.IsNullOrWhiteSpace(filePath) && File.Exists(filePath))
+                {
+                    FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(filePath);
 
+                    if (!string.IsNullOrWhiteSpace(versionInfo.FileVersion))
+                        return (versionInfo.FileVersion);
+
+                    if (!string.IsNullOrWhiteSpace(versionInfo.ProductVersion))
+                        return (versionInfo.ProductVersion);
+                }
+            }
+            catch
+            {
+            }
+
+            string? informationalVersion = assembly
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+                .InformationalVersion;
+
+            if (!string.IsNullOrWhiteSpace(informationalVersion))
+                return (informationalVersion);
+
+            return (assembly.GetName().Version?.ToString() ?? "Unknown");
         }
     }
 }

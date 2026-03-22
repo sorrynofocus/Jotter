@@ -10,7 +10,8 @@
 
 
     <!-- dark tint for dropshadow effect -->
-    <DropShadowEffect x:Key="NoteShadowEffect" ShadowDepth="5" BlurRadius="8" Color="#FF999999" />
+    <Color x:Key="NoteShadowColor">#FF999999</Color>
+    <DropShadowEffect x:Key="NoteShadowEffect" ShadowDepth="5" BlurRadius="8" Color="{DynamicResource NoteShadowColor}" />
     
 
 
@@ -42,6 +43,7 @@
 
     <!-- Note Block -->
     <SolidColorBrush x:Key="NoteBlockBackgroundBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="NoteBlockBackgroundInnerBrush" Color="#FFFFFFFF" />
     <SolidColorBrush x:Key="NoteBlockBorderBrush" Color="#FFCCCCCC" />
     <SolidColorBrush x:Key="NoteDateForegroundBrush" Color="#FF999999" />
     <SolidColorBrush x:Key="NoteTitleBackgroundBrush" Color="#FFFFFFFF" />

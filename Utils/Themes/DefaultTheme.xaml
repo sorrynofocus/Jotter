@@ -39,7 +39,9 @@
     #FFF921
     Original:     <DropShadowEffect x:Key="NoteShadowEffect" ShadowDepth="10" BlurRadius="8" Color="#E0D600" />
     -->
-    <DropShadowEffect x:Key="NoteShadowEffect" ShadowDepth="5" BlurRadius="8" Color="#E0D600" />
+    <Color x:Key="NoteShadowColor">#E0D600</Color>
+    <DropShadowEffect x:Key="NoteShadowEffect" ShadowDepth="5" BlurRadius="8" Color="{DynamicResource NoteShadowColor}" />
+
 
     <Style x:Key="MyNotesListViewContainerStyle" TargetType="ListViewItem">
 
@@ -65,7 +67,11 @@
         <!-- end of removing default blue outline -->
 
         <Setter Property="Margin" Value="0,0,0,5" />
-        <Setter Property="Effect" Value="{DynamicResource NoteShadowEffect}" />
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect ShadowDepth="5" BlurRadius="8" Color="{DynamicResource NoteShadowColor}" />
+            </Setter.Value>
+        </Setter>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
                 <!-- Add dynamic margin for elevation from MouseOver 
@@ -74,7 +80,7 @@
                 <Setter Property="Margin" Value="0,-2,0,8" />
                 <Setter Property="Effect">
                     <Setter.Value>
-                         <DropShadowEffect ShadowDepth="8" BlurRadius="15" Color="Gray" /> 
+                         <DropShadowEffect ShadowDepth="8" BlurRadius="15" Color="{DynamicResource NoteShadowColor}" /> 
                     </Setter.Value>
                 </Setter>
             </Trigger>

@@ -424,3 +424,11 @@ file it is. In this case, the SharedResources.xaml is where it could happen.
   - Immediate fix for settings displaying version info for application. 
 When opening Settings Manager, application crashes. Logs  and event viewer 
 points to getting version info. 
+
+## 2026-03-22 -> 2:45pm
+
+- Adding additiona theme components for the dropshadow of the notes. This is was a bit tricky. See   **Drop Shadow Ownership** in \Utils\Themes\Themes-README.md.
+  Added a few things under Default,Light, Dark, and baked in code EarlKelly Themes: <Color x:Key="NoteShadowColor">#FF424242</Color> and changed the Color to {DynamicResource NoteShadowColor}. This way, the shadow color can be changed per theme.
+  AI played a huge part of this due to a lack of notes in the XAML files (and they are hard to keep notes on)
+- Settings.xaml - adjusted size for vertical scrollbar. She was THICK.
+

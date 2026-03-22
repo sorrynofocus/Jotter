@@ -8,7 +8,8 @@
     </ResourceDictionary.MergedDictionaries>
 
     <!-- Light grey dropshadow under note -->
-    <DropShadowEffect x:Key="NoteShadowEffect" ShadowDepth="5" BlurRadius="8" Color="#FF424242" />
+    <Color x:Key="NoteShadowColor">#FF424242</Color>
+    <DropShadowEffect x:Key="NoteShadowEffect" ShadowDepth="5" BlurRadius="8" Color="{DynamicResource NoteShadowColor}" />
 
     
     <!-- trying to voerride mouse  over note so we see static dropshadow -->
@@ -50,6 +51,7 @@
     <!-- Note Block -->
     <SolidColorBrush x:Key="NoteBlockBackgroundBrush" Color="#FF2E2E2E" />
     <!-- Same as MainGridBackground -->
+    <SolidColorBrush x:Key="NoteBlockBackgroundInnerBrush" Color="#FF2E2E2E" />
     <SolidColorBrush x:Key="NoteBlockBorderBrush" Color="#FF505050" />
     <!-- Medium Gray -->
     <SolidColorBrush x:Key="NoteDateForegroundBrush" Color="#FFAAAAAA" />

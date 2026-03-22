@@ -41,6 +41,7 @@ namespace Jotter
             "NoteBlockBackgroundBrush",
             "NoteBlockBackgroundInnerBrush",
             "NoteBlockBorderBrush",
+            "NoteShadowColor",
             "NoteDateForegroundBrush",
             "NoteTitleBackgroundBrush",
             "NoteTitleForegroundBrush",
@@ -109,9 +110,12 @@ namespace Jotter
 
     Brush guide:
     - WindowBackgroundBrush: Main window background for Settings and note windows.
+    - WindowBorderBrush: Main outer window border color.
     - MainGridBackgroundBrush: Main Note Manager surface behind the note list.
     - HeaderBackgroundBrush: Top title/header bars in the app windows.
     - HeaderForegroundBrush: Text/icons shown on the header bars.
+    - SearchBoxBackgroundBrush: Search box background in the note manager.
+    - SearchBoxForegroundBrush: Search box text color in the note manager.
     - ListViewBackgroundBrush: Background of the note list area.
     - ContentBackgroundBrush: Main content region behind note cards in the manager.
     - SelectedNoteBackgroundBrush: Background used when a note card is selected.
@@ -125,29 +129,35 @@ namespace Jotter
     - NoteTextForegroundBrush: Main text color for note previews and general themed text.
     - NoteEditBackgroundBrush: Background color of the RichEdit note editor surface.
     - NoteEditForegroundBrush: Text color inside the RichEdit note editor surface.
+    - NoteShadowColor: Color used by the note card drop shadow.
 
     Tip:
     - For dark skins, set NoteEditForegroundBrush and NoteTextForegroundBrush to light colors.
     - For light skins, use darker text colors so note content stays readable.
+    - Use a softer shadow color instead of pure white unless the theme is intentionally stylized.
     -->
 
-    <SolidColorBrush x:Key=""WindowBackgroundBrush"" Color=""#FFF8F4EC"" />
-    <SolidColorBrush x:Key=""MainGridBackgroundBrush"" Color=""#FFF1E7D5"" />
-    <SolidColorBrush x:Key=""HeaderBackgroundBrush"" Color=""#FF6A4E3B"" />
+    <SolidColorBrush x:Key=""WindowBackgroundBrush"" Color=""#FFF9F3E8"" />
+    <SolidColorBrush x:Key=""WindowBorderBrush"" Color=""#FF6B4A34"" />
+    <SolidColorBrush x:Key=""MainGridBackgroundBrush"" Color=""#FFF4E8D6"" />
+    <SolidColorBrush x:Key=""HeaderBackgroundBrush"" Color=""#FF6B4A34"" />
     <SolidColorBrush x:Key=""HeaderForegroundBrush"" Color=""#FFFFFFFF"" />
-    <SolidColorBrush x:Key=""ListViewBackgroundBrush"" Color=""#FFF6EEDF"" />
-    <SolidColorBrush x:Key=""ContentBackgroundBrush"" Color=""#FFF1E7D5"" />
-    <SolidColorBrush x:Key=""NoteEditBackgroundBrush"" Color=""#FFF8F1E2"" />
+    <SolidColorBrush x:Key=""SearchBoxBackgroundBrush"" Color=""#FFF6E4CB"" />
+    <SolidColorBrush x:Key=""SearchBoxForegroundBrush"" Color=""#FF2E241C"" />
+    <SolidColorBrush x:Key=""ListViewBackgroundBrush"" Color=""#FFF8EEDF"" />
+    <SolidColorBrush x:Key=""ContentBackgroundBrush"" Color=""#FFF4E8D6"" />
+    <SolidColorBrush x:Key=""NoteEditBackgroundBrush"" Color=""#FFFBF4E8"" />
     <SolidColorBrush x:Key=""NoteEditForegroundBrush"" Color=""#FF2E241C"" />
-    <SolidColorBrush x:Key=""SelectedNoteBackgroundBrush"" Color=""#FFE4C9A8"" />
-    <SolidColorBrush x:Key=""SelectedNoteBorderBrush"" Color=""#FF9D6B3F"" />
-    <SolidColorBrush x:Key=""NoteBlockBackgroundBrush"" Color=""#FFE9D3B0"" />
-    <SolidColorBrush x:Key=""NoteBlockBackgroundInnerBrush"" Color=""#FFF8F1E2"" />
-    <SolidColorBrush x:Key=""NoteBlockBorderBrush"" Color=""#FFC28A52"" />
-    <SolidColorBrush x:Key=""NoteDateForegroundBrush"" Color=""#FF705643"" />
-    <SolidColorBrush x:Key=""NoteTitleBackgroundBrush"" Color=""#FFF3E4CC"" />
+    <SolidColorBrush x:Key=""SelectedNoteBackgroundBrush"" Color=""#FFF1D4B1"" />
+    <SolidColorBrush x:Key=""SelectedNoteBorderBrush"" Color=""#FF8C5A2B"" />
+    <SolidColorBrush x:Key=""NoteBlockBackgroundBrush"" Color=""#FFE7C79D"" />
+    <SolidColorBrush x:Key=""NoteBlockBackgroundInnerBrush"" Color=""#FFFCF6EC"" />
+    <SolidColorBrush x:Key=""NoteBlockBorderBrush"" Color=""#FFBC7A3F"" />
+    <SolidColorBrush x:Key=""NoteDateForegroundBrush"" Color=""#FF6A503C"" />
+    <SolidColorBrush x:Key=""NoteTitleBackgroundBrush"" Color=""#FFF6E4CB"" />
     <SolidColorBrush x:Key=""NoteTitleForegroundBrush"" Color=""#FF2E241C"" />
     <SolidColorBrush x:Key=""NoteTextForegroundBrush"" Color=""#FF2E241C"" />
+    <Color x:Key=""NoteShadowColor"">#FFB88A5A</Color>
 
 </ResourceDictionary>
 ");
@@ -269,11 +279,22 @@ namespace Jotter
                 if (!AllowedCustomSkinKeys.Contains(key))
                     return ($"The custom theme key \"{key}\" is not allowed.");
 
-                if (entry.Value is not SolidColorBrush)
-                    return ($"The custom theme key \"{key}\" must use SolidColorBrush.");
+                if (!IsAllowedCustomSkinValue(key, entry.Value))
+                    return ($"The custom theme key \"{key}\" uses an unsupported resource type.");
             }
 
             return (string.Empty);
+        }
+
+        private static bool IsAllowedCustomSkinValue(string key, object value)
+        {
+            switch (key)
+            {
+                case "NoteShadowColor":
+                    return (value is Color);
+                default:
+                    return (value is SolidColorBrush);
+            }
         }
 
         private static void ApplyMergedDictionaries(params ResourceDictionary[] dictionaries)

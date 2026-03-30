@@ -432,3 +432,17 @@ points to getting version info.
   AI played a huge part of this due to a lack of notes in the XAML files (and they are hard to keep notes on)
 - Settings.xaml - adjusted size for vertical scrollbar. She was THICK.
 
+
+## 2026-03-30 -> 2:00am
+
+  - Made MAIN note search more robust by normalizing whitespace and searching the full title or full note body text.
+  - Updated main note search to run on `TextChanged` instead of Enter-only.
+  - PreviewKeyDown added for note search keyboard shortcuts, `PerformSearch()` and `NoteMatchesSearch()` changed in the main window, and note-search match indexing now uses `searchMatches` plus `currentSearchMatchIndex`.
+  - Updated note editor search so highlights persist when the search box loses focus and are only cleared with `Escape` or an empty-search clear action.
+  - Added `F3` next-match navigation and `Shift+F3` previous-match navigation for the current highlighted note search results.
+  - Improved note editor search placeholder behavior so typing into the search box clears the `Search...` watermark more reliably when returning to the field.
+  - Made NOTE editor phrase search more robust by normalizing whitespace across the RichTextBox document before locating highlight ranges, helping queries like multi-word phrases search more like the main window search.
+  - Added `Ctrl+F` in the note editor window so keyboard focus jumps directly to the note search textbox. Applied to MAIN window as well. 
+  - Kept _existing_ NOTE search behavior intact, including Enter to search, `F3`/`Shift+F3` navigation, and `Escape` to clear.
+  - Investigated note editor foreground behavior when opening from the main window. Tried localized activation-focused changes, but behavior remained effectively the same, so the issue is being deferred...
+

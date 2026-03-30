@@ -49,6 +49,7 @@ namespace Jotter
         public static string jotNotesFilePath => SettingsMgr.CurrentDataFilePath;
         public static Logger logger = new Logger();
         private Visibility noteDateVisibility = Visibility.Collapsed;
+        private bool isMainWindowLoaded = false;
         public ObservableCollection<Note> Notes { get; set; }
         public NoteManager? noteManager;
         public Note? SelectedNote { get; set; }
@@ -156,6 +157,7 @@ namespace Jotter
             // Subscribe to StateChanged event
             this.StateChanged += MainWindow_StateChanged;
 
+            isMainWindowLoaded = true;
 
         }
 
@@ -571,8 +573,11 @@ namespace Jotter
                         openedNote.IdIndexer == note.IdIndexer)
                     {
                         noteIsOpen = true;
+                        window.Topmost = true;
                         // a'right, then go back to the opened note
-                        window.Focus();
+                        window.Activate();
+                        window.Topmost = false;
+                        //Move onto noteEditor.Show();...
                         break;
                     }
                 }
@@ -610,8 +615,16 @@ namespace Jotter
                     //Can you have anon noteEditor.Closed += (s, e) => ? 
                     
                     //ADDED
+                    // NOTE! With Jotter being a custom WPF windows 
+                    // (WindowStyle="None" and AllowsTransparency="True"), 
+                    // activation can be less reliable.
+                    // Topmost and Activate() are used to ensure the note editor 
+                    // window comes to the foreground when opened, but it doesn't work.
                     noteEditor.NoteUpdated += NoteEditor_NoteUpdated;
                     noteEditor.Show();
+                    noteEditor.Topmost = true;
+                    noteEditor.Activate();
+                    noteEditor.Topmost = false;
 
                     // Add the note editor window to the tracking list
                     openNoteWindows.Add(noteEditor);
@@ -707,6 +720,19 @@ namespace Jotter
                 this.DragMove();
         }
 
+        private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.F && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                NoteManagerSearch.Focus();
+
+                if (NoteManagerSearch.Text != UI_TEXTBOX_STR_SEARCH)
+                    NoteManagerSearch.SelectAll();
+
+                e.Handled = true;
+            }
+        }
+
         //Once we click elsewhere, reset the search box watermark, or html "placeholder"
         private void NoteManagerSearch_LostFocus(object sender, RoutedEventArgs e)
         {
@@ -730,46 +756,93 @@ namespace Jotter
             }
         }
 
-        //Begin the search after pressing enter.
-        private void NoteManagerSearch_KeyUp(object sender, KeyEventArgs e)
+        /// <summary>
+        /// Search main-window notes as the search textbox changes.
+        /// </summary>
+        private void NoteManagerSearch_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (e.Key == Key.Enter)
-            {
-                TextBox textBox = sender as TextBox;
-                if (textBox != null)
-                {
-                    // Convert to lowercase for cheap-ass case-insensitive search
-                    string searchText = textBox.Text.Trim().ToLower(); 
-                    PerformSearch(NoteManagerSearch.Text);
-                }
-            }
-            else if (NoteManagerSearch.Text.Length == 0 && e.Key == Key.Back || e.Key == Key.Delete)
-            {
-                // Clear the search when the textbox is empty and the user presses Backspace
-                ClearSearch();
-            }
+            if (!isMainWindowLoaded || MyNotesListView == null)
+                return;
+
+            TextBox textBox = sender as TextBox;
+            if (textBox != null)
+                PerformSearch(textBox.Text);
         }
 
+        /// <summary>
+        /// Filter the main note list by matching the normalized search text against note title or body text.
+        /// </summary>
         private void PerformSearch(string searchText)
         {
-                // Create a temp collection to hold filtered notes
-                ObservableCollection<Note> filteredNotes = new ObservableCollection<Note>();
+            if (!isMainWindowLoaded || MyNotesListView == null)
+                return;
 
-                foreach (Note note in noteManager.Notes)
-                {
-                    // if (note.Title.ToLower().Contains(searchText) || note.Text.ToLower().Contains(searchText))
-                    if ((note.Title != null && noteManager.SearchContext(note.Title, searchText)) || (note.Text != null && noteManager.SearchContext(note.Text, searchText)))
-                        filteredNotes.Add(note);
-                }
+            if (noteManager?.Notes == null)
+            {
+                ClearSearch();
+                return;
+            }
 
-                // Update the bound collection with the filtered notes
-                MyNotesListView.ItemsSource = filteredNotes;
+            string normalizedSearchText = NormalizeSearchText(searchText);
+            if (string.IsNullOrWhiteSpace(normalizedSearchText) || normalizedSearchText == NormalizeSearchText(UI_TEXTBOX_STR_SEARCH))
+            {
+                ClearSearch();
+                return;
+            }
+
+            // Create a temp collection to hold filtered notes
+            ObservableCollection<Note> filteredNotes = new ObservableCollection<Note>();
+
+            foreach (Note note in noteManager.Notes)
+            {
+                if (NoteMatchesSearch(note, normalizedSearchText))
+                    filteredNotes.Add(note);
+            }
+
+            // Update the bound collection with the filtered notes
+            MyNotesListView.ItemsSource = filteredNotes;
         }
 
         private void ClearSearch()
         {
+            if (!isMainWindowLoaded || MyNotesListView == null || Notes == null)
+                return;
+
             //show all notes
             MyNotesListView.ItemsSource = Notes;
+        }
+
+        /// <summary>
+        /// Return true when the normalized search text is found in a note title or note body.
+        /// </summary>
+        private bool NoteMatchesSearch(Note note, string normalizedSearchText)
+        {
+            string normalizedTitle = NormalizeSearchText(note.Title);
+            if (!string.IsNullOrWhiteSpace(normalizedTitle) &&
+                normalizedTitle.Contains(normalizedSearchText, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            string normalizedBody = NormalizeSearchText(note.Text);
+            if (!string.IsNullOrWhiteSpace(normalizedBody) &&
+                normalizedBody.Contains(normalizedSearchText, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Normalize search text by trimming and collapsing repeated whitespace to a single space.
+        /// </summary>
+        private string NormalizeSearchText(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return string.Empty;
+
+            return Regex.Replace(text.Trim(), @"\s+", " ");
         }
 
         /// <summary>

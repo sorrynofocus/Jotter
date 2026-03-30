@@ -16,6 +16,7 @@
     BorderThickness="5"
     Background="{DynamicResource WindowBackgroundBrush}"
     AllowsTransparency="True"
+    PreviewKeyDown="MainWindow_PreviewKeyDown"
     Height="600" 
     Width="450">
 
@@ -86,7 +87,7 @@
                      MinWidth="2" 
                      GotFocus="NoteManagerSearch_GotFocus" 
                      LostFocus="NoteManagerSearch_LostFocus" 
-                     KeyUp="NoteManagerSearch_KeyUp" />
+                     TextChanged="NoteManagerSearch_TextChanged" />
         </DockPanel>
         <!-- End Header -->
 

@@ -15,6 +15,7 @@
         Foreground="{DynamicResource NoteTextForegroundBrush}"
         BorderThickness="5"
         AllowsTransparency="True"
+        PreviewKeyDown="NoteTemplateEditor_PreviewKeyDown"
         Height="570" 
         Width="495"
          >
@@ -195,6 +196,7 @@
                      Background="{DynamicResource HeaderBackgroundBrush}"
                      GotFocus="NoteSearch_GotFocus" 
                      LostFocus="NoteSearch_LostFocus"
+                     PreviewTextInput="NoteSearch_PreviewTextInput"
                      KeyUp="NoteSearch_KeyUp"
                      />
         </DockPanel>

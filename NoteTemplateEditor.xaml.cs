@@ -6,8 +6,10 @@
 
 using com.nobodynoze.flogger;
 using com.nobodynoze.notemanager;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -37,6 +39,10 @@ namespace Jotter
         private const int SaveDelayMilliseconds = 25000; 
         private DateTime lastActivityTime;
         public readonly string UI_TEXTBOX_STR_SEARCH = "Search...";
+        // Keep the current note-search results so F3 / Shift+F3 can move between matches.
+        private readonly List<TextRange> searchMatches = new List<TextRange>();
+        // Track which highlighted match is currently selected while cycling search results.
+        private int currentSearchMatchIndex = -1;
 
         //Main Note template application child window
         public NoteTemplateEditor(Note note)
@@ -245,12 +251,17 @@ namespace Jotter
             if (string.IsNullOrWhiteSpace(NoteSearch.Text)
                 || NoteSearch.Text == UI_TEXTBOX_STR_SEARCH)
                 NoteSearch.Text = UI_TEXTBOX_STR_SEARCH;
-
-            ResetSpotlights(rchEditNote);
         }
 
         //clear the tesxtbox watermark so we can search.
         private void NoteSearch_GotFocus(object sender, RoutedEventArgs e)
+        {
+            TextBox textBox = sender as TextBox;
+            if (textBox != null && textBox.Text == UI_TEXTBOX_STR_SEARCH)
+                textBox.Text = string.Empty;
+        }
+
+        private void NoteSearch_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             TextBox textBox = sender as TextBox;
             if (textBox != null && textBox.Text == UI_TEXTBOX_STR_SEARCH)
@@ -269,15 +280,44 @@ namespace Jotter
                     if (!string.IsNullOrEmpty(searchText))
                         // Do search and highlight matches
                         SpotlightSearch(rchEditNote, searchText);
+                    else
+                        ClearNoteSearch();
                 }
             }
             else if (string.IsNullOrEmpty(NoteSearch.Text) && (e.Key == Key.Back || e.Key == Key.Delete))
             {
-                // Clear the search when the textbox is empty and the user presses Backspace or Delete
-                NoteSearch.Text = UI_TEXTBOX_STR_SEARCH;
+                ClearNoteSearch();
+            }
+        }
 
-                // Clear highlights in the RichTextBox
-                ResetSpotlights(rchEditNote);
+        /// <summary>
+        /// Keyboard shortcuts for note search behavior:
+        /// Ctrl+F focuses search, F3 moves next, Shift+F3 moves previous, Escape clears.
+        /// </summary>
+        private void NoteTemplateEditor_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.F && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                NoteSearch.Focus();
+
+                if (NoteSearch.Text != UI_TEXTBOX_STR_SEARCH)
+                    NoteSearch.SelectAll();
+
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Escape)
+            {
+                ClearNoteSearch();
+                e.Handled = true;
+            }
+            else if (e.Key == Key.F3)
+            {
+                if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)
+                    GoToPreviousSearchMatch();
+                else
+                    GoToNextSearchMatch();
+
+                e.Handled = true;
             }
         }
 
@@ -292,57 +332,138 @@ namespace Jotter
             // Reset all previous spotlights
             ResetSpotlights(richTextBox);
 
-            if (string.IsNullOrWhiteSpace(searchText))
+            string normalizedSearchText = NormalizeSearchText(searchText);
+            if (string.IsNullOrWhiteSpace(normalizedSearchText))
                 return;
 
-            TextPointer pointer = richTextBox.Document.ContentStart;
+            RichTextSearchData searchData = BuildRichTextSearchData(richTextBox);
+            if (string.IsNullOrWhiteSpace(searchData.NormalizedText))
+                return;
 
-            while (pointer != null && pointer.CompareTo(richTextBox.Document.ContentEnd) < 0)
+            int searchStartIndex = 0;
+            while (searchStartIndex < searchData.NormalizedText.Length)
             {
-                TextRange foundRange = FindTextInRange(pointer, searchText);
-                if (foundRange != null)
-                {
-                    // Did we find? Shine a spotlight on it
-                    foundRange.ApplyPropertyValue(TextElement.BackgroundProperty, Brushes.Yellow);
-
-                    // Move pointer to the end of the found range
-                    pointer = foundRange.End;
-                }
-                else
-                {
+                int matchIndex = searchData.NormalizedText.IndexOf(normalizedSearchText, searchStartIndex, StringComparison.OrdinalIgnoreCase);
+                if (matchIndex < 0)
                     break;
+
+                TextRange foundRange = CreateTextRangeFromNormalizedMatch(richTextBox, searchData, matchIndex, normalizedSearchText.Length);
+                if (foundRange == null)
+                {
+                    searchStartIndex = matchIndex + normalizedSearchText.Length;
+                    continue;
                 }
+
+                // Did we find? Shine a spotlight on it
+                foundRange.ApplyPropertyValue(TextElement.BackgroundProperty, Brushes.Yellow);
+                searchMatches.Add(foundRange);
+
+                searchStartIndex = matchIndex + normalizedSearchText.Length;
+            }
+
+            if (searchMatches.Count > 0)
+            {
+                currentSearchMatchIndex = 0;
+                SelectSearchMatch(currentSearchMatchIndex);
             }
         }
 
-        /// <summary>
-        /// Search for text in a FlowDocument/TextBlock and return the TextRange of the found text  
-        /// </summary>
-        /// <param name="startPointer">position in the text container</param>
-        /// <param name="searchText">string input of text to find</param>
-        /// <returns>selection of context between two TextPointer positions</returns>
-        private TextRange FindTextInRange(TextPointer startPointer, string searchText)
+        private string NormalizeSearchText(string? text)
         {
-            TextPointer pointer = startPointer;
-            while (pointer != null)
+            if (string.IsNullOrWhiteSpace(text))
+                return string.Empty;
+
+            return Regex.Replace(text.Trim(), @"\s+", " ");
+        }
+
+        /// <summary>
+        /// Search for text in a FlowDocument/TextBlock and return the TextRange of the found text.
+        /// Build a normalized search view of the RichTextBox document so phrase search can
+        /// tolerate whitespace differences while still mapping matches back to TextPointer positions.
+        /// </summary>
+        /// <param name="richTextBox">RichEdit FlowDocument to search into</param>
+        private RichTextSearchData BuildRichTextSearchData(RichTextBox richTextBox)
+        {
+            List<TextPointer> rawTextPointers = new List<TextPointer>();
+            System.Text.StringBuilder rawTextBuilder = new System.Text.StringBuilder();
+
+            TextPointer pointer = richTextBox.Document.ContentStart;
+            while (pointer != null && pointer.CompareTo(richTextBox.Document.ContentEnd) < 0)
             {
                 if (pointer.GetPointerContext(LogicalDirection.Forward) == TextPointerContext.Text)
                 {
                     string textRun = pointer.GetTextInRun(LogicalDirection.Forward);
-                    int index = textRun.IndexOf(searchText, StringComparison.OrdinalIgnoreCase);
-
-                    if (index >= 0)
+                    for (int i = 0; i < textRun.Length; i++)
                     {
-                        TextPointer start = pointer.GetPositionAtOffset(index);
-                        TextPointer end = start.GetPositionAtOffset(searchText.Length);
-                        return new TextRange(start, end);
+                        TextPointer charPointer = pointer.GetPositionAtOffset(i, LogicalDirection.Forward);
+                        if (charPointer != null)
+                        {
+                            rawTextBuilder.Append(textRun[i]);
+                            rawTextPointers.Add(charPointer);
+                        }
                     }
                 }
 
                 pointer = pointer.GetNextContextPosition(LogicalDirection.Forward);
             }
 
-            return (null);
+            List<int> normalizedToRawIndexMap = new List<int>();
+            System.Text.StringBuilder normalizedTextBuilder = new System.Text.StringBuilder();
+
+            for (int i = 0; i < rawTextBuilder.Length; i++)
+            {
+                char currentChar = rawTextBuilder[i];
+                if (char.IsWhiteSpace(currentChar))
+                {
+                    if (normalizedTextBuilder.Length == 0 || normalizedTextBuilder[normalizedTextBuilder.Length - 1] == ' ')
+                        continue;
+
+                    normalizedTextBuilder.Append(' ');
+                    normalizedToRawIndexMap.Add(i);
+                }
+                else
+                {
+                    normalizedTextBuilder.Append(currentChar);
+                    normalizedToRawIndexMap.Add(i);
+                }
+            }
+
+            return new RichTextSearchData
+            {
+                RawTextPointers = rawTextPointers,
+                NormalizedText = normalizedTextBuilder.ToString(),
+                NormalizedToRawIndexMap = normalizedToRawIndexMap
+            };
+        }
+
+        private TextRange? CreateTextRangeFromNormalizedMatch(RichTextBox richTextBox, RichTextSearchData searchData, int normalizedMatchIndex, int normalizedMatchLength)
+        {
+            if (normalizedMatchIndex < 0 ||
+                normalizedMatchLength <= 0 ||
+                normalizedMatchIndex >= searchData.NormalizedToRawIndexMap.Count)
+            {
+                return null;
+            }
+
+            int normalizedEndIndex = normalizedMatchIndex + normalizedMatchLength - 1;
+            if (normalizedEndIndex >= searchData.NormalizedToRawIndexMap.Count)
+                return null;
+
+            int rawStartIndex = searchData.NormalizedToRawIndexMap[normalizedMatchIndex];
+            int rawEndInclusiveIndex = searchData.NormalizedToRawIndexMap[normalizedEndIndex];
+
+            if (rawStartIndex < 0 || rawStartIndex >= searchData.RawTextPointers.Count)
+                return null;
+
+            if (rawEndInclusiveIndex < 0 || rawEndInclusiveIndex >= searchData.RawTextPointers.Count)
+                return null;
+
+            TextPointer start = searchData.RawTextPointers[rawStartIndex];
+            TextPointer end = rawEndInclusiveIndex + 1 < searchData.RawTextPointers.Count
+                ? searchData.RawTextPointers[rawEndInclusiveIndex + 1]
+                : richTextBox.Document.ContentEnd;
+
+            return new TextRange(start, end);
         }
 
         /// <summary>
@@ -351,6 +472,9 @@ namespace Jotter
         /// <param name="richTextBox">RichEdit control to reset</param>
         private void ResetSpotlights(RichTextBox richTextBox)
         {
+            searchMatches.Clear();
+            currentSearchMatchIndex = -1;
+
             TextPointer pointer = richTextBox.Document.ContentStart;
 
             while (pointer != null && pointer.CompareTo(richTextBox.Document.ContentEnd) < 0)
@@ -372,6 +496,86 @@ namespace Jotter
 
                 pointer = pointer.GetNextContextPosition(LogicalDirection.Forward);
             }
+        }
+
+        /// <summary>
+        /// Move selection to the next highlighted search result in the current note.
+        /// </summary>
+        private void GoToNextSearchMatch()
+        {
+            if (searchMatches.Count == 0)
+            {
+                RunSearchFromCurrentText();
+                if (searchMatches.Count == 0)
+                    return;
+            }
+
+            currentSearchMatchIndex++;
+            if (currentSearchMatchIndex >= searchMatches.Count)
+                currentSearchMatchIndex = 0;
+
+            SelectSearchMatch(currentSearchMatchIndex);
+        }
+
+        /// <summary>
+        /// Move selection to the previous highlighted search result in the current note.
+        /// </summary>
+        private void GoToPreviousSearchMatch()
+        {
+            if (searchMatches.Count == 0)
+            {
+                RunSearchFromCurrentText();
+                if (searchMatches.Count == 0)
+                    return;
+            }
+
+            currentSearchMatchIndex--;
+            if (currentSearchMatchIndex < 0)
+                currentSearchMatchIndex = searchMatches.Count - 1;
+
+            SelectSearchMatch(currentSearchMatchIndex);
+        }
+
+        /// <summary>
+        /// Select and focus a specific highlighted match by its index in the search results list.
+        /// </summary>
+        private void SelectSearchMatch(int matchIndex)
+        {
+            if (matchIndex < 0 || matchIndex >= searchMatches.Count)
+                return;
+
+            TextRange selectedRange = searchMatches[matchIndex];
+            rchEditNote.Selection.Select(selectedRange.Start, selectedRange.End);
+            rchEditNote.Focus();
+        }
+
+        /// <summary>
+        /// Re-run note search from the current contents of the search textbox.
+        /// </summary>
+        private void RunSearchFromCurrentText()
+        {
+            string searchText = NoteSearch.Text?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(searchText) || searchText == UI_TEXTBOX_STR_SEARCH)
+                return;
+
+            SpotlightSearch(rchEditNote, searchText);
+        }
+
+        /// <summary>
+        /// Reset the note search textbox and remove all current in-note highlights.
+        /// </summary>
+        private void ClearNoteSearch()
+        {
+            NoteSearch.Text = UI_TEXTBOX_STR_SEARCH;
+            ResetSpotlights(rchEditNote);
+            rchEditNote.Selection.Select(rchEditNote.CaretPosition, rchEditNote.CaretPosition);
+        }
+
+        private sealed class RichTextSearchData
+        {
+            public List<TextPointer> RawTextPointers { get; set; } = new List<TextPointer>();
+            public string NormalizedText { get; set; } = string.Empty;
+            public List<int> NormalizedToRawIndexMap { get; set; } = new List<int>();
         }
 
         private void NotesTitle_MouseDoubleClick(object sender, MouseButtonEventArgs e)

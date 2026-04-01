@@ -183,8 +183,9 @@ jobs:
             #Write-Output "First 100 characters of notes.md for debugging:"
             #Write-Output $notesContent.Substring(0, [Math]::Min(100, $notesContent.Length))
 
-            # Regular expression to match all entries
-            $entryPattern = '##\s.*?\n([\s\S]*?)(?=\n##|\z)'
+            # Regular expression to match all entries.
+            # Allows optional leading whitespace before ## so slightly-indented headers still count.
+            $entryPattern = '(?ms)^\s*##\s.*?(?=^\s*##\s|\z)'
 
             # Match all entries and select the last one
             $allMatches = [regex]::Matches($notesContent, $entryPattern)
@@ -198,7 +199,7 @@ jobs:
             $lastMatch = $allMatches[$allMatches.Count - 1]
 
             # Combine the header and content for the last entry
-            $lastEntry = $lastMatch.Groups[0].Value.Trim()
+            $lastEntry = $lastMatch.Value.Trim()
 
             # Debugging: Display the extracted last entry
             Write-Output "### Extracted last entry:"
@@ -285,10 +286,17 @@ jobs:
             git push origin "v$TAG_NAME"
 
             # Prepare release notes by reading the template and replacing placeholders  
-            # Read the commit message from the last commit
+            # Read the last real commit message, skipping the CI-generated version-info commit if present.
             try {
-              $commitMessage = git log -1 --pretty=format:"%s"
-              Write-Output "Latest commit message: $commitMessage"
+              $commitMessage = git log --format="%s" -n 5 | Where-Object {
+                $_ -notmatch '^\s*Update versioninfo\.txt to reflect release version \[skip ci\]\s*$'
+              } | Select-Object -First 1
+
+              if (-not $commitMessage) {
+                $commitMessage = git log -1 --pretty=format:"%s"
+              }
+
+              Write-Output "Selected release summary commit message: $commitMessage"
             } catch {
               Write-Error "Failed to fetch the latest commit message: $_"
               $commitMessage = "Fixes and features"
@@ -299,6 +307,9 @@ jobs:
             #do same for file hash
             $fileHash = Get-Content -Path "C:\workspace\release\Jotter.exe.hash" -Raw  
             #Get the last commit (but not the skip ci for checking in versioninfo.txt)  
+            # skips the version-info commit for the displayed hash but the release notes 
+            # will still link to the correct commit with the version-info change included, 
+            # which is ideal for users to see the full context of the release.
             $commitHash = git log --format="%H" --skip=1 -n 1
             Write-Output "Previous commit hash: $commitHash"
 

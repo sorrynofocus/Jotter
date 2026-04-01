@@ -92,11 +92,16 @@ jobs:
       - run:
           name: Install Additional Dependencies and verify tree
           command: |
-            choco install gh zip -y --no-progress
-            RefreshEnv.cmd
+            choco install gh zip -y --no-progress --force
+
+            # Force refresh PATH because Chocolatey/RefreshEnv.cmd is unreliable in CircleCI
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+            
+            Write-Output "=== PATH refreshed ==="
             where gh
             where zip
             gh --version
+            zip -v
 
       # ---------------------------------------------------------
       # Generate release notes from notes.md.
@@ -142,7 +147,6 @@ jobs:
             # Debugging: Output the first few characters of the file for verification
             #Write-Output "First 100 characters of notes.md for debugging:"
             #Write-Output $notesContent.Substring(0, [Math]::Min(100, $notesContent.Length))
-
             # Regular expression to match all entries
             $entryPattern = '##\s.*?\n([\s\S]*?)(?=\n##|\z)'
 
@@ -156,6 +160,7 @@ jobs:
 
             # Get the last match
             $lastMatch = $allMatches[$allMatches.Count - 1]
+
             # Combine the header and content for the last entry
             $lastEntry = $lastMatch.Groups[0].Value.Trim()
 
@@ -192,7 +197,7 @@ jobs:
       - run:
           name: Create GitHub Release
           command: |
-            # Read in the env vars we stored earlier
+           # Read in the env vars we stored earlier
             $envVars = Get-Content -Path "c:\workspace\env-vars.txt"
             foreach ($line in $envVars) {
                 # Split key and value
@@ -202,17 +207,16 @@ jobs:
 
             Write-Output "notesFilePath: $templateFilePath"
             Write-Output "templateFilePath: $templateFilePath"
-            Write-Output "releaseNotesFilePath: $releaseNotesFilePath"
+            Write-Output "releaseNotesFilePath: $releaseNotesFilePath"              
 
-            # Get back to our .git location!
-            Set-Location "c:\workspace"
+           #Get back to our .git location! 
+           Set-Location "c:\workspace"
 
             # Read the version from the file
             $versionFilePath = "c:\workspace\build\VersionInfo.txt"
             $TAG_NAME = (Get-Content -Path $versionFilePath -Raw).Trim()
             Write-Output "Detected release from versioninfo: v$TAG_NAME"
 
-            # Setup git and create tag
             # Create the release name
             $RELEASE_NAME = "Release v$TAG_NAME"
             Write-Output "Creating release $RELEASE_NAME"
@@ -228,6 +232,7 @@ jobs:
             if (-not $env:GITHUB_USERNAME) {
               throw "CircleCI env var GITHUB_USERNAME is not set."
             }
+
             git remote set-url origin https://$env:GITHUB_USERNAME:$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
 
             # Create tag in GitHub
@@ -235,7 +240,15 @@ jobs:
             Write-Host "*NEW* GitHub TAG_NAME: '$TAG_NAME'"
             git push origin "v$TAG_NAME"
 
-            # Prepare release notes
+            # Prepare release notes by reading the template and replacing placeholders  
+            # Read the commit message from the last commit
+            try {
+              $commitMessage = git log -1 --pretty=format:"%s"
+              Write-Output "Latest commit message: $commitMessage"
+            } catch {
+              Write-Error "Failed to fetch the latest commit message: $_"
+              $commitMessage = "Fixes and features"
+            }
             # read lastEntry release notes file 
             $lastEntry = Get-Content -Path "C:\workspace\last-entry.md" -Raw  
             #do same for file hash
@@ -246,10 +259,10 @@ jobs:
 
             $releaseNotesTemplate = Get-Content -Path $templateFilePath -Raw
             $releaseNotes = $releaseNotesTemplate `
-              -replace '\[RELEASE_SUMMARY\]', (git log -1 --pretty=format:"%s") `
-              -replace '\[RELEASE_CONTENT\]', $lastEntry `
-              -replace '\[RELEASE_GITHUB_COMMIT\]', $commitHash `
-              -replace '\[PRODUCT_RELEASE_HASH\]', "``$fileHash``"
+            -replace '\[RELEASE_SUMMARY\]', $commitMessage `
+            -replace '\[RELEASE_CONTENT\]', $lastEntry `
+            -replace '\[RELEASE_GITHUB_COMMIT\]', $commitHash `
+            -replace '\[PRODUCT_RELEASE_HASH\]', "``$fileHash``"
 
             # Write the release notes to a file 
             $releaseNotes | Set-Content -Path $releaseNotesFilePath
@@ -260,13 +273,11 @@ jobs:
             Write-Output "[DEBUG] Latest notes extracted from Notes.md:"
             Write-Output $lastEntry      
 
-            # Create the GitHub release
-            Write-Output "Creating GitHub Release v$TAG_NAME ..."
+            # Create the GitHub release using the generated release notes
+            Write-Output "Github release URL..."
             gh release create "v$TAG_NAME" "C:\workspace\release\jotter-release.zip" `
               --title "Release v$TAG_NAME" `
               --notes-file $releaseNotesFilePath
-
-            Write-Output "GitHub Release completed successfully."
 
       - store_artifacts:
           name: Artifacts storage

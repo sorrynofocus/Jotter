@@ -37,6 +37,8 @@ jobs:
       - run:
           name: Commit and Push Updated Version
           command: |
+            $ErrorActionPreference = "Stop"
+
             # ---------------------------------------------------------
             # IMPORTANT:
             # The checkout key is read-only, so pushing must use HTTPS.
@@ -54,6 +56,11 @@ jobs:
 
             git remote set-url origin https://$env:GITHUB_USERNAME:$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
 
+            # Make sure we are on a real local main branch tracking origin/main,
+            # not a detached HEAD from CircleCI checkout.
+            git fetch origin main
+            git checkout -B main origin/main
+
             $versionFilePath = "build\VersionInfo.txt"
             Write-Output "Committing updated $versionFilePath to the repository"
             $TAG_NAME = (Get-Content -Path $versionFilePath -Raw).Trim()
@@ -67,7 +74,35 @@ jobs:
               Write-Output "No staged changes detected for $versionFilePath. Skipping commit and push."
             } else {
               git commit -m "Update versioninfo.txt to reflect release version [skip ci]"
-              git push origin HEAD:main
+
+              # Retry a few times in case origin/main moves while this job is running.
+              $pushSucceeded = $false
+
+              for ($attempt = 1; $attempt -le 3; $attempt++) {
+                Write-Output "Push attempt $attempt of 3"
+
+                # Refresh against the latest remote main and replay our commit on top.
+                git fetch origin main
+                git rebase origin/main
+
+                if ($LASTEXITCODE -ne 0) {
+                  throw "Rebase failed while preparing push. Manual conflict resolution is required."
+                }
+
+                git push origin HEAD:main
+
+                if ($LASTEXITCODE -eq 0) {
+                  $pushSucceeded = $true
+                  Write-Output "Push succeeded."
+                  break
+                }
+
+                Write-Output "Push failed due to remote updates. Retrying..."
+              }
+
+              if (-not $pushSucceeded) {
+                throw "Failed to push updated version file after 3 attempts."
+              }
             }
 
       - persist_to_workspace:
@@ -239,6 +274,10 @@ jobs:
             }
 
             git remote set-url origin https://$env:GITHUB_USERNAME:$env:GITHUB_TOKEN@github.com/sorrynofocus/Jotter.git
+
+            # Make sure we are on the latest main before tagging.
+            git fetch origin main
+            git checkout -B main origin/main
 
             # Create tag in GitHub
             git tag -a "v$TAG_NAME" -m "Version v$TAG_NAME"

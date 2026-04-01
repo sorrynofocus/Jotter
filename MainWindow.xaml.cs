@@ -560,6 +560,42 @@ namespace Jotter
         }
 
 
+        /// <summary>
+        /// Brings a note window to the foreground reliably for custom transparent windows (TNA supported)
+        /// </summary>
+        /// <param name="noteWindow">The NoteTemplateEditor window to activate</param>
+        /// Example usage:
+        /// 
+        /// // Is note already open via its IdIndexer?
+        /// foreach (var window in openNoteWindows)
+        /// {
+        ///    if (window.DataContext is Note openedNote && 
+        ///        openedNote.IdIndexer == note.IdIndexer)
+        ///    {
+        ///        noteIsOpen = true;
+        ///        
+        ///        // Use helper to bring already open note to front
+        ///        BringNoteToFront(window);
+        ///        
+        ///        break;
+        ///    }
+        ///}
+        /// 
+        /// NOTE: Keep this in if we decide to use as a helper func.
+        // private void BringNoteToFront(Window noteWindow)
+        // {
+        //     if (noteWindow == null) 
+        //         return;
+
+        //     noteWindow.Dispatcher.BeginInvoke(new Action(() =>
+        //     {
+        //         noteWindow.Topmost = true;
+        //         noteWindow.Activate();
+        //         noteWindow.Focus();
+        //         noteWindow.Topmost = false;
+        //     }), System.Windows.Threading.DispatcherPriority.Render);
+        // }
+
         private void OpenSelectedNote()
         {
             if (MyNotesListView.SelectedItem is Note note)
@@ -573,10 +609,21 @@ namespace Jotter
                         openedNote.IdIndexer == note.IdIndexer)
                     {
                         noteIsOpen = true;
-                        window.Topmost = true;
+                        //window.Topmost = true;
                         // a'right, then go back to the opened note
-                        window.Activate();
-                        window.Topmost = false;
+                        //window.Activate();
+                        //window.Topmost = false;
+
+                        // IMPROVED ACTIVATION FOR ALREADY OPEN NOTES 
+                        // This replaces the old Topmost/Activate sequence that wasn't working reliably
+                        window.Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            window.Topmost = true;
+                            window.Activate();
+                            window.Focus();
+                            window.Topmost = false;
+                        }), System.Windows.Threading.DispatcherPriority.Render);                        
+                        
                         //Move onto noteEditor.Show();...
                         break;
                     }
@@ -622,9 +669,23 @@ namespace Jotter
                     // window comes to the foreground when opened, but it doesn't work.
                     noteEditor.NoteUpdated += NoteEditor_NoteUpdated;
                     noteEditor.Show();
-                    noteEditor.Topmost = true;
-                    noteEditor.Activate();
-                    noteEditor.Topmost = false;
+
+
+                    //noteEditor.Topmost = true;
+                    //noteEditor.Activate();
+                    //noteEditor.Topmost = false;
+
+                    // IMPROVED ACTIVATION FOR TNA / CUSTOM WINDOW 
+                    // GROK helped me with this one! Surprise! Claude/Chat Gippity and CoPilot did not. 
+                    // I assumed the window owner = this and the models did too. But, being a custom 
+                    // window, the note editor was not activating reliably with the old method.
+                    noteEditor.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        noteEditor.Topmost = true;
+                        noteEditor.Activate();
+                        noteEditor.Focus();
+                        noteEditor.Topmost = false;
+                    }), System.Windows.Threading.DispatcherPriority.Render);                    
 
                     // Add the note editor window to the tracking list
                     openNoteWindows.Add(noteEditor);

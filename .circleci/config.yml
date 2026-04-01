@@ -100,7 +100,7 @@ jobs:
             choco install gh zip -y 
             where zip
 
-      # ---------------------------------------------------------
+      # --------------------------------------------------------- 
       # Generate release notes from notes.md.
       # ---------------------------------------------------------
       - run:
@@ -128,10 +128,6 @@ jobs:
 
             # Read Notes.md and extract the latest entry
             # Regex to capture from the separator or end of file back to the previous markdown header
-
-            # ^\s{0,3}##.*\n([\s\S]*?)^\s{0,3}---
-            # ^\s{0,3}##.*\n([\s\S]*?)(^\s{0,3}---|\z)
-            # ^\s{0,3}##.*\n([\s\S]*?)^\s{0,3}(---|\z)
 
             # Read the entire content of the notes file
             try {
@@ -178,24 +174,23 @@ jobs:
       - run:
           name: Prepare release
           command: |
-            Write-Output "Creating release archive"
-            mkdir C:\workspace\release\
-            cd C:\workspace\bin\x64\Release\net8.0-windows\publishprod
+            $ReleaseDir = "C:\workspace\release"
+            $PublishDir = "C:\workspace\bin\x64\Release\net8.0-windows\publishprod"
 
-            # Generate file hash using certutil
-            $outputFilePath = "C:\workspace\bin\x64\Release\net8.0-windows\publishprod\Jotter.exe"
-            $hashFilePath = "C:\workspace\bin\x64\Release\net8.0-windows\publishprod\Jotter.exe.hash"
-            
-            $hashOutput = certutil -hashfile $outputFilePath SHA256
-            $fileHash = ($hashOutput | Where-Object { $_ -match "^[0-9A-F]{64}$" }).Trim()
-            
-            # Save the hash to jotter.exe.hash. Read this in later for the release notes.
-            $fileHash | Set-Content -Path $hashFilePath
-            Write-Output "Generated SHA256 hash: $fileHash"
+            mkdir $ReleaseDir -Force
 
-            zip C:\workspace\release\jotter-release.zip `
-              C:\workspace\bin\x64\Release\net8.0-windows\publishprod\Jotter.exe `
-              C:\workspace\bin\x64\Release\net8.0-windows\publishprod\Jotter.exe.hash
+            Copy-Item "$PublishDir\Jotter.exe" "$ReleaseDir\Jotter.exe" -Force
+            Copy-Item "$PublishDir\Jotter.exe.hash" "$ReleaseDir\Jotter.exe.hash" -Force
+
+            # Re-generate hash to be safe
+            $hash = (certutil -hashfile "$ReleaseDir\Jotter.exe" SHA256 | Select-String -Pattern '^[0-9A-F]{64}$').ToString().Trim()
+            $hash | Set-Content "$ReleaseDir\Jotter.exe.hash"
+
+            # Zip with flat structure -j (junk paths) so files are in the root of the zip
+            cd $ReleaseDir
+            zip -j jotter-release.zip Jotter.exe Jotter.exe.hash
+
+            Write-Output "Flat release zip created successfully."
 
       - run:
           name: Create GitHub Release
@@ -213,11 +208,10 @@ jobs:
             Write-Output "releaseNotesFilePath: $releaseNotesFilePath"              
 
 
-           #Get backt o our .git location! 
+           #Get back to our .git location! 
            Set-Location "c:\workspace"
-           #Get-ChildItem -Recurse -Force | Select-Object FullName
 
-            # # #Read the version from the file
+            # Read the version from the file
             $versionFilePath = "c:\workspace\build\VersionInfo.txt"
             $TAG_NAME = (Get-Content -Path $versionFilePath -Raw).Trim()
             Write-Output "Detected release from versioninfo: v$TAG_NAME"
@@ -258,7 +252,7 @@ jobs:
             # read lastEntry release notes file 
             $lastEntry = Get-Content -Path "C:\workspace\last-entry.md" -Raw  
             #do same for file hash
-            $fileHash = Get-Content -Path "C:\workspace\bin\x64\Release\net8.0-windows\publishprod\Jotter.exe.hash" -Raw  
+            $fileHash = Get-Content -Path "C:\workspace\release\Jotter.exe.hash" -Raw  
             #Get the last commit (but not the skip ci for checking in versioninfo.txt)  
             $commitHash = git log --format="%H" --skip=1 -n 1
             Write-Output "Previous commit hash: $commitHash"
@@ -271,7 +265,6 @@ jobs:
             -replace '\[PRODUCT_RELEASE_HASH\]', "``$fileHash``"
 
             # Write the release notes to a file 
-
             $releaseNotes | Set-Content -Path $releaseNotesFilePath
             Write-Output "Release notes prepared."
 
@@ -282,7 +275,7 @@ jobs:
 
             # Create the GitHub release using the generated release notes
             Write-Output "Github release URL..."
-            gh release create "v$TAG_NAME" C:\workspace\release\jotter-release.zip `
+            gh release create "v$TAG_NAME" "C:\workspace\release\jotter-release.zip" `
               --title "Release v$TAG_NAME" `
               --notes-file $releaseNotesFilePath `
 
@@ -290,7 +283,7 @@ jobs:
           name: Artifacts storage
           path: C:\workspace\release\jotter-release.zip
           destination: jotter-release.zip
-
+          
 workflows:
   build-and-release:
     jobs:

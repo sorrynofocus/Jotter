@@ -446,3 +446,34 @@ points to getting version info.
   - Kept _existing_ NOTE search behavior intact, including Enter to search, `F3`/`Shift+F3` navigation, and `Escape` to clear.
   - Investigated note editor foreground behavior when opening from the main window. Tried localized activation-focused changes, but behavior remained effectively the same, so the issue is being deferred...
 
+  ## 2026-03-31 -> 10:22pm
+
+  - Improved circleci to put product at root of artifact directory. Before, you had to navigate through the "build" folder to get to the product.
+
+  - Improved note activation and foreground behavior when opening from the main window.
+    The note editor window was not reliably activating and coming to the foreground when opened from the main window, especially with the custom window style. The old method of setting `Topmost` to `true`, calling `Activate()`, and then setting `Topmost` back to `false` was not working consistently.
+    The new method uses `Dispatcher.BeginInvoke` to set `Topmost` to `true` on the note editor window, which reliably brings it to the foreground. This is done both when opening a new note and when activating an already open note from the main window.
+
+    Details:
+    MainWindow and Notes are custom transparent windows (WindowStyle="None" and AllowsTransparency="True"). These kinds of windows are notoriously bad at responding to normal Activate() calls. WPF often ignores them or they end up behind the main window. This block is a reliable workaround that forces the note window to the foreground.
+
+    Break it down:
+
+    TL;DR: Wait until the current screen update is done, then very quickly flash the window as Topmost, activate it, give it focus, and then turn Topmost back off.
+
+    `window.Dispatcher.BeginInvoke(...)` - This is the most important part. Instead of running the activation code immediately, it queues it to run on the UI thread after the current rendering pass finishes. This tiny delay is what makes it work reliably with transparent/custom windows. 
+ 
+    DispatcherPriority.Render: Tells WPF: "Run this as soon as you’re done rendering the current frame."
+    This is higher priority than ApplicationIdle but not so high that it fights with other UI updates. It’s the sweet spot for bringing windows forward.
+
+    The Action() is the code that runs when the dispatcher gets to it. It does the following:
+    { 
+    window.Topmost = true;
+    window.Activate();
+    window.Focus();
+    window.Topmost = false;
+    }
+    The last TopMost  = false is important - you don’t want the note to stay permanently on top of all windows (like over your browser or other apps). It only uses Topmost for a split second to steal focus, then behaves normally.
+
+
+

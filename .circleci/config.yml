@@ -147,6 +147,7 @@ jobs:
             # Debugging: Output the first few characters of the file for verification
             #Write-Output "First 100 characters of notes.md for debugging:"
             #Write-Output $notesContent.Substring(0, [Math]::Min(100, $notesContent.Length))
+
             # Regular expression to match all entries
             $entryPattern = '##\s.*?\n([\s\S]*?)(?=\n##|\z)'
 
@@ -182,11 +183,15 @@ jobs:
             mkdir $ReleaseDir -Force
 
             Copy-Item "$PublishDir\Jotter.exe" "$ReleaseDir\Jotter.exe" -Force
-            Copy-Item "$PublishDir\Jotter.exe.hash" "$ReleaseDir\Jotter.exe.hash" -Force
 
-            # Re-generate hash to be safe
-            $hash = (certutil -hashfile "$ReleaseDir\Jotter.exe" SHA256 | Select-String -Pattern '^[0-9A-F]{64}$').ToString().Trim()
-            $hash | Set-Content "$ReleaseDir\Jotter.exe.hash"
+            # Handle missing .hash file gracefully
+            if (Test-Path "$PublishDir\Jotter.exe.hash") {
+                Copy-Item "$PublishDir\Jotter.exe.hash" "$ReleaseDir\Jotter.exe.hash" -Force
+            } else {
+                Write-Output "WARNING: Jotter.exe.hash not found. Generating it now..."
+                $hash = (certutil -hashfile "$ReleaseDir\Jotter.exe" SHA256 | Select-String -Pattern '^[0-9A-F]{64}$').ToString().Trim()
+                $hash | Set-Content "$ReleaseDir\Jotter.exe.hash"
+            }
 
             # Zip with flat structure
             cd $ReleaseDir
@@ -249,6 +254,7 @@ jobs:
               Write-Error "Failed to fetch the latest commit message: $_"
               $commitMessage = "Fixes and features"
             }
+
             # read lastEntry release notes file 
             $lastEntry = Get-Content -Path "C:\workspace\last-entry.md" -Raw  
             #do same for file hash

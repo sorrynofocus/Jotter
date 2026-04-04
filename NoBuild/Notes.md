@@ -446,7 +446,7 @@ points to getting version info.
   - Kept _existing_ NOTE search behavior intact, including Enter to search, `F3`/`Shift+F3` navigation, and `Escape` to clear.
   - Investigated note editor foreground behavior when opening from the main window. Tried localized activation-focused changes, but behavior remained effectively the same, so the issue is being deferred...
 
-  ## 2026-03-31 -> 10:22pm
+## 2026-03-31 -> 10:22pm
 
   - Improved circleci to put product at root of artifact directory. Before, you had to navigate through the "build" folder to get to the product.
 
@@ -474,6 +474,25 @@ points to getting version info.
     window.Topmost = false;
     }
     The last TopMost  = false is important - you don’t want the note to stay permanently on top of all windows (like over your browser or other apps). It only uses Topmost for a split second to steal focus, then behaves normally.
+
+## 2026-04-04 -> 12:22am
+
+  - Added Spotlight search highlights in the note editor. During note editing, if the user performs a search, the matching text in the note will be highlighted. This makes it easier to see where all search matches are in the note content. Also, by selecting text, if any matching text are present, they will be highlighted as well. This is similar to the search behavior in VSCode and other editors, where search matches are highlighted in the text.
+  Things get goofy, throw a `return;` in QueueSelectionSpotlightUpdate() (a new helper func) to disable the spotlight search highlights 
+  
+  - Spotlight search text will be  using a new theme brush `NoteSearchHighlightBrush` for the highlight color. The code is there, but hardcoded to `Brushes.Yellow` until the brush is added to the theme system and defined in each theme.
+  Below is the TODO for this:
+
+    TODO: Finish adding NoteSearchHighlightBrush to the theme skinning set for all themes, then remove the Brushes.Yellow fallback. Code already in place in NoteTemplateEditor.xaml.cs to use NoteSearchHighlightBrush for the note search highlights, but the brush needs to be added to the theme system and defined in each theme before it will work.
+
+    Implementations: register the brush as a theme-supported resource, then define it in each theme (the hard part)
+
+    1. Add the brush name to the theme system
+      - In ThemeSkinManager.cs, add NoteSearchHighlightBrush with skinnable brush keys listed. Add a short description describing the brush.
+    2. Add the brush to shared/default theme resources
+      - In SharedResources.xaml, add a safe default: `NoteSearchHighlightBrush` this gives a baseline even if a theme forgets to define it. (during development, chosen color was Yellow for HIGH visibility). Try to keep the color conservative and not bright.
+    3. Add the brush to each concrete theme
+      - In DefaultTheme.xaml, DarkTheme.xaml, and LightTheme.xaml -- define NoteSearchHighlightBrush with a color that works against that theme’s NoteEditBackgroundBrush and NoteEditForegroundBrush.  
 
 
 

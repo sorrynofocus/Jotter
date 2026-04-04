@@ -43,6 +43,17 @@ namespace Jotter
         private readonly List<TextRange> searchMatches = new List<TextRange>();
         // Track which highlighted match is currently selected while cycling search results.
         private int currentSearchMatchIndex = -1;
+        // Track whether current spotlights came from editor text selection instead of explicit search.
+        private bool isSelectionSpotlightActive = false;
+        // Prevent selection-change reentry while code updates the editor selection.
+        private bool isHandlingEditorSelectionChange = false;
+        // Debounce selection-based highlighting so normal caret movement does not thrash the editor.
+        // RichTextBox fires a lot of selection notifications while the mouse is dragging or while the
+        // caret is moving with the keyboard, so we wait briefly before searching and painting matches.
+        private readonly DispatcherTimer selectionSpotlightTimer;
+        // Avoid re-running the same selection highlight repeatedly.
+        // If the user keeps the same word selected, there is no reason to rebuild the same highlight set.
+        private string lastSelectionSpotlightText = string.Empty;
 
         //Main Note template application child window
         public NoteTemplateEditor(Note note)
@@ -59,6 +70,10 @@ namespace Jotter
             saveTimer.Interval = TimeSpan.FromMilliseconds(SaveDelayMilliseconds);
             saveTimer.Tick += SaveTimer_Tick;
 
+            selectionSpotlightTimer = new DispatcherTimer();
+            selectionSpotlightTimer.Interval = TimeSpan.FromMilliseconds(225);
+            selectionSpotlightTimer.Tick += SelectionSpotlightTimer_Tick;
+
             // Initialize last activity time
             lastActivityTime = DateTime.Now;
             /////////////////////////////////////////
@@ -72,6 +87,13 @@ namespace Jotter
 
             // Subscribe to text changed event of the RichTextBox tracking user activity
             rchEditNote.TextChanged += RchEditNote_TextChanged;
+            rchEditNote.SelectionChanged += RchEditNote_SelectionChanged;
+            // SelectionChanged is the broad signal that the editor selection moved.
+            // MouseUp and KeyUp are the "selection is likely finished" signals that make the
+            // feature feel closer to editors like VS Code without constantly repainting highlights.
+            // To disable selection-based spotlighting later, comment out the three event hookups below.
+            rchEditNote.PreviewMouseLeftButtonUp += RchEditNote_PreviewMouseLeftButtonUp;
+            rchEditNote.KeyUp += RchEditNote_KeyUp;
 
             //Set the selected note
             SelectedNote = note;
@@ -207,6 +229,127 @@ namespace Jotter
             saveTimer.Start();
         }
 
+        /// <summary>
+        /// Highlight all matches of the current text selection in the note editor when no explicit search is active.
+        /// </summary>
+        private void RchEditNote_SelectionChanged(object sender, RoutedEventArgs e)
+        {
+            if (isHandlingEditorSelectionChange)
+                return;
+
+            selectionSpotlightTimer.Stop();
+
+            // Explicit Ctrl+F search owns the editor highlighting state. While search is active,
+            // selection-based highlighting stays out of the way so the two features do not fight.
+            if (HasActiveNoteSearch())
+                return;
+
+            string selectedText = NormalizeSearchText(rchEditNote.Selection?.Text);
+            if (selectedText.Length < 2)
+            {
+                ClearSelectionSpotlight();
+                return;
+            }
+
+            selectionSpotlightTimer.Start();
+        }
+
+        private void RchEditNote_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            // When the mouse button is released, the user is usually done selecting text.
+            // Queue the spotlight update here so the highlight pass runs after the final selection settles.
+            QueueSelectionSpotlightUpdate();
+        }
+
+        private void RchEditNote_KeyUp(object sender, KeyEventArgs e)
+        {
+            // Keyboard selection changes (Shift+Arrow, Ctrl+Shift+Arrow, etc.) land here.
+            // Reuse the same deferred update path as mouse selection completion.
+            QueueSelectionSpotlightUpdate();
+        }
+
+        private void QueueSelectionSpotlightUpdate()
+        {
+            if (isHandlingEditorSelectionChange)
+                return;
+
+            selectionSpotlightTimer.Stop();
+
+            // If the user is in explicit search mode, leave the current search highlights alone.
+            if (HasActiveNoteSearch())
+                return;
+
+            string selectedText = NormalizeSearchText(rchEditNote.Selection?.Text);
+            if (selectedText.Length < 2)
+            {
+                // Small or empty selections are ignored on purpose. This keeps one-letter selections
+                // from lighting up the whole note and also clears any previous selection-based matches.
+                ClearSelectionSpotlight();
+                return;
+            }
+
+            // The timer gives the RichTextBox a short quiet period before we scan the document.
+            selectionSpotlightTimer.Start();
+        }
+
+        private void SelectionSpotlightTimer_Tick(object sender, EventArgs e)
+        {
+            selectionSpotlightTimer.Stop();
+
+            if (isHandlingEditorSelectionChange || HasActiveNoteSearch())
+                return;
+
+            string selectedText = NormalizeSearchText(rchEditNote.Selection?.Text);
+            if (selectedText.Length < 2)
+            {
+                ClearSelectionSpotlight();
+                return;
+            }
+
+            // If we already highlighted this exact selected text and those highlights are still active,
+            // do nothing. This avoids rebuilding the same search result set over and over.
+            if (selectedText == lastSelectionSpotlightText && isSelectionSpotlightActive)
+                return;
+
+            isHandlingEditorSelectionChange = true;
+
+            try
+            {
+                // Reuse the existing in-note spotlight engine, but do not move the caret/selection.
+                // The goal here is "show the other matches" while preserving the user's current selection.
+                SpotlightSearch(rchEditNote, selectedText, false);
+                isSelectionSpotlightActive = searchMatches.Count > 0;
+                lastSelectionSpotlightText = isSelectionSpotlightActive ? selectedText : string.Empty;
+            }
+            finally
+            {
+                isHandlingEditorSelectionChange = false;
+            }
+        }
+
+        private void ClearSelectionSpotlight()
+        {
+            selectionSpotlightTimer.Stop();
+            lastSelectionSpotlightText = string.Empty;
+
+            if (!isSelectionSpotlightActive)
+                return;
+
+            isHandlingEditorSelectionChange = true;
+
+            try
+            {
+                // Only clear highlights that came from the selection spotlight flow.
+                // Explicit search will rebuild its own results whenever it is active again.
+                ResetSpotlights(rchEditNote);
+                isSelectionSpotlightActive = false;
+            }
+            finally
+            {
+                isHandlingEditorSelectionChange = false;
+            }
+        }
+
         // This will be called after the specified delay of inactivity saving note data.
         // The timer will reset whenever there's user activity, ensuring the note is
         // saved when there's a period of inactivity.
@@ -327,7 +470,7 @@ namespace Jotter
         /// </summary>
         /// <param name="richTextBox">Richedit FlowDocument to search into (</param>
         /// <param name="searchText">string input of text to find</param>
-        private void SpotlightSearch(RichTextBox richTextBox, string searchText)
+        private void SpotlightSearch(RichTextBox richTextBox, string searchText, bool selectFirstMatch = true)
         {
             // Reset all previous spotlights
             ResetSpotlights(richTextBox);
@@ -354,8 +497,11 @@ namespace Jotter
                     continue;
                 }
 
-                // Did we find? Shine a spotlight on it
-                foundRange.ApplyPropertyValue(TextElement.BackgroundProperty, Brushes.Yellow);
+                // Paint every matched range with the same background brush.
+                // The resulting TextRanges are also cached so F3 / Shift+F3 can move between them.
+                // For theme  skinning, use the DynamicResource reference to a highlight brush defined in the app resources 
+                // TODO: Finish adding NoteSearchHighlightBrush to the theme skinning set for all themes, then remove the Brushes.Yellow fallback.
+                foundRange.ApplyPropertyValue(TextElement.BackgroundProperty, Application.Current.Resources["NoteSearchHighlightBrush"]  ?? Brushes.Yellow);
                 searchMatches.Add(foundRange);
 
                 searchStartIndex = matchIndex + normalizedSearchText.Length;
@@ -364,8 +510,18 @@ namespace Jotter
             if (searchMatches.Count > 0)
             {
                 currentSearchMatchIndex = 0;
-                SelectSearchMatch(currentSearchMatchIndex);
+
+                // Explicit search wants to jump to the first result, but selection-based spotlighting
+                // does not. That behavior difference is controlled by the selectFirstMatch flag.
+                if (selectFirstMatch)
+                    SelectSearchMatch(currentSearchMatchIndex);
             }
+        }
+
+        private bool HasActiveNoteSearch()
+        {
+            string searchText = NoteSearch.Text?.Trim() ?? string.Empty;
+            return !string.IsNullOrWhiteSpace(searchText) && searchText != UI_TEXTBOX_STR_SEARCH;
         }
 
         private string NormalizeSearchText(string? text)
@@ -475,6 +631,8 @@ namespace Jotter
             searchMatches.Clear();
             currentSearchMatchIndex = -1;
 
+            // Walk through the RichTextBox document and remove only the yellow search/selection
+            // background that this window applies. Other formatting is left alone.
             TextPointer pointer = richTextBox.Document.ContentStart;
 
             while (pointer != null && pointer.CompareTo(richTextBox.Document.ContentEnd) < 0)
@@ -545,7 +703,9 @@ namespace Jotter
                 return;
 
             TextRange selectedRange = searchMatches[matchIndex];
+            isHandlingEditorSelectionChange = true;
             rchEditNote.Selection.Select(selectedRange.Start, selectedRange.End);
+            isHandlingEditorSelectionChange = false;
             rchEditNote.Focus();
         }
 
@@ -567,8 +727,13 @@ namespace Jotter
         private void ClearNoteSearch()
         {
             NoteSearch.Text = UI_TEXTBOX_STR_SEARCH;
+            selectionSpotlightTimer.Stop();
+            lastSelectionSpotlightText = string.Empty;
             ResetSpotlights(rchEditNote);
+            isSelectionSpotlightActive = false;
+            isHandlingEditorSelectionChange = true;
             rchEditNote.Selection.Select(rchEditNote.CaretPosition, rchEditNote.CaretPosition);
+            isHandlingEditorSelectionChange = false;
         }
 
         private sealed class RichTextSearchData

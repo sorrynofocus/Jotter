@@ -241,7 +241,7 @@
             <tb:TaskbarIcon
                 x:Name="NotifyIcon"
                 ToolTipText="Jotter App"
-                IconSource="pack://application:,,,/build/Icos/gradiant_notebook.ico"
+                IconSource="pack://application:,,,/build/Icos/jotter-ico-pack.ico"
                 Visibility="Hidden"
                 DoubleClickCommand="{Binding NotifyIcon_MouseDoubleClick}" >
                 <tb:TaskbarIcon.ContextMenu>

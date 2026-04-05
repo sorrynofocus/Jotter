@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>build\Icos\gradiant_notebook.ico</ApplicationIcon>
+    <ApplicationIcon>build\Icos\jotter-ico-pack.ico</ApplicationIcon>
     <Platforms>AnyCPU;x64;ARM64;x86</Platforms>
 	  <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
 	  <Deterministic>false</Deterministic>
@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="build\Icos\gradiant_notebook.ico">
+    <Resource Include="build\Icos\jotter-ico-pack.ico">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>

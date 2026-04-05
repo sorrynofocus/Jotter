@@ -495,4 +495,5 @@ points to getting version info.
       - In DefaultTheme.xaml, DarkTheme.xaml, and LightTheme.xaml -- define NoteSearchHighlightBrush with a color that works against that theme’s NoteEditBackgroundBrush and NoteEditForegroundBrush.  
 
 
-
+## 2026-04-05 -> 11:58am
+  - Added all new icons for the application. Forgot to add notes for 1st pass for 04.04 release notes. This is the 2nd and final pass. Add transparency around the icon to clean it up under light/dark themes under OS.

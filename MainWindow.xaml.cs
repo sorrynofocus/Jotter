@@ -20,6 +20,8 @@
 
 using com.nobodynoze.flogger;
 using com.nobodynoze.notemanager;
+using Jotter.Utils.Exporter;
+using Microsoft.Win32;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -763,6 +765,42 @@ namespace Jotter
             OpenSelectedNote();
         }
 
+
+        // Export a note to markdown via context menu
+        // Save dialog will default to markdown file type and the file name will default to the note title.
+        private void ExportNote_Click(object sender, RoutedEventArgs e)
+        {
+            if (MyNotesListView.SelectedItem is not Note selectedNote)
+            {
+                MessageBox.Show("Select a note to export.", "Export Note", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            SaveFileDialog saveFileDialog = new SaveFileDialog
+            {
+                Filter = "Markdown files (*.md)|*.md|All files (*.*)|*.*",
+                DefaultExt = ".md",
+                AddExtension = true,
+                FileName = NoteMarkdownExporter.GetDefaultMarkdownFileName(selectedNote),
+                Title = "Export Note to Markdown - select destination"
+            };
+
+            if (saveFileDialog.ShowDialog() != true)
+                return;
+
+            try
+            {
+                NoteMarkdownExporter.ExportNoteToMarkdownFile(selectedNote, saveFileDialog.FileName);
+                logger.LogInfo($"[ExportNote_Click] Exported note to markdown: {saveFileDialog.FileName}");
+                MessageBox.Show("The note was exported successfully!!!", "Export Note", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"[ExportNote_Click] Error exporting note: {ex.Message}");
+                MessageBox.Show($"Unable to export the note.\n\r{ex.Message}", "Export Note", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         //Open a note via double-clicking on note
         private void Note_DoubleClick(object sender, RoutedEventArgs e)
         {
@@ -772,6 +810,15 @@ namespace Jotter
             //    noteEditor.Show();
             //}
             OpenSelectedNote();
+        }
+
+        private void Note_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is ListViewItem item)
+            {
+                item.IsSelected = true;
+                item.Focus();
+            }
         }
 
         //Holding left clikc button and moving the mouse will move the window

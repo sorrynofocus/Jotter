@@ -132,8 +132,8 @@
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Padding" Value="5,2,2,7"/>
             <Setter Property="FontFamily" Value="Segoe UI"/>
-        </Style>        
-        
+        </Style>
+
         <Style TargetType="TextBlock" x:Key="HeaderTextStyle">
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Margin" Value="5,10,0,5"/>
@@ -169,6 +169,188 @@
             <Setter Property="FontSize" Value="12"/>
         </Style>
 
+        <Style TargetType="Button" x:Key="ExportActionButtonStyle">
+            <Setter Property="MinWidth" Value="96"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource NoteTitleForegroundBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource SelectedNoteBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SelectedNoteBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ExportButtonBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"
+                                              RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ExportButtonBorder" Property="Background" Value="{DynamicResource NoteBlockBackgroundBrush}"/>
+                                <Setter TargetName="ExportButtonBorder" Property="BorderBrush" Value="{DynamicResource WindowBorderBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ExportButtonBorder" Property="Background" Value="{DynamicResource NoteBlockBorderBrush}"/>
+                                <Setter TargetName="ExportButtonBorder" Property="BorderBrush" Value="{DynamicResource WindowBorderBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ComboBoxItem" x:Key="SettingsComboBoxItemStyle">
+            <Setter Property="Foreground" Value="{DynamicResource NoteEditForegroundBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource NoteEditBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border x:Name="ItemBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource MainGridBackgroundBrush}"/>
+                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{DynamicResource SelectedNoteBorderBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource NoteEditBackgroundBrush}"/>
+                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{DynamicResource SelectedNoteBorderBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="ComboBox" x:Key="SettingsComboBoxStyle">
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="MinWidth" Value="132"/>
+            <Setter Property="Padding" Value="12,4,36,4"/>
+            <Setter Property="FontFamily" Value="Segoe UI Semibold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource NoteEditForegroundBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource NoteEditBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource NoteBlockBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource SettingsComboBoxItemStyle}"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border x:Name="ComboBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="8"
+                                    SnapsToDevicePixels="True">
+                                <Grid>
+                                    <ContentPresenter Margin="{TemplateBinding Padding}"
+                                                      HorizontalAlignment="Left"
+                                                      VerticalAlignment="Center"
+                                                      Content="{TemplateBinding SelectionBoxItem}"
+                                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                      ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                      SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                    <Border Width="28"
+                                            Margin="0,3,4,3"
+                                            HorizontalAlignment="Right"
+                                            CornerRadius="6"
+                                            Background="{DynamicResource MainGridBackgroundBrush}"
+                                            IsHitTestVisible="False">
+                                        <TextBlock Text="v"
+                                                   FontSize="11"
+                                                   FontWeight="Bold"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource NoteEditForegroundBrush}"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <ToggleButton Background="Transparent"
+                                          BorderThickness="0"
+                                          Focusable="False"
+                                          ClickMode="Press"
+                                          IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Rectangle Fill="Transparent"/>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+
+                            <Popup x:Name="PART_Popup"
+                                   Placement="Bottom"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Slide"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}">
+                                <Border Margin="0,6,0,0"
+                                        MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                        Background="{DynamicResource NoteEditBackgroundBrush}"
+                                        BorderBrush="{DynamicResource SelectedNoteBorderBrush}"
+                                        BorderThickness="1.5"
+                                        CornerRadius="8">
+                                    <ScrollViewer Margin="2"
+                                                  SnapsToDevicePixels="True">
+                                        <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="{DynamicResource WindowBorderBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="{DynamicResource WindowBorderBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsDropDownOpen" Value="True">
+                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="{DynamicResource WindowBorderBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ComboBorder" Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style TargetType="TextBox" x:Key="FilePathTextStyle">
             <Setter Property="Margin" Value="5,2,0,2"/>
             <Setter Property="FontFamily" Value="Consolas"/>
@@ -183,17 +365,41 @@
         </Style>
 
         <Style x:Key="CloseButtonStyle" TargetType="Button">
-            <Setter Property="Width" Value="25"/>
-            <Setter Property="Height" Value="25"/>
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
             <Setter Property="Foreground" Value="{DynamicResource HeaderForegroundBrush}"/>
             <Setter Property="Background" Value="{DynamicResource HeaderBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource HeaderBackgroundBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Grid Background="{TemplateBinding Background}">
-                            <TextBlock Text="X" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
-                        </Grid>
+                        <Border x:Name="CloseBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                SnapsToDevicePixels="True">
+                            <TextBlock Text="X"
+                                       FontSize="14"
+                                       FontWeight="Bold"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center"
+                                       Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="CloseBorder" Property="Background" Value="{StaticResource Button.MouseOver.Background}"/>
+                                <Setter TargetName="CloseBorder" Property="BorderBrush" Value="{StaticResource Button.MouseOver.Border}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="CloseBorder" Property="Background" Value="{StaticResource Button.Pressed.Background}"/>
+                                <Setter TargetName="CloseBorder" Property="BorderBrush" Value="{StaticResource Button.Pressed.Border}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="CloseBorder" Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -208,13 +414,17 @@
 
     <!-- Background="#FF333333" -->
     <Grid x:Name="GlobalSettingsGrid" Grid.Row="0" >
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="273*"/>
+            <ColumnDefinition Width="137*"/>
+        </Grid.ColumnDefinitions>
+
         <!-- Close Button -->
-        <Grid x:Name="TopBorderGrid" MouseDown="TopBorderGrid_MouseDown" Grid.Row="1" Background="{DynamicResource HeaderBackgroundBrush}" HorizontalAlignment="Stretch" >
+        <Grid x:Name="TopBorderGrid" MouseDown="TopBorderGrid_MouseDown" Background="{DynamicResource HeaderBackgroundBrush}" Grid.ColumnSpan="2" >
             <TextBlock Name="StickyNotesSettingsTitle" Style="{StaticResource SettingsTitle}"/>
-            <Button x:Name="CloseSettings" Click="CloseSettings_Click" Style="{StaticResource CloseButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="3"/>
+            <Button x:Name="CloseSettings" Click="CloseSettings_Click" Style="{StaticResource CloseButtonStyle}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="1"/>
         </Grid>
-        
+
         <!-- TODO 
         GlobalSettingsGrid and TopBorderGrid I'm a bit troubled on. TopBorerGRid has a maxwidth of 700 and that's just to get the "border band" to extend to end of window.
         If it were not setting the ScrollViewerMain's background color, then the whole window will be TopBorderGrid's background.
@@ -225,7 +435,7 @@
         away, I had made changes to "fix" a problem in cache. Ended up closing VS2022 and restarting to get it to behave after clean builds.
         So... yeah, settings UI grid layouts may need to get re-done.
         -->
-        <ScrollViewer x:Name="ScrollViewerMain" VerticalScrollBarVisibility="Auto" Margin="0,35,0,0" Background="{DynamicResource WindowBackgroundBrush}">
+        <ScrollViewer x:Name="ScrollViewerMain" VerticalScrollBarVisibility="Auto" Margin="0,35,0,0" Background="{DynamicResource WindowBackgroundBrush}" Grid.ColumnSpan="2">
 
             <Grid Margin="15">
                 <Grid.ColumnDefinitions>
@@ -272,7 +482,7 @@
                              VerticalAlignment="Center" 
                              IsReadOnly="True"
                              LostFocus="TextUserData_LostFocus"/>
-                    <Button Grid.Column="2" x:Name="btnBrowseUserData" Content="Browse..." Margin="8,2,0,2" Click="btnBrowseUserData_Click"/>
+                    <Button Grid.Column="2" x:Name="btnBrowseUserData" Content="Browse..." Margin="8,2,0,2" Style="{StaticResource ExportActionButtonStyle}" Width="92" Click="btnBrowseUserData_Click"/>
                 </Grid>
 
                 <Grid Grid.Row="2" Grid.ColumnSpan="2" Margin="0,0,0,11">
@@ -304,7 +514,7 @@
                             <TextBlock Text="Enable logging" VerticalAlignment="Center" Margin="5,0,10,0"/>
                             <CheckBox x:Name="chkEnableLogging" Width="62" VerticalAlignment="Center" IsChecked="True" Checked="chkEnableLogging_Checked" Unchecked="chkEnableLogging_Unchecked"/>
                         </StackPanel>
-                        <Button Grid.Row="1" x:Name="btnOpenLog" Content="Open log" Width="80" HorizontalAlignment="Left" Margin="5,6,0,0" Click="btnOpenLog_Click" Visibility="Collapsed"/>
+                        <Button Grid.Row="1" x:Name="btnOpenLog" Content="Open log" Width="92" HorizontalAlignment="Left" Margin="5,6,0,0" Style="{StaticResource ExportActionButtonStyle}" Click="btnOpenLog_Click" Visibility="Collapsed"/>
                     </Grid>
                 </Grid>
 
@@ -332,7 +542,7 @@
                 -->
                 <StackPanel Grid.Row="6" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,50,0,8">
                     <TextBlock Text="Set number of seconds for auto save: " Style="{StaticResource GeneralTextStyle}" VerticalAlignment="Center" Margin="5,8,0,5"/>
-                    <ComboBox x:Name="AutoSave" SelectedIndex="0" Margin="5,5,0,5" Height="25" IsEnabled="True" SelectionChanged="cb_AutoSaveValChanged">
+                    <ComboBox x:Name="AutoSave" SelectedIndex="0" Margin="5,5,0,5" Width="150" IsEnabled="True" Style="{StaticResource SettingsComboBoxStyle}" SelectionChanged="cb_AutoSaveValChanged">
                         <ComboBoxItem Tag="3">Auto [3 seconds]</ComboBoxItem>
                         <ComboBoxItem Tag="25">25 seconds</ComboBoxItem>
                         <ComboBoxItem Tag="45">45 seconds</ComboBoxItem>
@@ -342,17 +552,17 @@
 
                 <!-- Themes -->
                 <Separator Grid.Row="7" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,5"/>
-                
+
                 <TextBlock Grid.Row="8" Text="Themes" Style="{StaticResource HeaderTextStyle}" Grid.ColumnSpan="2"/>
 
                 <StackPanel Grid.Row="9" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,0,0,11">
                     <TextBlock Text="Theme: " Style="{StaticResource GeneralTextStyle}" VerticalAlignment="Center" Margin="5,5,0,5"/>
-                    <ComboBox x:Name="ThemeSelection" SelectedIndex="0" Height="24" Margin="5,5,0,5" SelectionChanged="cb_ThemeSelectionChanged">
+                    <ComboBox x:Name="ThemeSelection" SelectedIndex="0" Width="180" Margin="5,5,0,5" Style="{StaticResource SettingsComboBoxStyle}" SelectionChanged="cb_ThemeSelectionChanged">
                         <ComboBoxItem>Light Theme</ComboBoxItem>
                         <ComboBoxItem>Dark Theme</ComboBoxItem>
                         <ComboBoxItem>Default Theme</ComboBoxItem>
                     </ComboBox>
-                    <Button x:Name="btnOpenThemesFolder" Content="Open folder" Margin="8,5,0,5" Click="btnOpenThemesFolder_Click" Visibility="Collapsed"/>
+                    <Button x:Name="btnOpenThemesFolder" Content="Open folder" Margin="8,5,0,5" Style="{StaticResource ExportActionButtonStyle}" Width="102" Click="btnOpenThemesFolder_Click" Visibility="Collapsed"/>
                 </StackPanel>
 
                 <!-- Note Options -->
@@ -382,6 +592,42 @@
                 Place holders at the moment 
                 -->
                 <Separator Grid.Row="17" Style="{StaticResource SeparatorStyle}" Grid.ColumnSpan="2" Margin="0,5,0,5"/>
+
+                <Border Grid.Row="18"
+                        Grid.ColumnSpan="2"
+                        Margin="0,8,0,8"
+                        Padding="12"
+                        CornerRadius="10"
+                        Background="{DynamicResource NoteBlockBackgroundInnerBrush}"
+                        BorderBrush="{DynamicResource NoteBlockBorderBrush}"
+                        BorderThickness="1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="Markdown export"
+                                       FontFamily="Segoe UI Semibold"
+                                       FontSize="14"
+                                       Foreground="{DynamicResource NoteTitleForegroundBrush}"/>
+                            <TextBlock Text="Save every note as its own .md file in a folder you choose."
+                                       Margin="0,4,0,0"
+                                       FontSize="11"
+                                       TextWrapping="Wrap"
+                                       Foreground="{DynamicResource NoteTextForegroundBrush}"/>
+                        </StackPanel>
+
+                        <Button Grid.Column="1"
+                                x:Name="btnExportNotes"
+                                Content="Export Notes"
+                                Margin="8,0,0,0"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource ExportActionButtonStyle}"
+                                Click="btnExportNotes_Click"/>
+                    </Grid>
+                </Border>
 
                 <StackPanel Grid.Row="19" Orientation="Horizontal" Grid.ColumnSpan="2" Margin="0,28,0,0" Grid.RowSpan="2">
                     <TextBlock Text="Version: " VerticalAlignment="Center"/>

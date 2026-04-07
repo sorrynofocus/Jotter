@@ -1,4 +1,6 @@
 ﻿using com.nobodynoze.flogger;
+using com.nobodynoze.notemanager;
+using Jotter.Utils.Exporter;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -508,6 +510,42 @@ namespace Jotter
                     txtUserData = System.IO.Path.Combine(folderDialog.SelectedPath, SettingsMgr.NotesFileName);
                     TextUserData.Text = txtUserData;
                     ApplyDataPathChange();
+                }
+            }
+        }
+        /// <summary>
+        /// Export every note to its own markdown file in a folder selected by the user.
+        /// Existing files are preserved by creating numbered filenames when titles collide.
+        /// </summary>
+        /// <param name="sender">Export button sender.</param>
+        /// <param name="e">Click event arguments.</param>
+        private void btnExportNotes_Click(object sender, RoutedEventArgs e)
+        {
+            using (var folderDialog = new System.Windows.Forms.FolderBrowserDialog())
+            {
+                folderDialog.InitialDirectory = Directory.Exists(txtUserData)
+                    ? txtUserData
+                    : System.IO.Path.GetDirectoryName(settingsManager.DataFilePath) ?? SettingsMgr.DefaultDataDirectory;
+                folderDialog.ShowNewFolderButton = true;
+
+                if (folderDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+                    return;
+
+                try
+                {
+                    NoteManager exportNoteManager = new NoteManager();
+                    IEnumerable<Note> notesToExport = exportNoteManager.Notes != null
+                        ? exportNoteManager.Notes
+                        : Array.Empty<Note>();
+                    int exportCount = NoteMarkdownExporter.ExportNotesToMarkdownFolder(notesToExport, folderDialog.SelectedPath);
+
+                    logger.LogInfo($"[btnExportNotes_Click] Exported notes to markdown folder: {folderDialog.SelectedPath}");
+                    MessageBox.Show($"Exported {exportCount} notes to markdown.", "Export Notes", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError($"[btnExportNotes_Click] Error exporting notes: {ex.Message}");
+                    MessageBox.Show($"Unable to export notes.\n\r{ex.Message}", "Export Notes", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }

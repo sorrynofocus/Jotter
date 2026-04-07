@@ -497,3 +497,15 @@ points to getting version info.
 
 ## 2026-04-05 -> 11:58am
   - Added all new icons for the application. Forgot to add notes for 1st pass for 04.04 release notes. This is the 2nd and final pass. Add transparency around the icon to clean it up under light/dark themes under OS.
+
+## 2026-04-07 -> 12:22am
+  - Added an "Export Notes" operation to allow users to export their notes in Markdown format.
+  Exporting notes can be done by right clicking on a note, individually, and selecting the "Export Note to Markdown" option from the context menu.
+  Exporting notes can also be done in bulk by going  to the settings panel and choose export notes in the export card section. Choose a folder  where you want the exported files to be placed and all  the files will be placed there. 
+
+  Decision was made that Markdown export is a good fit for this data model and most users write in markdown already. For many notes, export can be nearly lossless because users are already writing Markdown-ish content. No need a RichTextBox-to-Markdown converter for v1. The exporter should preserve body text as-is and avoid assisting transformations that might damage existing Markdown.
+
+  - Updated UI in Settings panel for drop-down menu and buttons. Buttons and rop menu menus were stock UI elements and have now been updated to match the application’s visual style for a more consistent look and feel.
+
+
+

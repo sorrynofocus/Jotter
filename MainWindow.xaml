@@ -112,6 +112,7 @@
                 <ListView.ContextMenu>
                     <ContextMenu Name="ContextOnItem">
                         <MenuItem Name="OpenNote" Header="Open Note" Click="OpenNote_Click" />
+                        <MenuItem Name="ExportNote" Header="Export Note to Markdown" Click="ExportNote_Click" />
                         <MenuItem Name="DelNote" Header="Delete This Note" Click="DeleteNoteFromContextMenu_Click" />
                     </ContextMenu>
                 </ListView.ContextMenu>
@@ -127,6 +128,7 @@
                     <Style BasedOn="{StaticResource MyNotesListViewContainerStyle}" TargetType="ListViewItem">
                         <!-- Add the EventSetter locally -->
                         <EventSetter Event="MouseDoubleClick" Handler="Note_DoubleClick" />
+                        <EventSetter Event="PreviewMouseRightButtonDown" Handler="Note_PreviewMouseRightButtonDown" />
                     </Style>
                 </ListView.ItemContainerStyle>
 

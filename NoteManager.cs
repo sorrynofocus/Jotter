@@ -1,17 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Windows;
-using System.Xml.Serialization;
-using System.ComponentModel;
-using com.nobodynoze.flogger;
-using static Jotter.MainWindow;
-using System.Windows.Shapes;
-using System.Diagnostics;
-
-
-/*
+﻿/*
 * Jotter
 * NoteManager
 * C.Winters / US / Arizona / Thinkpad T15g
@@ -27,11 +14,106 @@ using System.Diagnostics;
  * like title and text instead of noteTitle and noteText.As the application grows, this all 
  * needs cleaning up.
  */
+using Jotter;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.IO;
+using System.Windows;
+using System.Xml.Serialization;
+using static Jotter.MainWindow;
 
 namespace com.nobodynoze.notemanager
 {
     /// <summary>
+    /// MediaItem class represents a media attachment associated with a note.
+    /// It stores the type of media, a reference to the media file, and the original file name.
+    /// </summary>
+    /// <remarks>
+    /// This class is used by the Note class to associate media files such as images, videos, or audio
+    /// with a particular note. Each MediaItem stores the type of media, a reference to the file location,
+    /// and the original file name for display purposes.
+    /// </remarks>
+    public class MediaItem
+    {
+        public string? MediaType { get; set; }
+        public string? MediaRef { get; set; }
+        public string? OriginalFileName { get; set; }
+    }
+    /// <summary>
+    /// MediaPreviewItem class represents a preview of a media item for display purposes in the UI.
+    /// It contains a reference to the MediaItem, a path to a preview image, and properties to handle
+    /// overflow display when there are more media items than can be shown at once.
+    /// </summary>
+    /// <remarks>
+    /// This class is used by the UI layer to display a preview of media items associated with a note.
+    /// It wraps a MediaItem and provides a path to a preview image for display, as well as properties
+    /// to handle overflow tiles when there are more media items than can be displayed at once in the UI.
+    /// The DisplayText and ToolTipText properties provide user-friendly text for overflow tiles and
+    /// for showing the original file name of the media item in tooltips.
+    /// </remarks>
+
+    public class MediaPreviewItem
+    {
+        /// <summary>
+        /// Reference to the MediaItem that this preview item represents.
+        /// </summary>
+        public MediaItem? MediaItem { get; set; }
+        /// <summary>
+        /// Path to the preview image file that will be displayed in the UI for this media item.
+        /// </summary>
+        public string? PreviewFilePath { get; set; }
+        /// <summary>
+        /// Indicates whether this preview item represents an overflow tile in the UI
+        /// when there are more media items than can be displayed at once.
+        /// </summary>
+        public bool IsOverflowTile { get; set; }
+        /// <summary>
+        /// The number of additional media items that are not displayed in the UI
+        /// and are represented by this overflow tile.
+        /// </summary>
+        /// <remarks>
+        /// This property is used in conjunction with the IsOverflowTile property to indicate
+        /// how many additional media items exist that are not currently displayed in the UI.
+        /// When the number of media items exceeds the display capacity, an overflow tile is
+        /// shown with a count of the remaining items, which is represented by this property.
+        /// </remarks>
+        public int OverflowCount { get; set; }
+        /// <summary>
+        /// DisplayText property returns the text that should be displayed on the UI tile
+        /// for this media preview item. If this item represents an overflow tile, it will
+        /// display the number of additional media items that are not currently visible.
+        /// Otherwise, it returns an empty string.
+        /// </summary>
+        /// <remarks>
+        /// This property is used by the UI to determine what text should be displayed on the tile
+        /// representing this media preview item. If the item is an overflow tile, it will show
+        /// the number of additional media items that are not currently visible in the UI, prefixed
+        /// with a plus sign. If it is not an overflow tile, it returns an empty string so that
+        /// no text is displayed on the tile.
+        /// </remarks>
+        public string DisplayText => IsOverflowTile ? $"+{OverflowCount}" : string.Empty;
+        
+        /// <summary>
+        /// ToolTipText property returns the text that should be displayed in the tooltip
+        /// for this media preview item. If this item represents an overflow tile, it will
+        /// display the number of additional media items that are not currently visible.
+        /// Otherwise, it will display the original file name of the media item.
+        /// </summary>
+        /// <remarks>
+        /// This property is used by the UI to determine what text should be displayed in the tooltip
+        /// when the user hovers over a media preview tile. If the item is an overflow tile, it will
+        /// show the number of additional media items that are not currently visible in the UI.
+        /// If it is not an overflow tile, it will show the original file name of the media item
+        /// so that the user can see which file the preview represents.
+        /// </remarks>
+        public string ToolTipText => IsOverflowTile
+            ? $"{OverflowCount} more image(s)"
+            : MediaItem?.OriginalFileName ?? string.Empty;
+    }
+
+    /// <summary>
     ///Note class embodies the note data and its properties such as title, index, and body.
+    /// It also tracks creation date, soft deletion status, and associated media items.
     /// </summary>
     [XmlRoot("ArrayOfNote")]
     public class Note : INotifyPropertyChanged
@@ -41,6 +123,7 @@ namespace com.nobodynoze.notemanager
         private string? text;
         private bool isDeleted; // New property for soft delete - added in for experimental
         private DateTime createdDate;
+        private List<MediaItem>? media;
 
         ////Width x Height
         //public double noteWidth { get; set; } = 450;
@@ -133,6 +216,34 @@ namespace com.nobodynoze.notemanager
             }
         }
 
+        /// <summary>
+        /// Collection of media items associated with this note.
+        /// </summary>
+        /// <remarks>
+        /// This property holds the list of media items that are attached
+        /// to this note. It is serialized as an XML array when the note is saved to disk, and
+        /// each individual media item is represented as a MediaItem element within that array.
+        /// The UI can use this collection to display previews of the media associated with the note.
+        /// </remarks>
+        [XmlArray("Media")]
+        [XmlArrayItem("MediaItem")]
+        public List<MediaItem>? Media
+        {
+            get { return media; }
+            set
+            {
+                if (!ReferenceEquals(media, value))
+                {
+                    media = value;
+                    OnPropertyChanged(nameof(Media));
+                }
+            }
+        }
+
+
+        [XmlIgnore]
+        public List<MediaPreviewItem> PreviewMedia => NoteMediaStorage.BuildPreviewItems(media, 4);
+
         ///// <summary>
         ///// Position of the note property on screen.
         ///// </summary>
@@ -167,6 +278,238 @@ namespace com.nobodynoze.notemanager
         protected virtual void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+
+    /// <summary>
+    /// NoteMediaStorage class handles the storage and management of media files associated with 
+    /// notes, including determining file paths, mapping media types to file extensions, 
+    /// and managing media file deletion.
+    /// </summary>
+    public static class NoteMediaStorage
+    {
+        public const string MediaDirectoryName = "Media";
+        private const int MAX_RETRY_DELETE_MEDIA_ATTEMPTS = 3;
+
+        /// <summary>
+        /// Gets the file path to the media directory where media files associated with notes are stored.
+        /// </summary>
+        /// <returns>The file path to the media directory.</returns>
+        public static string GetMediaDirectoryPath()
+        {
+            string? notesDirectory = Path.GetDirectoryName(MainWindow.jotNotesFilePath);
+
+            if (string.IsNullOrWhiteSpace(notesDirectory))
+                notesDirectory = SettingsMgr.DefaultDataDirectory;
+
+            return Path.Combine(notesDirectory, MediaDirectoryName);
+        }
+
+        /// <summary>
+        /// This function checks if the media directory exists and creates it if 
+        /// it doesn't. This ensures that there is a valid location for storing media 
+        /// files associated with notes, preventing errors when trying to save media 
+        /// files to a non-existent directory. It should be called during application 
+        /// initialization to set up the necessary directory.
+        /// </summary>
+        public static void InitMediaDirectoryExists()
+        {
+            string mediaDirectoryPath = GetMediaDirectoryPath();
+
+            if (!Directory.Exists(mediaDirectoryPath))
+                Directory.CreateDirectory(mediaDirectoryPath);
+        }
+
+        /// <summary>
+        /// This function maps a media type (MIME type) to a corresponding file extension for storage purposes.
+        /// </summary>
+        /// <param name="mediaType">The media type (MIME type) to map to a file extension.</param>
+        /// <returns>The corresponding file extension for the given media type, or an empty string if unsupported.</returns>
+        public static string GetStoredFileExtension(string? mediaType)
+        {
+            return mediaType?.ToLowerInvariant() switch
+            {
+                "image/png" => ".png",
+                "image/jpeg" => ".jpg",
+                "image/gif" => ".gif",
+                "image/bmp" => ".bmp",
+                "image/tiff" => ".tif",
+                _ => string.Empty
+            };
+        }
+
+        /// <summary>
+        /// Gets the media type (MIME type) based on the file extension of the media file. 
+        /// This is used to determine the type of media being handled and to ensure that 
+        /// only supported media types are processed.
+        /// </summary>
+        /// <param name="fileExtension">The file extension of the media file.</param>
+        /// <returns>The corresponding media type (MIME type) for the given file extension, or an empty string if unsupported.</returns>
+        public static string GetMediaTypeFromExtension(string? fileExtension)
+        {
+            return fileExtension?.ToLowerInvariant() switch
+            {
+                ".png" => "image/png",
+                ".jpg" => "image/jpeg",
+                ".jpeg" => "image/jpeg",
+                ".gif" => "image/gif",
+                ".bmp" => "image/bmp",
+                ".tif" => "image/tiff",
+                ".tiff" => "image/tiff",
+                _ => string.Empty
+            };
+        }
+
+        /// <summary>
+        /// Does a quick check to see if the file extension of the provided file path 
+        /// corresponds to a supported image media type.
+        /// </summary>
+        /// <param name="filePath">The file path to check.</param>
+        /// <returns>True if the file is a supported image file, false otherwise.</returns>
+        public static bool IsSupportedImageFile(string? filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath))
+                return false;
+
+            string fileExtension = Path.GetExtension(filePath);
+            return GetMediaTypeFromExtension(fileExtension) != string.Empty;
+        }
+
+        /// <summary>
+        /// This function constructs the file path for a media item based on its 
+        /// MediaRef and MediaType properties.
+        /// </summary>
+        /// <param name="mediaItem"></param>
+        /// <returns></returns>
+        public static string GetMediaFilePath(MediaItem? mediaItem)
+        {
+            if (mediaItem == null || string.IsNullOrWhiteSpace(mediaItem.MediaRef))
+                return string.Empty;
+
+            string fileExtension = GetStoredFileExtension(mediaItem.MediaType);
+            if (string.IsNullOrWhiteSpace(fileExtension))
+                return string.Empty;
+
+            return Path.Combine(GetMediaDirectoryPath(), $"{mediaItem.MediaRef}{fileExtension}");
+        }
+
+        /// <summary>
+        /// Deletes the media files associated with the provided list of MediaItem objects. 
+        /// It checks if each media file exists and deletes it from the file system.
+        /// </summary>
+        /// <param name="mediaItems">The list of media items whose associated files are to be deleted.</param>
+        public static void DeleteMediaFiles(List<MediaItem>? mediaItems)
+        {
+            if (mediaItems == null || mediaItems.Count == 0)
+                return;
+
+            foreach (MediaItem mediaItem in mediaItems)
+            {
+                string mediaFilePath = GetMediaFilePath(mediaItem);
+                if (!string.IsNullOrWhiteSpace(mediaFilePath) && File.Exists(mediaFilePath))
+                    File.Delete(mediaFilePath);
+            }
+        }
+
+        /// <summary>
+        /// This function attempts to delete a media file associated with a given MediaItem. 
+        /// It checks if the file exists and tries to delete it, with retries in case of IO 
+        /// exceptions or unauthorized access exceptions. It returns true if the file was 
+        /// successfully deleted or if it doesn't exist, and false if it failed to delete 
+        /// after multiple attempts.
+        /// </summary>
+        /// <param name="mediaItem">The media item whose associated file is to be deleted.</param>
+        /// <returns>True if the file was successfully deleted or doesn't exist, false otherwise.</returns>
+        public static bool TryDeleteMediaFile(MediaItem? mediaItem)
+        {
+            logger.LogInfo(new List<string> { "[Doing action] TryDeleteMediaFile", "Attempting to delete media file." });
+
+            string mediaFilePath = GetMediaFilePath(mediaItem);
+            
+            if (string.IsNullOrWhiteSpace(mediaFilePath) || !File.Exists(mediaFilePath))
+            {
+                logger.LogInfo(new List<string> { "[Ending action] TryDeleteMediaFile", $"Media file does not exist, no need to delete: {mediaFilePath}" });
+                return true;
+            }
+
+            for (int retry = 0; retry < MAX_RETRY_DELETE_MEDIA_ATTEMPTS; retry++)
+            {
+                try
+                {
+                    File.Delete(mediaFilePath);
+                    logger.LogInfo(new List<string> { "[Ending action] TryDeleteMediaFile", $"Successfully deleted media file: {mediaFilePath}" });
+                    return true;
+                }
+                catch (IOException)
+                {
+                    logger.LogInfo(new List<string> { "[Retrying action] TryDeleteMediaFile", $"IOException encountered when trying to delete media file: {mediaFilePath}. Retrying..." });
+                    System.Threading.Thread.Sleep(125);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    logger.LogInfo(new List<string> { "[Retrying action] TryDeleteMediaFile", $"UnauthorizedAccessException encountered when trying to delete media file: {mediaFilePath}. Retrying..." });
+                    System.Threading.Thread.Sleep(125);
+                }
+            }
+            logger.LogInfo(new List<string> { "[Ending action] TryDeleteMediaFile", $"Failed to delete media file: {mediaFilePath}" });
+            return false;
+        }
+
+        /// <summary>
+        /// This function builds a list of MediaPreviewItem objects for a given list of MediaItem objects, 
+        /// considering the maximum number of visible slots. If the number of media items exceeds the 
+        /// maximum visible slots, an overflow tile is added to indicate the remaining items.
+        /// </summary>
+        /// <param name="mediaItems">The list of media items to build preview items for.</param>
+        /// <param name="maxVisibleSlots">The maximum number of visible slots for preview items.</param>
+        /// <returns>A list of MediaPreviewItem objects representing the preview items.</returns>
+        public static List<MediaPreviewItem> BuildPreviewItems(List<MediaItem>? mediaItems, int maxVisibleSlots)
+        {
+            logger.LogInfo(new List<string> { "[Doing action] BuildPreviewItems", "Building media preview items." });
+
+            List<MediaPreviewItem> previewItems = new List<MediaPreviewItem>();
+
+            if (mediaItems == null || mediaItems.Count == 0 || maxVisibleSlots <= 0)
+                return previewItems;
+
+            // If the number of media items is less than or equal to the maximum visible slots, create preview items for all media items.
+            if (mediaItems.Count <= maxVisibleSlots)
+            {
+                foreach (MediaItem mediaItem in mediaItems)
+                {
+                    previewItems.Add(new MediaPreviewItem
+                    {
+                        MediaItem = mediaItem,
+                        PreviewFilePath = GetMediaFilePath(mediaItem)
+                    });
+                }
+                logger.LogInfo(new List<string> { "[Ending action] BuildPreviewItems", $"Finish building media preview items. Number of media items: {mediaItems.Count}" });
+                return previewItems;
+            }
+
+            // If there are more media items than the maximum visible slots, create preview items for the first (maxVisibleSlots - 1)
+            // media items and add an overflow tile to indicate the number of remaining items. 
+            int standardTileCount = Math.Max(1, maxVisibleSlots - 1);
+            for (int i = 0; i < standardTileCount; i++)
+            {
+                MediaItem mediaItem = mediaItems[i];
+                previewItems.Add(new MediaPreviewItem
+                {
+                    MediaItem = mediaItem,
+                    PreviewFilePath = GetMediaFilePath(mediaItem)
+                });
+            }
+
+            // Add an overflow tile to indicate the number of remaining media items that are not displayed in the preview.
+            previewItems.Add(new MediaPreviewItem
+            {
+                IsOverflowTile = true,
+                OverflowCount = mediaItems.Count - standardTileCount
+            });
+
+            logger.LogInfo(new List<string> { "[Ending action] BuildPreviewItems", $"Finish building media preview items. Number of media items: {mediaItems.Count}, Number of preview items: {previewItems.Count}" });
+
+            return previewItems;
         }
     }
 
@@ -307,7 +650,10 @@ namespace com.nobodynoze.notemanager
             Note? existingNote = Notes.FirstOrDefault(n => n.Title == note.Title);
 
             if (existingNote != null)
+            {
                 existingNote.Text = note.Text;
+                existingNote.Media = note.Media;
+            }
             else
                 Notes.Add(note);
 
@@ -330,6 +676,7 @@ namespace com.nobodynoze.notemanager
             Note? noteToRemove = Notes.FirstOrDefault(n => n.Title == title);
             if (noteToRemove != null)
             {
+                NoteMediaStorage.DeleteMediaFiles(noteToRemove.Media);
                 Notes.Remove(noteToRemove);
                 SaveNotes(jotNotesFilePath);
             }
@@ -362,10 +709,7 @@ namespace com.nobodynoze.notemanager
         /// Generate a GUID to be used for the indexer in the NoteManager
         /// </summary>
         /// <returns></returns>
-        public Guid GenerateID()
-        { 
-            return Guid.NewGuid(); 
-        }
+        public Guid GenerateID() => Guid.NewGuid();
 
         /// <summary>
         /// Search for note with specified IdIndexer and update it

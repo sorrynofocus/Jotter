@@ -438,6 +438,7 @@ namespace Jotter
                 {
                     note.Title = updatedNote.Title;
                     note.Text = updatedNote.Text;
+                    note.Media = updatedNote.Media;
 
                     // Optionally refresh the ListView UI here if necessary
                     UpdateListView();

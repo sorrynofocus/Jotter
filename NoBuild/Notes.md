@@ -507,5 +507,8 @@ points to getting version info.
 
   - Updated UI in Settings panel for drop-down menu and buttons. Buttons and rop menu menus were stock UI elements and have now been updated to match the application’s visual style for a more consistent look and feel.
 
-
-
+## 2026-04-11 -> 7:15pm
+    - Added functionality to include images in notes! Supported images are jpg, png, tiff, gif, and bmp. To add an image, simply drag and drop the image file into the note editor. The image will be added to the mediastrip at top of note (Microsoft StickyNotes also does something similar). You can also remove images and in MainWindow, there's an image preview to signify the image is present in the note.
+    - Small improvement for Spotlight search in note editor for non themed highlight. 
+    - PREVIEW: Working on an installer for the application. Still in early stages, but the goal is to have a simple installer that can be used to install Jotter. 
+    - Now each note supports the title of the note, rather than an empty windnow in the Windows taskbar.

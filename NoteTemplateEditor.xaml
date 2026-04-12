@@ -15,7 +15,11 @@
         Foreground="{DynamicResource NoteTextForegroundBrush}"
         BorderThickness="5"
         AllowsTransparency="True"
+        AllowDrop="True"
         PreviewKeyDown="NoteTemplateEditor_PreviewKeyDown"
+        PreviewDragEnter="NoteTemplateEditor_PreviewDragEnter"
+        PreviewDragOver="NoteTemplateEditor_PreviewDragOver"
+        PreviewDrop="NoteTemplateEditor_PreviewDrop"
         Height="570" 
         Width="495"
          >
@@ -209,7 +213,31 @@
         -->
         <Grid x:Name="gridContainsNote" Grid.Row="1"  HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="{DynamicResource NoteEditBackgroundBrush}">
 
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Border x:Name="MediaStripBorder"
+                    Grid.Row="0"
+                    Margin="4,4,4,2"
+                    Padding="4"
+                    CornerRadius="8"
+                    Background="{DynamicResource NoteEditBackgroundBrush}"
+                    BorderBrush="{DynamicResource WindowBorderBrush}"
+                    BorderThickness="1"
+                    Visibility="Collapsed">
+                <ScrollViewer HorizontalScrollBarVisibility="Hidden"
+                              VerticalScrollBarVisibility="Disabled"
+                              CanContentScroll="False"
+                              PanningMode="HorizontalOnly">
+                    <StackPanel x:Name="MediaItemsPanel"
+                                Orientation="Horizontal" />
+                </ScrollViewer>
+            </Border>
+
             <RichTextBox x:Name="rchEditNote"
+             Grid.Row="1"
              Width="{Binding ElementName=gridContainsNote}" 
              FontFamily="Segoe UI"
              FontWeight="Normal"

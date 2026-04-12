@@ -165,6 +165,7 @@
                                 <Grid.RowDefinitions >
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
                                 <!-- Title and Date stamp row -->
@@ -204,10 +205,67 @@
                                         Grid.Row="1" />
                                 </Grid>
 
+                                <!-- media preview strip for the note -->
+                                <ItemsControl x:Name="NoteMediaPreviewStrip"
+                                              Grid.Row="1"
+                                              Margin="0,8,0,8"
+                                              ItemsSource="{Binding PreviewMedia}">
+                                    <ItemsControl.Style>
+                                        <Style TargetType="ItemsControl">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasMedia}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ItemsControl.Style>
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Width="86"
+                                                    Height="68"
+                                                    Margin="0,0,8,0"
+                                                    CornerRadius="4"
+                                                    BorderBrush="{DynamicResource NoteBlockBorderBrush}"
+                                                    BorderThickness="1"
+                                                    Background="#22000000">
+                                                <Grid>
+                                                    <Image x:Name="PreviewImage"
+                                                           Source="{Binding PreviewFilePath}"
+                                                           Stretch="UniformToFill" />
+                                                    <Border x:Name="OverflowOverlay"
+                                                            Background="#AA000000"
+                                                            Visibility="Collapsed" />
+                                                    <TextBlock x:Name="OverflowText"
+                                                               Text="{Binding DisplayText}"
+                                                               Foreground="White"
+                                                               FontSize="20"
+                                                               FontWeight="Bold"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               Visibility="Collapsed" />
+                                                </Grid>
+                                            </Border>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding IsOverflowTile}" Value="True">
+                                                    <Setter TargetName="PreviewImage" Property="Visibility" Value="Collapsed" />
+                                                    <Setter TargetName="OverflowOverlay" Property="Visibility" Value="Visible" />
+                                                    <Setter TargetName="OverflowText" Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
 
-                                <!-- Note Text Preview Body -->
+
+                                <!-- Note Text Preview Body note grid row 2 -->
                                 <TextBlock x:Name="txtText"
-                                       Grid.Row="1"
+                                       Grid.Row="2"
                                        Text="{Binding Text}"
                                        FontSize="12"
                                        FontWeight="Medium"

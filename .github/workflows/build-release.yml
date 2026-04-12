@@ -1,0 +1,278 @@
+name: Jotter Build And Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Set up build environment
+        shell: pwsh
+        run: |
+          "IS_DEBUG=false" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "VERBOSE_LEVEL=normal" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Execute auto-build script
+        shell: cmd
+        run: auto-build.cmd
+
+      - name: Commit and Push Updated Version
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          git config user.name "Jotter Build Release Working Joe"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"          
+
+          # Make sure we are on a real local main branch tracking origin/main,
+          # not a detached HEAD.
+          git fetch origin main
+          git checkout -B main origin/main
+
+          $versionFilePath = "build\VersionInfo.txt"
+          Write-Output "Committing updated $versionFilePath to the repository"
+          $TAG_NAME = (Get-Content -Path $versionFilePath -Raw).Trim()
+          Write-Output "Release tag read: v$TAG_NAME"
+
+          git add $versionFilePath
+          git status
+
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) {
+            Write-Output "No staged changes detected for $versionFilePath. Skipping commit and push."
+          } else {
+            git commit -m "Update versioninfo.txt to reflect release version [skip ci]"
+
+            $pushSucceeded = $false
+
+            for ($attempt = 1; $attempt -le 3; $attempt++) {
+              Write-Output "Push attempt $attempt of 3"
+
+              git fetch origin main
+              git rebase origin/main
+
+              if ($LASTEXITCODE -ne 0) {
+                throw "Rebase failed while preparing push. Manual conflict resolution is required."
+              }
+
+              git push origin HEAD:main
+
+              if ($LASTEXITCODE -eq 0) {
+                $pushSucceeded = $true
+                Write-Output "Push succeeded."
+                break
+              }
+
+              Write-Output "Push failed due to remote updates. Retrying..."
+            }
+
+            if (-not $pushSucceeded) {
+              throw "Failed to push updated version file after 3 attempts."
+            }
+          }
+
+      - name: Upload build workspace
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-workspace
+          path: |
+            bin\x64\Release\net8.0-windows\publishprod
+            build\VersionInfo.txt
+            NoBuild\Notes.md
+            NoBuild\release-notes.md
+
+  release:
+    runs-on: windows-latest
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Download build workspace
+        uses: actions/download-artifact@v4
+        with:
+          name: build-workspace
+          path: artifact
+
+      - name: Verify GitHub CLI availability
+        shell: pwsh
+        run: |
+          gh --version
+
+      - name: Generate Release Notes with Notes.md Content
+        shell: pwsh
+        run: |
+          $artifactRoot = Join-Path $PWD "artifact"
+
+          $notesFilePath = Join-Path $artifactRoot "NoBuild\Notes.md"
+          $templateFilePath = Join-Path $artifactRoot "NoBuild\release-notes.md"
+          $releaseNotesFilePath = Join-Path $artifactRoot "NoBuild\release-notes-final.md"
+
+          Write-Output "notesFilePath: $notesFilePath"
+          Write-Output "templateFilePath: $templateFilePath"
+          Write-Output "releaseNotesFilePath: $releaseNotesFilePath"
+
+          try {
+            $notesContent = Get-Content -Path $notesFilePath -Raw
+            if (-not $notesContent) {
+              Write-Error "The notes file is empty or could not be read."
+              exit 1
+            }
+          } catch {
+            Write-Error "Failed to read the notes file: $_"
+            exit 1
+          }
+
+          # Allows optional leading whitespace before ## so slightly-indented headers still count.
+          $entryPattern = '(?ms)^\s*##\s.*?(?=^\s*##\s|\z)'
+          $allMatches = [regex]::Matches($notesContent, $entryPattern)
+
+          if ($allMatches.Count -eq 0) {
+            Write-Error "No entries found in the notes file. Please verify the file structure and regex."
+            exit 1
+          }
+
+          $lastMatch = $allMatches[$allMatches.Count - 1]
+          $lastEntry = $lastMatch.Value.Trim()
+
+          Write-Output "### Extracted last entry:"
+          Write-Output $lastEntry
+
+          $outputFilePath = Join-Path $artifactRoot "last-entry.md"
+          Set-Content -Path $outputFilePath -Value $lastEntry
+          Write-Output "Last entry saved to $outputFilePath"
+
+      - name: Prepare release
+        shell: pwsh
+        run: |
+          $artifactRoot = Join-Path $PWD "artifact"
+          $releaseDir = Join-Path $artifactRoot "release"
+          $publishDir = Join-Path $artifactRoot "bin\x64\Release\net8.0-windows\publishprod"
+
+          New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
+
+          Copy-Item (Join-Path $publishDir "Jotter.exe") (Join-Path $releaseDir "Jotter.exe") -Force
+
+          if (Test-Path (Join-Path $publishDir "Jotter.exe.hash")) {
+            Copy-Item (Join-Path $publishDir "Jotter.exe.hash") (Join-Path $releaseDir "Jotter.exe.hash") -Force
+          } else {
+            Write-Output "WARNING: Jotter.exe.hash not found. Generating it now..."
+            $hash = (certutil -hashfile (Join-Path $releaseDir "Jotter.exe") SHA256 | Select-String -Pattern '^[0-9A-F]{64}$').ToString().Trim()
+            $hash | Set-Content (Join-Path $releaseDir "Jotter.exe.hash")
+          }
+
+          Compress-Archive `
+            -Path (Join-Path $releaseDir "Jotter.exe"), (Join-Path $releaseDir "Jotter.exe.hash") `
+            -DestinationPath (Join-Path $releaseDir "jotter-release.zip") `
+            -Force
+
+          Write-Output "Flat release zip created successfully."
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $artifactRoot = Join-Path $PWD "artifact"
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin main
+          git checkout -B main origin/main
+
+          $versionFilePath = Join-Path $PWD "build\VersionInfo.txt"
+          $TAG_NAME = (Get-Content -Path $versionFilePath -Raw).Trim()
+          Write-Output "Detected release from versioninfo: v$TAG_NAME"
+
+          $RELEASE_NAME = "Release v$TAG_NAME"
+          Write-Output "Creating release $RELEASE_NAME"
+
+          $existingTag = git tag -l "v$TAG_NAME"
+          if (-not $existingTag) {
+            git tag -a "v$TAG_NAME" -m "Version v$TAG_NAME"
+            Write-Host "*NEW* GitHub TAG_NAME: '$TAG_NAME'"
+            git push origin "v$TAG_NAME"
+          } else {
+            Write-Output "Tag v$TAG_NAME already exists. Skipping tag creation."
+          }
+
+          try {
+            $commitMessage = git log --format="%s" -n 5 | Where-Object {
+              $_ -notmatch '^\s*Update versioninfo\.txt to reflect release version \[skip ci\]\s*$'
+            } | Select-Object -First 1
+
+            if (-not $commitMessage) {
+              $commitMessage = git log -1 --pretty=format:"%s"
+            }
+
+            Write-Output "Selected release summary commit message: $commitMessage"
+          } catch {
+            Write-Error "Failed to fetch the latest commit message: $_"
+            $commitMessage = "Fixes and features"
+          }
+
+          $lastEntry = Get-Content -Path (Join-Path $artifactRoot "last-entry.md") -Raw
+          $fileHash = Get-Content -Path (Join-Path $artifactRoot "release\Jotter.exe.hash") -Raw
+          $commitHash = git log --format="%H" --skip=1 -n 1
+          Write-Output "Previous commit hash: $commitHash"
+
+          $templateFilePath = Join-Path $artifactRoot "NoBuild\release-notes.md"
+          $releaseNotesFilePath = Join-Path $artifactRoot "NoBuild\release-notes-final.md"
+          $releaseNotesTemplate = Get-Content -Path $templateFilePath -Raw
+          $releaseNotes = $releaseNotesTemplate `
+            -replace '\[RELEASE_SUMMARY\]', $commitMessage `
+            -replace '\[RELEASE_CONTENT\]', $lastEntry `
+            -replace '\[RELEASE_GITHUB_COMMIT\]', $commitHash `
+            -replace '\[PRODUCT_RELEASE_HASH\]', "``$fileHash``"
+
+          $releaseNotes | Set-Content -Path $releaseNotesFilePath
+          Write-Output "Release notes prepared."
+          Write-Output "Release notes written to $releaseNotesFilePath"
+          Write-Output "[DEBUG] Latest notes extracted from Notes.md:"
+          Write-Output $lastEntry
+
+          $null = gh release view "v$TAG_NAME" 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Output "Release v$TAG_NAME already exists. Skipping release creation."
+          } else {
+            gh release create "v$TAG_NAME" (Join-Path $artifactRoot "release\jotter-release.zip") `
+              --title "Release v$TAG_NAME" `
+              --notes-file $releaseNotesFilePath
+          }
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jotter-release
+          path: artifact\release\jotter-release.zip

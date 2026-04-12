@@ -236,10 +236,17 @@ namespace com.nobodynoze.notemanager
                 {
                     media = value;
                     OnPropertyChanged(nameof(Media));
+                    OnPropertyChanged(nameof(HasMedia));
+                    OnPropertyChanged(nameof(PreviewMedia));
                 }
             }
         }
 
+        // Do not remove these TWO properties (HasMedia and PreviewMedia) even if they look unused in C# search.
+        // MainWindow.xaml binds to HasMedia and PreviewMedia to show/hide and populate
+        // the note media preview strip. These are live XAML binding dependencies.
+        [XmlIgnore]
+        public bool HasMedia => media != null && media.Count > 0;
 
         [XmlIgnore]
         public List<MediaPreviewItem> PreviewMedia => NoteMediaStorage.BuildPreviewItems(media, 4);

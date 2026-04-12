@@ -45,7 +45,7 @@ namespace Jotter
         //Fully exit or minimized to tray? 
         public bool IsTray { get; set; } = false;
 
-        public string Theme { get; set; } = "Light";
+        public string Theme { get; set; } = "Default Theme";
 
         //Add date/time stamp to note
         public bool IsDateTimeStamp { get; set; } = false;

@@ -36,8 +36,12 @@ jobs:
 
       - run:
           name: Commit and Push Updated Version
+          no_output_timeout: 20m
           command: |
             $ErrorActionPreference = "Stop"
+            $env:GIT_TERMINAL_PROMPT = "0"
+            $env:GIT_TRACE = "1"
+            $env:GIT_CURL_VERBOSE = "1"
 
             # ---------------------------------------------------------
             # IMPORTANT:
@@ -89,7 +93,9 @@ jobs:
                   throw "Rebase failed while preparing push. Manual conflict resolution is required."
                 }
 
-                git push origin HEAD:main
+                Write-Output "About to push HEAD to origin/main"
+                git push --verbose origin HEAD:main
+                Write-Output "Push command exit code: $LASTEXITCODE"
 
                 if ($LASTEXITCODE -eq 0) {
                   $pushSucceeded = $true

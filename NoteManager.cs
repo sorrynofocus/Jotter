@@ -19,6 +19,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Windows;
+using System.Windows.Media.Imaging;
 using System.Xml.Serialization;
 using static Jotter.MainWindow;
 
@@ -78,6 +79,18 @@ namespace com.nobodynoze.notemanager
         /// shown with a count of the remaining items, which is represented by this property.
         /// </remarks>
         public int OverflowCount { get; set; }
+
+        /// <summary>
+        /// In-memory preview image source for the main window note list.
+        /// </summary>
+        /// <remarks>
+        /// Do not bind PreviewFilePath directly to Image.Source in XAML for the main window.
+        /// WPF can keep a file handle open when it creates an image from a raw file path or Uri.
+        /// This computed property loads the image into memory first so the preview does not lock the file on disk.
+        /// </remarks>
+        [XmlIgnore]
+        public BitmapImage? PreviewImageSource => NoteMediaStorage.CreateBitmapImageFromFilePath(PreviewFilePath, 180);
+
         /// <summary>
         /// DisplayText property returns the text that should be displayed on the UI tile
         /// for this media preview item. If this item represents an overflow tile, it will
@@ -401,6 +414,44 @@ namespace com.nobodynoze.notemanager
         }
 
         /// <summary>
+        /// Creates a frozen BitmapImage from file bytes so the caller can show a preview without leaving
+        /// the source file locked on disk.
+        /// </summary>
+        /// <param name="filePath">Absolute file path to the preview image.</param>
+        /// <param name="decodePixelWidth">Optional width hint used for thumbnail decoding.</param>
+        /// <returns>A frozen BitmapImage or null when the file is missing or unreadable.</returns>
+        public static BitmapImage? CreateBitmapImageFromFilePath(string? filePath, int? decodePixelWidth = null)
+        {
+            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+                return null;
+
+            try
+            {
+                byte[] imageData = File.ReadAllBytes(filePath);
+
+                using (MemoryStream stream = new MemoryStream(imageData))
+                {
+                    BitmapImage bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.CacheOption = BitmapCacheOption.OnLoad;
+
+                    if (decodePixelWidth.HasValue)
+                        bitmap.DecodePixelWidth = decodePixelWidth.Value;
+
+                    bitmap.StreamSource = stream;
+                    bitmap.EndInit();
+                    bitmap.Freeze();
+                    return bitmap;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"[CreateBitmapImageFromFilePath] Failed to create preview image from: {filePath}. Error: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Deletes the media files associated with the provided list of MediaItem objects. 
         /// It checks if each media file exists and deletes it from the file system.
         /// </summary>
@@ -427,6 +478,7 @@ namespace com.nobodynoze.notemanager
         /// </summary>
         /// <param name="mediaItem">The media item whose associated file is to be deleted.</param>
         /// <returns>True if the file was successfully deleted or doesn't exist, false otherwise.</returns>
+        /// <remarks>Associated functions: ScheduleMediaDeleteRetry(), RemoveMediaButton_Click() in NoteTemplateEditor.xaml.cs</remarks>
         public static bool TryDeleteMediaFile(MediaItem? mediaItem)
         {
             logger.LogInfo(new List<string> { "[Doing action] TryDeleteMediaFile", "Attempting to delete media file." });

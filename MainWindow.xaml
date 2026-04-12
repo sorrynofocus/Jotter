@@ -236,7 +236,7 @@
                                                     Background="#22000000">
                                                 <Grid>
                                                     <Image x:Name="PreviewImage"
-                                                           Source="{Binding PreviewFilePath}"
+                                                           Source="{Binding PreviewImageSource}"
                                                            Stretch="UniformToFill" />
                                                     <Border x:Name="OverflowOverlay"
                                                             Background="#AA000000"

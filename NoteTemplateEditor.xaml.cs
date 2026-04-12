@@ -668,8 +668,9 @@ namespace Jotter
             // The TRADEOFF is that media files might remain in storage for a short time after removal if they are locked,
             // but it prevents the complexity and potential issues of trying to delete files that are still in use. Also, there's
             // quite a delay which seems like a blocked thread in the UI -lasting about 5 seconds after deleting.
-            //if (!NoteMediaStorage.TryDeleteMediaFile(mediaItem))
-            //    ScheduleMediaDeleteRetry(mediaItem);
+			// Update -this is now working with very little block threading appearance.
+            if (!NoteMediaStorage.TryDeleteMediaFile(mediaItem))
+                ScheduleMediaDeleteRetry(mediaItem);
             logger.LogInfo($"[RemoveMediaButton_Click] Finished processing media removal for: {mediaItem.OriginalFileName}");
         }
 
@@ -688,23 +689,23 @@ namespace Jotter
         /// without requiring user intervention.
         /// THS IS USED IN FUNC RemoveMediaButton_Click() when a media file fails to delete due to a lock. REMmed out for now,
         /// but can be re-enabled later.</remarks>
-        //private void ScheduleMediaDeleteRetry(MediaItem mediaItem)
-        //{
-        //    // Safety net only. If you need to isolate delete behavior without delayed retries,
-        //    // comment out the ScheduleMediaDeleteRetry(...) calls at the inline remove path
-        //    // and the gallery delete path first, then stop here before starting the timer.
-        //    DispatcherTimer deleteRetryTimer = new DispatcherTimer();
-        //    int attemptsRemaining = 8;
-        //    deleteRetryTimer.Interval = TimeSpan.FromMilliseconds(300);
-        //    deleteRetryTimer.Tick += (sender, e) =>
-        //    {
-        //        attemptsRemaining--;
+        private void ScheduleMediaDeleteRetry(MediaItem mediaItem)
+        {
+            // Safety net only. If you need to isolate delete behavior without delayed retries,
+            // comment out the ScheduleMediaDeleteRetry(...) calls at the inline remove path
+            // and the gallery delete path first, then stop here before starting the timer.
+            DispatcherTimer deleteRetryTimer = new DispatcherTimer();
+            int attemptsRemaining = 8;
+            deleteRetryTimer.Interval = TimeSpan.FromMilliseconds(300);
+            deleteRetryTimer.Tick += (sender, e) =>
+            {
+                attemptsRemaining--;
 
-        //        if (NoteMediaStorage.TryDeleteMediaFile(mediaItem) || attemptsRemaining <= 0)
-        //            deleteRetryTimer.Stop();
-        //    };
-        //    deleteRetryTimer.Start();
-        //}
+                if (NoteMediaStorage.TryDeleteMediaFile(mediaItem) || attemptsRemaining <= 0)
+                    deleteRetryTimer.Stop();
+            };
+            deleteRetryTimer.Start();
+        }
 
 
         /// <summary>
@@ -861,15 +862,16 @@ namespace Jotter
 
             Image previewImage = new Image
             {
-                Stretch = Stretch.Uniform
+                Stretch = Stretch.Uniform,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
             };
 
-            ScrollViewer previewScroller = new ScrollViewer
+            Border previewSurface = new Border
             {
-                Content = previewImage,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Hidden,
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                Background = noteEditBackgroundBrush
+                Background = noteEditBackgroundBrush,
+                Padding = new Thickness(8),
+                Child = previewImage
             };
 
             StackPanel thumbnailPanel = new StackPanel
@@ -890,11 +892,11 @@ namespace Jotter
             toolbarPanel.Children.Add(galleryMenuButton);
             toolbarPanel.Children.Add(galleryTitle);
             Grid.SetRow(toolbarPanel, 0);
-            Grid.SetRow(previewScroller, 1);
+            Grid.SetRow(previewSurface, 1);
             Grid.SetRow(thumbnailScroller, 2);
 
             galleryGrid.Children.Add(toolbarPanel);
-            galleryGrid.Children.Add(previewScroller);
+            galleryGrid.Children.Add(previewSurface);
             galleryGrid.Children.Add(thumbnailScroller);
             previewWindow.Content = galleryGrid;
 

@@ -512,3 +512,10 @@ points to getting version info.
     - Small improvement for Spotlight search in note editor for non themed highlight. 
     - PREVIEW: Working on an installer for the application. Still in early stages, but the goal is to have a simple installer that can be used to install Jotter. 
     - Now each note supports the title of the note, rather than an empty windnow in the Windows taskbar.
+
+## 2026-04-12 -> 2:10am
+  - The file locking came back as an issue during deletion of images in notes. Noticed that when media gets deleted, then file locks remained and did not get removed in the media folder properly. I've discovered that the root cause is that the main window media preview strip is holding references to the image files in the note media folder. Even after the note media list is updated and the media item is removed from the note, the preview strip still has the image loaded in its `Image` control, which keeps a file handle open. This prevents the file from being deleted from disk until the preview strip releases the image. The fix will need to ensure that the preview strip releases any image references when media is removed from a note so that the underlying file can be deleted cleanly. Difficulty level: high. 
+  - Image gallery viewer shows original images but you had to scroll to see the images. If they were large, it would be hard to see. Made adjustments so that the gallery viewer now scales images down to fit within the visible viewport so that large images can be seen without scrolling horizontally or vertically.
+  - The Versioning is NOW stable. 
+  - Creating a github action to help automate builds. The goal is to see if github actions can provide a similar level of automation for building the application, running tests, and producing artifacts that can be used for releases without having to rely on CircleCI for CI/CD. This will help determine if github actions can be a viable replacement for the current CircleCI setup.
+

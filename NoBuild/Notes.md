@@ -519,3 +519,8 @@ points to getting version info.
   - The Versioning is NOW stable. 
   - Creating a github action to help automate builds. The goal is to see if github actions can provide a similar level of automation for building the application, running tests, and producing artifacts that can be used for releases without having to rely on CircleCI for CI/CD. This will help determine if github actions can be a viable replacement for the current CircleCI setup.
 
+## 2026-04-13 -> 11:27pm
+
+  - A reproducible UI hang was found in the note editor while selecting text and then clicking elsewhere. Issue: https://github.com/sorrynofocus/Jotter/issues/17
+  
+    Using a debugger and thread dump analysis, it was determined that the hang occurred on the UI thread while the note editor was processing selection change events. Specifically, the call stack showed that `RchEditNote_SelectionChanged(...)` fired, which then called `ClearSelectionSpotlight()` and `ResetSpotlights(...)`. `ResetSpotlights(...)` walks the `RichTextBox` document and modifies formatting, which caused WPF to perform document tree updates while input/selection activity was still in progress. The UI thread became stuck inside WPF's internal `SplayTreeNode` and `TextRangeBase.EndChange(...)` calls, which are part of the document formatting and tree update logic. This confirmed that the hang was caused by selection/highlight maintenance logic blocking the UI thread during document updates.

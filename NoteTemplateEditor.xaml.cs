@@ -14,6 +14,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -141,8 +142,33 @@ namespace Jotter
         //Same with the mainwindow - drag window since windowstyle = none
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left)
-                this.DragMove();
+            if (e.ChangedButton != MouseButton.Left)  return;
+
+            // Only allow window dragging from non-interactive chrome/background regions.
+            // Clicking inside the editor, title box, search box, scrollbars, or buttons should
+            // not enter DragMove(), because that can trap the UI thread in a move loop while
+            // the editor is still processing a selection/caret update.
+            // https://github.com/sorrynofocus/Jotter/issues/17
+            if (IsInteractiveEditorClick(e.OriginalSource as DependencyObject))  return;
+
+            if (e.LeftButton == MouseButtonState.Pressed)  this.DragMove();
+        }
+
+        private bool IsInteractiveEditorClick(DependencyObject? source)
+        {
+            DependencyObject? current = source;
+            
+            while (current != null)
+            {
+                if (current is RichTextBox || current is TextBox ||
+                    current is TextBoxBase || current is ButtonBase ||
+                    current is ScrollBar)
+                    return true;
+
+                current = VisualTreeHelper.GetParent(current);
+            }
+
+            return false;
         }
 
 
@@ -1628,20 +1654,6 @@ namespace Jotter
                         // defined in the app resources, with a fallback to Brushes.Yellow for any themes that have not
                         // yet defined the resource.
                         object background = range.GetPropertyValue(TextElement.BackgroundProperty);
-
-                        if (background != null)
-                        {
-                            // If the background is a SolidColorBrush, we want to check its color against the highlight color as well,
-                            // to account for cases where the brush instances are different but the color is the same (e.g. due to theme changes).
-                            if (background is SolidColorBrush backgroundBrush)
-                            {
-                                object themedHighlight = Application.Current.Resources["NoteSearchHighlightBrush"];
-                                if (themedHighlight is SolidColorBrush themedHighlightBrush && backgroundBrush.Color == themedHighlightBrush.Color)
-                                    continue;
-                                if (backgroundBrush.Color == Colors.Yellow)
-                                    continue;
-                            }
-                        }
 
                         // Only clear the background if it matches the highlight brush we use. This allows the reset
                         // to coexist with other background formatting that may be present in the document.

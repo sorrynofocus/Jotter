@@ -95,7 +95,7 @@ To quickly build the project without opening Visual Studio 2022 and output build
 ./NoBuild/img/Jotter-alpha-screenshot.png
 
 [jotter-logo]:
-./build/icos/Jotter-logo.png
+./build/icos/jotter-logo.png
 
 [jotter-screen001]:
 ./NoBuild/img/Jotter-screen-001.png

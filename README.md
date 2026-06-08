@@ -63,6 +63,38 @@ _Screen exhibit of the settings manager_
 
 ---
 
+## Documentation
+
+There's documentation of tracking the project to get familiar with it, lessons learned, failures, and successes. Docs in root will eventually be moved towards a `docs` folder (I've relied heavily into AI assistance recently) . All docs are now AI generated; the brain moves faster than fingers. 
+
+Here comes the roadmap below:
+
+AGENT.MD (soon!) \
+When I started using AI assisted development, I was using a single agent to help development. I'll add one soon.
+
+[NOTES MD][jotter-nobuilds-readme] \
+**THIS** file gives a life cycle of the project: design, technical development, lessons learned, and more. It's basically a brain dump of my experiences building Jotter. *This* is the place to be where my thoughts and experiences are documented.
+
+#### The documents below are 100% AI generated.:
+
+   [ARCHITECTURE][architecture] \
+   This documentation describes the runtime structure of the application. 
+
+   [CODEINTELLIGENCEMAP][codeintelligencemap] \
+   This document is a code navigation map explaining file relationships.
+
+   [CODINGTASKS][codingtasks] \
+   This document tracks current implementation and what to do next. 
+
+   [DEVONBOARDING][devonboarding] \
+   Instead of reverse engineering the codebase, this document can help with onboarding. 
+
+   [REPOMAP][repomap] \
+   This document is a map of the repo structure. 
+
+
+
+---
 ## Build Jotter
 To build Jotter from source, ensure you have the following prerequisites installed:
 
@@ -88,6 +120,12 @@ To quickly build the project without opening Visual Studio 2022 and output build
 
 
 
+[jotter-nobuilds-readme]:NoBuild\Notes.md
+[architecture]:ARCHITECTURE.MD
+[codeintelligencemap]:CODEINTELLIGENCEMAP.MD
+[codingtasks]:CODINGTASKS.MD
+[devonboarding]:DEVONBOARDING.MD
+[repomap]:REPOMAP.MD
 
 [sticky_notes_url]: https://apps.microsoft.com/detail/9nblggh4qghw
 

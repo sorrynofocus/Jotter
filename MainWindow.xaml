@@ -1,7 +1,7 @@
 ﻿<Window 
     x:Class="Jotter.MainWindow"
     Name="Jotter"
-    Title="Jotter V 1.0.0"
+    Title="Jotter Note Application"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -18,8 +18,8 @@
     AllowsTransparency="True"
     PreviewKeyDown="MainWindow_PreviewKeyDown"
     Height="600" 
-    Width="450">
-
+    Width="660">
+    <!-- SettingsMgr.cs will contain main window settings such as width, height, position, and other global settings -->
 
 
 

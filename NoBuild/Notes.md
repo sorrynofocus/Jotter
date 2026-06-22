@@ -524,3 +524,205 @@ points to getting version info.
   - A reproducible UI hang was found in the note editor while selecting text and then clicking elsewhere. Issue: https://github.com/sorrynofocus/Jotter/issues/17
   
     Using a debugger and thread dump analysis, it was determined that the hang occurred on the UI thread while the note editor was processing selection change events. Specifically, the call stack showed that `RchEditNote_SelectionChanged(...)` fired, which then called `ClearSelectionSpotlight()` and `ResetSpotlights(...)`. `ResetSpotlights(...)` walks the `RichTextBox` document and modifies formatting, which caused WPF to perform document tree updates while input/selection activity was still in progress. The UI thread became stuck inside WPF's internal `SplayTreeNode` and `TextRangeBase.EndChange(...)` calls, which are part of the document formatting and tree update logic. This confirmed that the hang was caused by selection/highlight maintenance logic blocking the UI thread during document updates.
+
+
+## 2026-06-21 -> 12:11am
+  
+  Issue: https://github.com/sorrynofocus/Jotter/issues/18
+
+  ### Resolution
+
+  Improved Jotter's settings path handling so user-configured paths can use Windows environment variables such as `%LOCALAPPDATA%` while still resolving correctly at runtime.
+
+  The main goal was to support portable/user-independent settings without forcing those values to be rewritten as hardcoded user paths. 
+
+  Also, if a migration happened where the data came from another system, Jotter can detect the change and adjust the paths accordingly, ensuring that the data is correctly referenced without requiring _manual_ updates to the configuration files. This helps maintain consistency and prevents issues arising from hardcoded paths that may no longer be valid.
+
+  Example:
+
+  ```xml
+  <DataPath>%LOCALAPPDATA%\Jotter</DataPath>
+  <LogPath>%LOCALAPPDATA%\Jotter\JotterNotes.log</LogPath>
+  ```
+
+
+  ### Files Changed
+  - SettingsMgr.cs
+  - MainWindow.xaml.cs
+  - Settings.xaml.cs
+  - NoBuild/release-notes.md
+
+  ### SettingsMgr.cs
+  Updated path resolution logic for note data and note settings files.
+
+  *Affected functions:*
+
+  - ExpandConfiguredPath(...)
+  - GetDataDirectory(...)
+  - GetDataFilePath(...)
+  - GetNoteSettingsFilePath(...)
+  - RelocateDataFiles(...)
+
+  *Changes:*
+  - Added centralized environment-variable expansion through ExpandConfiguredPath(...).
+  - Updated data path resolution so %LOCALAPPDATA% and similar variables are expanded before file I/O.
+  - Added GetDataDirectory(...) so note data and note settings paths derive from the same resolved directory.
+  - Updated GetDataFilePath(...) to support both directory paths and explicit .xml file paths.
+  - Updated GetNoteSettingsFilePath(...) to use the resolved data directory.
+  - Updated RelocateDataFiles(...) so:
+    - expanded paths are used for filesystem operations
+    - raw user-entered paths are preserved in settings
+  - Changed mainwindow window width to default 660
+
+  Sidenotes, troubleshooting and additional trace-back data:
+  
+  ### Most important spots:
+  
+  ```
+  SettingsMgr.cs (line 201) GetDataFilePath()
+  SettingsMgr.cs (line 342) RelocateDataFiles()
+  Settings.xaml.cs (line 207) when assigning logger.LogFile
+  Settings.xaml.cs (line 655) ApplyLogPathChange()
+  Settings.xaml.cs (line 705) GetUserDataDirectoryFromInput
+  Settings.xaml.cs (line 723)UpdateOpenLogButton()
+  ```
+
+  ### Summary
+  1. Add `ExpandConfiguredPath` to centralize environment variable expansion for paths.
+  2. Update runtime path usage to call `ExpandConfiguredPath` instead of directly using settings values.
+  3. Preserve raw textbox/settings values when saving to avoid silently overwriting user-configured paths.
+  4. Use a warning-style check for validation rather than hard-blocking, allowing users to be informed of non-existent directories without forcing strict behavior.
+
+  Created ConfigureDataPath() and ConfigureLoggerPath() for data/log paths based on settings, with a fallback to the default local app data path if the configured path is invalid or inaccessible. This also supports environment variable expansion, allowing paths like `%LOCALAPPDATA%\Jotter` to be correctly resolved at runtime.
+
+  Modified [Settings.xaml.cs] LoadAppSettings()
+
+  ```csharp
+  logger.LogFile = SettingsMgr.ExpandConfiguredPath(settingsManager.Settings.LogPath);
+  ```
+
+  *Need to modify:*
+  CloseSettings_Click() -> ApplyDataPathChange() and ApplyLogPathChange()
+
+  *Found during troubleshooting:*
+
+  Two separate log entries from a fake log dir. I noticed that even though the log path contained environment variables like `%LOCALAPPDATA%`, the log entries still displayed the expanded absolute path when performing file I/O operations. This highlighted the side effect that expanding paths at runtime causes the original environment variable references to be lost when settings are saved.
+
+  UpdateOpenLogButton():
+
+  ```text
+  [ 6/21/2026 8:46:13 PM  INFO ] [Doing action] Settings- UpdateOpenLogButton
+  [ 6/21/2026 8:46:13 PM  INFO ]     Log file path: %LOCALAPPDATA%\Jotter\JotterNotes.log
+  [ 6/21/2026 8:46:13 PM  INFO ]     Open log button visibility: Visible
+  [ 6/21/2026 8:46:13 PM  INFO ] [Ending action] Settings- UpdateOpenLogButton
+  [ 6/21/2026 8:47:41 PM  INFO ] [Doing action] SaveNotes
+  [ 6/21/2026 8:47:41 PM  INFO ] Recording note in RAM.
+  [ 6/21/2026 8:47:41 PM  INFO ] [Ending action] SaveNotes
+  ```
+
+  Another cause: [settings.xaml.cs] ApplyLogPathChange()
+
+  Changed `from:`
+
+  ```
+  //string newLogPath = txtLogFile?.Trim() ?? string.Empty;
+  ```
+
+  `to:`
+  ```
+  string newLogPath = SettingsMgr.ExpandConfiguredPath(settingsManager.Settings.LogPath?.Trim() ?? string.Empty);
+  ```
+
+
+  In `ApplyDataPathChange()`, changed `from:`
+
+  ```
+  string userDataInput = TextUserData.Text?.Trim() ?? string.Empty;
+  ```
+
+  `to:`
+
+  ```
+  string userDataInput = TextUserData.Text?.Trim() ?? string.Empty;
+  userDataInput = SettingsMgr.ExpandConfiguredPath(userDataInput);
+  ```
+
+  Now the side effect is that %LOCALAPPDATA% will not be retained because ApplyLogPathChange() and ApplyDataPathChange() both expand the configured paths at runtime, replacing environment variables with their actual values. This means that when the settings are saved, the original environment variable references are lost, and the paths are stored as absolute paths instead. This was a side effect of using UpdateOpenLogButton() during debugging.
+
+
+  ### MainWindow.xaml.cs
+  Improved startup handling for configured data and log paths.
+
+  *Affected functions:*
+  - ConfigureLoggerPath(...)
+  - ConfigureDataPath(...)
+  - CreateDirectoryFullAccess(...)
+  - Main window constructor startup flow
+
+  *Changes:*
+  - Added `ConfigureLoggerPath(...)` to initialize logging before data directory validation.
+  - Logger paths now support environment variables at runtime.
+  - If the configured log path is invalid or inaccessible, Jotter falls back to:`%LOCALAPPDATA%\Jotter\JotterNotes.log`
+  - Added `ConfigureDataPath(...)` to validate/create the configured data directory during startup.
+  - If the configured data path is inaccessible, Jotter prompts the user to fall back to:
+    - `%LOCALAPPDATA%\Jotter`
+  - Removed duplicate startup logger assignment so logger configuration is centralized.
+
+  ### Settings.xaml.cs
+  Improved Settings window behavior for raw path values, runtime expansion, and logging toggles.
+
+  *Affected functions:*
+  - `LoadAppSettings(...)`
+  - `ApplyLogPathChange(...)`
+  - `ApplyDataPathChange(...)`
+  - `GetUserDataDirectoryFromInput(...)`
+  - `UpdateOpenLogButton(...)`
+  - `chkEnableLogging_Checked(...)`
+  - `TextLogFile_LostFocus(...)`
+  - `TextUserData_LostFocus(...)`
+
+  *Changes:*
+  - Added default raw log path setting:
+    -`%LOCALAPPDATA%\Jotter\JotterNotes.log`
+  - Settings UI now preserves raw configured values instead of automatically rewriting them to expanded paths.
+  Runtime logging still uses expanded paths.
+  - `ApplyLogPathChange(...)` now:
+    - reads the current textbox value
+    - fills in the default log path if the textbox is blank
+    - expands the path before file/directory operations
+    - saves the raw value back to settings
+    - updates `logger.LogFile` with the expanded runtime path
+
+  - `ApplyDataPathChange(...)` now:
+    - reads the current textbox value
+    - validates unresolved environment variables
+    - passes the raw path to relocation logic
+
+  - Fixed an issue where enabling logging with a blank log path would write logs successfully but leave the Settings UI textbox empty.
+  - `UpdateOpenLogButton(...)` now checks the expanded log path when deciding whether the Open Log button should be visible.
+
+  ### Behavior Notes
+  Supported settings examples:
+
+  `<DataPath>C:\Users\cwrun\AppData\Local\Jotter</DataPath>`
+
+  and:
+
+  `<DataPath>%LOCALAPPDATA%\Jotter</DataPath>`
+
+  Both are supported _without_ migration! The same applies to log paths:
+
+  `<LogPath>C:\Users\cwrun\AppData\Local\Jotter\JotterNotes.log</LogPath>`
+  and:
+  `<LogPath>%LOCALAPPDATA%\Jotter\JotterNotes.log</LogPath>`
+
+  Runtime filesystem access uses expanded paths, while saved settings can keep environment-variable paths.
+
+  ### NoBuild/release-notes.md
+
+  Correct SHA256 hash verification instructions.
+
+  Done, for now!
+
+
+

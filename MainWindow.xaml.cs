@@ -1,4 +1,4 @@
-﻿/*
+/*
 * Jotter
 * C.Winters / US / Arizona / Thinkpad T15g
 * Feb 2024
@@ -89,9 +89,6 @@ namespace Jotter
             // Init settings manager
             settingsManager = new SettingsMgr();
 
-            //TODO VV temp function to TEST the settings manager prototype!!!
-            //LoadAppSettings(settingsManager);
-
             //Start Jotter at bottom left of screen.
             //We can later add this to settings
             //Center - WindowStartupLocation.CenterScreen
@@ -107,27 +104,19 @@ namespace Jotter
             LoadAppSettings(settingsManager.Settings);
 
             logger.LogWritten += LogWrite_Handler;
-            
-            //Get log path custom or not
-            if (!string.IsNullOrWhiteSpace(settingsManager.Settings.LogPath))
-                logger.LogFile = settingsManager.Settings.LogPath;
-            else
-            {
-                logger.LogFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                                               Path.Join(Assembly.GetExecutingAssembly().GetName().Name, "JotterNotes.log"));
-                //Turn logging off if no path..
-                //logger.EnableLogger = false;
-                //TODO: Add code in log handler to check if log file is empty, then turn off logging.   
-            }
+
+            // Configure log path before enabling logger or validating data dir.
+            ConfigureLoggerPath();
 
             logger.EnableLogger = settingsManager.Settings.IsKennyLoggings;
             logger.EnableDTStamps = true;
 
             //Dir has to be created first before any log written. Access error appears if logging first.
             //We may get rid of this in favor of a customized location. Future TODO?
+            //Reason  to keep log in same dir -> easier to find :)
             string? directoryPath = Path.GetDirectoryName(jotNotesFilePath);
             if (directoryPath != null)
-                CreateDirectoryFullAccess(directoryPath);
+                ConfigureDataPath(directoryPath); // calls CreateDirectoryFullAccess(directoryPath)!
 
             logger.LogInfo(new List<string> { " ", "------------------------------------------" });
             logger.LogInfo("[Doing action] Started up the generator!");
@@ -151,8 +140,6 @@ namespace Jotter
             // Subscribe to the Loaded event
             this.Loaded += MainWindow_Loaded;
 
-
-
             //Init NOTIFY TRAY ICON
             InitializeTrayIcon();
 
@@ -160,7 +147,6 @@ namespace Jotter
             this.StateChanged += MainWindow_StateChanged;
 
             isMainWindowLoaded = true;
-
         }
 
 
@@ -398,6 +384,72 @@ namespace Jotter
                                                               AccessControlType.Allow));
             dInfo.SetAccessControl(dSecurity);
             logger.LogInfo("[Ending action] CreateDirectoryFullAccess");
+        }
+
+        /// <summary>
+        /// Create directory with full access based on the configured data 
+        /// path, with a fallback to the default local app data path if the configured path is invalid or inaccessible.
+        /// </summary>
+        /// <param name="directoryPath"></param>
+        private void ConfigureDataPath(string directoryPath)
+        {
+            try
+            {
+                CreateDirectoryFullAccess(directoryPath);
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException || 
+                                       ex is IOException || 
+                                       ex is System.Security.SecurityException)
+            {
+                MessageBoxResult result = MessageBox.Show(
+                    $"The data appears to be a migration!\n\nJotter could not access the configured data folder:\n\n{directoryPath}\n\nUse the default local app data folder instead? ( Recommended: YES)",
+                    "Jotter Data Folder migration notice",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result != MessageBoxResult.Yes)
+                    throw;
+
+                settingsManager.Settings.DataPath = @"%LOCALAPPDATA%\Jotter";
+                settingsManager.SaveSettings();
+
+                string fallbackDirectory = SettingsMgr.GetDataDirectory(settingsManager.Settings);
+                CreateDirectoryFullAccess(fallbackDirectory);
+            }
+        }
+
+        /// <summary>
+        /// Configure the logger path based on settings, with a fallback to the default local app data path if 
+        /// the configured path is invalid or inaccessible.
+        /// Supporitng expanded environment variables in the configured log path. If the configured path is 
+        /// invalid or inaccessible, it falls back to a default path in the local application data folder and 
+        /// updates the settings accordingly.
+        /// </summary>
+        private void ConfigureLoggerPath()
+        {
+            string defaultLogPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                Path.Join(Assembly.GetExecutingAssembly().GetName().Name, "JotterNotes.log"));
+
+            string configuredLogPath = !string.IsNullOrWhiteSpace(settingsManager.Settings.LogPath)
+                ? SettingsMgr.ExpandConfiguredPath(settingsManager.Settings.LogPath)
+                : defaultLogPath;
+
+            try
+            {
+                string? logDirectory = Path.GetDirectoryName(configuredLogPath);
+
+                if (!string.IsNullOrWhiteSpace(logDirectory))
+                    Directory.CreateDirectory(logDirectory);
+
+                logger.LogFile = configuredLogPath;
+            }
+            catch
+            {
+                settingsManager.Settings.LogPath = @"%LOCALAPPDATA%\Jotter\JotterNotes.log";
+                logger.LogFile = SettingsMgr.ExpandConfiguredPath(settingsManager.Settings.LogPath);
+                settingsManager.SaveSettings();
+            }
         }
 
         /// <summary>
@@ -1265,8 +1317,6 @@ namespace Jotter
             settingsWindow.Closed += SettingsWindow_Closed;
 
             settingsWindow.ShowDialog();
-            //Application.Current.MainWindow.Left = Window.GetWindow(this).Left;
-            //Application.Current.MainWindow.Top = Window.GetWindow(this).Top;
 
             // Show MainWindow again and fade in
             this.Opacity = 0;
@@ -1274,10 +1324,6 @@ namespace Jotter
 
             DoubleAnimation fadeInAnimation = new DoubleAnimation(1, TimeSpan.FromSeconds(0.5));
             this.BeginAnimation(Window.OpacityProperty, fadeInAnimation);
-            
-            // Restore MainWindow's position
-            //Application.Current.MainWindow.Left = mainLeft;
-            //Application.Current.MainWindow.Top = mainTop;
         }
 
         /// <summary>

@@ -1,26 +1,17 @@
-﻿using com.nobodynoze.flogger;
+using com.nobodynoze.flogger;
 using com.nobodynoze.notemanager;
 using Jotter.Utils.Exporter;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
+using System.IO;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using System.Xml.Serialization;
-using System.IO;
+using static System.Net.Mime.MediaTypeNames;
 
 /*
- * examepl toggle in XAML
+ * example toggle in XAML
  *  <CheckBox x:Name="cbToggle" Height="45" Width="65" IsChecked="False" Checked="cbToggle_Checked" Unchecked="cbToggle_Unchecked" />
  *  
  */
@@ -38,6 +29,7 @@ namespace Jotter
         private readonly SettingsMgr settingsManager;
 
         Logger logger = Jotter.MainWindow.logger;
+        private const string DefaultLogPathSetting = @"%LOCALAPPDATA%\Jotter\JotterNotes.log";
 
         //Prop3erties for binding to textbox -logs
         public string txtUserData { get; set; } = "C:\\Jotter\\userdata.xml";
@@ -67,63 +59,6 @@ namespace Jotter
             LoadThemeSelectionItems();
         }
 
-        //private bool SwitchTheme(string themeName)
-        //{
-        //    //ResourceDictionary lightTheme = new ResourceDictionary { Source = new Uri("Utils/Themes/LightTheme.xaml", UriKind.Relative) };
-        //    //Application.Current.Resources.MergedDictionaries.Clear();
-        //    //Application.Current.Resources.MergedDictionaries.Add(lightTheme);
-
-
-        //    //logger.LogInfo($"[switchtheme] Doing action");
-        //    Application.Current.Resources.MergedDictionaries.Clear();
-
-        //    foreach (var key in Application.Current.Resources.Keys)
-        //    {
-        //        Debug.WriteLine($"Reources: {key}");
-        //        //logger.LogInfo($"Resources: {key}");
-        //    }
-
-        //    try 
-        //    {
-        //        Uri resourceUri = new Uri(@$"/Utils/Themes/{themeName}.xaml", UriKind.RelativeOrAbsolute);
-        //        ResourceDictionary resourceDictionary = new ResourceDictionary() { Source = resourceUri };
-        //    }
-        //    catch
-        //    {
-        //        MessageBox.Show($"The theme \"{themeName}\" could not be applied. Please ensure it exists.", "Theme Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-        //        return (false);
-        //    }
-
-        //    try
-        //    {
-        //        // Remove existing theme dictionaries
-        //        var existingDictionaries = Application.Current.Resources.MergedDictionaries.ToList();
-        //        foreach (var dictionary in existingDictionaries)
-        //        {
-        //            Application.Current.Resources.MergedDictionaries.Remove(dictionary);
-        //        }
-
-        //        // Add the new theme dictionary
-        //        Application.Current.Resources.MergedDictionaries.Add(resourceDictionary);
-
-        //        foreach (var dictionary in Application.Current.Resources.MergedDictionaries)
-        //        {
-        //            Debug.WriteLine($"Loaded Dictionary: {dictionary.Source}");
-        //            //logger.LogInfo($"Loaded Dictionary: {dictionary.Source}");
-        //        }
-
-        //        Debug.WriteLine($"Theme applied: {themeName}");
-        //        //logger.LogInfo($"Theme applied: {themeName}");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Debug.WriteLine($"Failed to apply theme: {ex.Message}");
-        //        //logger.LogInfo($"Failed to apply theme: {ex.Message}");
-        //    }
-
-        //    //logger.LogInfo($"[switchtheme] Doing action");
-        //    return (true);
-        //}
 
         /// <summary>
         /// Apply the requested theme or custom skin to the current application resources.
@@ -205,42 +140,72 @@ namespace Jotter
 
             //Get log file path 
             if (!string.IsNullOrWhiteSpace(settingsManager.Settings.LogPath))
-                logger.LogFile = settingsManager.Settings.LogPath;
+                logger.LogFile = SettingsMgr.ExpandConfiguredPath(settingsManager.Settings.LogPath);
             else
-                logger.LogFile = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                                               System.IO.Path.Join(Assembly.GetExecutingAssembly().GetName().Name, "JotterNotes.log"));
+                logger.LogFile = SettingsMgr.ExpandConfiguredPath(DefaultLogPathSetting);
 
             logger.EnableLogger = settings.IsKennyLoggings;
             logger.EnableDTStamps = true;
-            logger.LogInfo("[Doing action] Settings- LoadAppSettings");
-
 
 
             //Set UI Logging into bound properties to the textbox in UI
-            txtUserData = System.IO.Path.GetDirectoryName(settingsManager.DataFilePath) ?? SettingsMgr.DefaultDataDirectory;
+            //TODO: seeing redundant usage of variables. txtLogFile and logger.LogFile are the same.Need to clean this up.
+            //LoadAppSettings():
+            //TextLogFile.Text - current UI input
+            //
+            //ApplyLogPathChange:
+            //TextLogFile.Text - current UI input
+            //logger.LogFile -  expanded runtime path
+            //
+            //txtLogFile - remove or reduce reliance on txtLogFile, it's binding prop on the UI.
+
+            txtUserData = !string.IsNullOrWhiteSpace(settingsManager.Settings.DataPath)
+                ? settingsManager.Settings.DataPath
+                : SettingsMgr.DefaultDataDirectory;
             txtLogFile = !string.IsNullOrWhiteSpace(settingsManager.Settings.LogPath)
                 ? settingsManager.Settings.LogPath
-                : logger.LogFile;
+                : DefaultLogPathSetting;
+
+            logger.LogInfo("[Doing action] Settings- LoadAppSettings");
+            logger.LogInfo($"    [raw - settingsManager.DataFilePath] txtUserData: {txtUserData}");
+            logger.LogInfo($"    [raw - settingsManager.Settings.LogPath] txtLogFile: {txtLogFile}");
+
             TextUserData.Text = txtUserData;
             TextLogFile.Text = txtLogFile;
+
+
             chkEnableLogging.IsChecked = settings.IsKennyLoggings;
             chkDateTimeStamp.IsChecked = settings.IsDateTimeStamp;
             chkDeletionConfirm.IsChecked = settings.IsDeletionConfirm;
-            UpdateOpenLogButton();
-            UpdateOpenThemesFolderButton();
-            //TextUserData.Text = Jotter.MainWindow.jotNotesFilePath;
-            //TextLogFile.Text = Jotter.MainWindow.logger.LogFile;
 
+            logger.LogInfo($"    [config - settingsManager.DataFilePath] txtUserData: {txtUserData}");
+            logger.LogInfo($"    [config - settingsManager.Settings.LogPath] txtLogFile: {logger.LogFile}");
+            logger.LogInfo($"    [Settings UI] TextUserData.Text: {TextUserData.Text}");
+            logger.LogInfo($"    [Settings UI] TextLogFile.Text: {TextLogFile.Text}");
+            logger.LogInfo($"    [config] chkEnableLogging: {settings.IsKennyLoggings}");
+            logger.LogInfo($"    [config] chkDateTimeStamp: {settings.IsDateTimeStamp}");
+            logger.LogInfo($"    [config] chkDeletionConfirm: {settings.IsDeletionConfirm}");
+
+            //REM out to sniff out the expanded version of the env paths. ..
+            //string TextUserDataTMP = SettingsMgr.ExpandConfiguredPath(settingsManager.DataFilePath);
+            //string TextLogFileTMP = SettingsMgr.ExpandConfiguredPath(settingsManager.Settings.LogPath);
+            //TextUserData.Text = TextUserDataTMP;
+            //TextLogFile.Text = TextLogFileTMP;
+
+            //If logging is disabled, then hide the open log button because there won't be a log file to open.
+            UpdateOpenLogButton();
+            // If themes folder is not accessible, then hide the open themes folder button.
+            UpdateOpenThemesFolderButton();
 
             logger.LogInfo("[Doing action] Settings- GetJotterVersion started");
             VersionTextBlock.Text = GetJotterVersion();
-
             logger.LogInfo("[Doing action] Settings- GetJotterVersion finished");
 
 
 
             //Set the radio button for minmize or full exit
             bool isTray = settingsManager.Settings.IsTray;
+            logger.LogInfo($"   [config] IsTray: {settings.IsTray}");
 
             // Find the radio buttons in the UI and set their state
             //foreach (var child in LogicalTreeHelper.GetChildren(stackPanel_ExitBehavior))
@@ -267,6 +232,10 @@ namespace Jotter
             rb_MinimizeToTray.IsChecked = settings.IsTray;
             rb_FullExit.IsChecked = !settings.IsTray;
 
+            logger.LogInfo($"   [config] IsTray: {settings.IsTray}");
+            logger.LogInfo($"   [config] IsMaximized: {settings.IsMaximized}");
+
+
 
 
             //Check the themes
@@ -279,12 +248,16 @@ namespace Jotter
                         comboBoxItem.Content.ToString() == settings.Theme)
                     {
                         ThemeSelection.SelectedItem = comboBoxItem;
+                        logger.LogInfo($"   [config] Theme: {settings.Theme}"); 
                         break;
                     }
                 }
 
                 if (ThemeSelection.SelectedItem == null)
+                {
                     SelectThemeComboBoxItem("Default Theme");
+                    logger.LogInfo($"   [config] Theme: Default Theme (fallback)");
+                }
             }
 
             //Check the save technique
@@ -295,15 +268,12 @@ namespace Jotter
                     if (int.TryParse(item.Tag?.ToString(), out int tagValue) && tagValue == settings.SaveInterval)
                     {
                         AutoSave.SelectedItem = item;
+                        logger.LogInfo($"   [config] SaveInterval: {settings.SaveInterval} seconds");
                         break;
                     }
                 }
             }
-
-
-
             logger.LogInfo("[Ending action] Settings- LoadAppSettings");
-
         }
 
         /// <summary>
@@ -557,7 +527,7 @@ namespace Jotter
         /// <param name="e">Click event arguments.</param>
         private void btnOpenLog_Click(object sender, RoutedEventArgs e)
         {
-            string logPath = !string.IsNullOrWhiteSpace(txtLogFile) ? txtLogFile.Trim() : logger.LogFile;
+            string logPath = SettingsMgr.ExpandConfiguredPath(!string.IsNullOrWhiteSpace(txtLogFile) ? txtLogFile.Trim() : logger.LogFile);
 
             if (!File.Exists(logPath))
             {
@@ -654,24 +624,32 @@ namespace Jotter
         /// </summary>
         private void ApplyLogPathChange()
         {
-            string newLogPath = txtLogFile?.Trim() ?? string.Empty;
+            string newLogPath = TextLogFile.Text?.Trim() ?? string.Empty;
 
             if (string.IsNullOrWhiteSpace(newLogPath))
             {
-                UpdateOpenLogButton();
-                return;
+                newLogPath = DefaultLogPathSetting;
+                TextLogFile.Text = newLogPath;
             }
 
             bool wasLoggingEnabled = logger.EnableLogger;
             logger.EnableLogger = false;
 
-            string? logDirectory = System.IO.Path.GetDirectoryName(newLogPath);
+            string expandedLogPath = SettingsMgr.ExpandConfiguredPath(newLogPath);
+            if (expandedLogPath.Contains('%'))
+            {
+                MessageBox.Show($"The log path contains an unresolved environment variable:\n\n{newLogPath}", "Jotter Log Path", MessageBoxButton.OK, MessageBoxImage.Warning);
+                UpdateOpenLogButton();
+                return;
+            }
+
+            string? logDirectory = System.IO.Path.GetDirectoryName(expandedLogPath);
             if (!string.IsNullOrWhiteSpace(logDirectory) && !Directory.Exists(logDirectory))
                 Directory.CreateDirectory(logDirectory);
 
             txtLogFile = newLogPath;
             settingsManager.Settings.LogPath = newLogPath;
-            logger.LogFile = newLogPath;
+            logger.LogFile = expandedLogPath;
             logger.EnableLogger = settingsManager.Settings.IsKennyLoggings;
             settingsManager.SaveSettings();
 
@@ -687,13 +665,21 @@ namespace Jotter
         private void ApplyDataPathChange()
         {
             string userDataInput = TextUserData.Text?.Trim() ?? string.Empty;
+
             string newDirectory = GetUserDataDirectoryFromInput(userDataInput);
 
             if (string.IsNullOrWhiteSpace(newDirectory))
                 return;
 
+            string expandedDirectory = SettingsMgr.ExpandConfiguredPath(newDirectory);
+            if (expandedDirectory.Contains('%'))
+            {
+                MessageBox.Show($"The data path contains an unresolved environment variable:\n\n{newDirectory}", "Jotter Data Path", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             settingsManager.RelocateDataFiles(newDirectory);
-            txtUserData = System.IO.Path.GetDirectoryName(settingsManager.DataFilePath) ?? SettingsMgr.DefaultDataDirectory;
+            txtUserData = settingsManager.Settings.DataPath;
             TextUserData.Text = txtUserData;
         }
         /// <summary>
@@ -707,7 +693,7 @@ namespace Jotter
             string normalizedInput = userDataInput?.Trim() ?? string.Empty;
 
             if (string.IsNullOrWhiteSpace(normalizedInput))
-                return (System.IO.Path.GetDirectoryName(settingsManager.DataFilePath) ?? string.Empty);
+                return (settingsManager.Settings.DataPath ?? string.Empty);
 
             if (string.Equals(System.IO.Path.GetExtension(normalizedInput), ".xml", StringComparison.OrdinalIgnoreCase))
                 return (System.IO.Path.GetDirectoryName(normalizedInput) ?? string.Empty);
@@ -720,8 +706,17 @@ namespace Jotter
         /// </summary>
         private void UpdateOpenLogButton()
         {
-            string logPath = !string.IsNullOrWhiteSpace(txtLogFile) ? txtLogFile.Trim() : logger.LogFile;
+            logger.LogInfo("[Doing action] Settings- UpdateOpenLogButton");
+            string rawLogPath = !string.IsNullOrWhiteSpace(TextLogFile.Text)
+                ? TextLogFile.Text.Trim()
+                : txtLogFile;
+            string logPath = SettingsMgr.ExpandConfiguredPath(!string.IsNullOrWhiteSpace(rawLogPath) ? rawLogPath : logger.LogFile);
+            //TextResolvedLogFile.Text = $"Resolved: {logPath}";
+            
             btnOpenLog.Visibility = File.Exists(logPath) ? Visibility.Visible : Visibility.Collapsed;
+            logger.LogInfo($"    Log file path: {logPath}");
+            logger.LogInfo($"    Open log button visibility: {btnOpenLog.Visibility}");
+            logger.LogInfo("[Ending action] Settings- UpdateOpenLogButton");
         }
         /// <summary>
         /// Read the version metadata from the running assembly for display in Settings.
@@ -750,7 +745,7 @@ namespace Jotter
                         return (versionInfo.ProductVersion);
                 }
             }
-            catch
+            catch //TODO: You better catch!
             {
             }
 

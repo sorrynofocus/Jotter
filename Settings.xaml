@@ -364,6 +364,15 @@
             <!-- Blue color for file paths -->
         </Style>
 
+        <Style TargetType="TextBlock" x:Key="ResolvedPathTextStyle">
+            <Setter Property="Margin" Value="5,1,0,0"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{DynamicResource NoteTextForegroundBrush}"/>
+            <Setter Property="Opacity" Value="0.78"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+
         <Style x:Key="CloseButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="40"/>
             <Setter Property="Height" Value="40"/>
@@ -490,12 +499,18 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
                     <TextBlock Grid.Column="0" Text="Log path:  " Style="{StaticResource GeneralTextStyle}" VerticalAlignment="Center"/>
-                    <TextBox Grid.Column="1" x:Name="TextLogFile" 
+                    <TextBox Grid.Row="0" Grid.Column="1" x:Name="TextLogFile" 
                              Text="{Binding txtLogFile, Mode=TwoWay, UpdateSourceTrigger=LostFocus, TargetNullValue=C:\Logs\logfile.txt}" 
                              Style="{StaticResource FilePathTextStyle}" 
                              VerticalAlignment="Center"
                              LostFocus="TextLogFile_LostFocus"/>
+                    <!-- <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TextResolvedLogFile"
+                               Style="{StaticResource ResolvedPathTextStyle}"/> -->
                 </Grid>
 
 

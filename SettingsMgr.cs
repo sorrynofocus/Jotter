@@ -4,6 +4,42 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+/* Notes:
+
+TransitionToSettings() (located in MainWindow.xaml.cs) is called to transition and open the settings manager. 
+Ultimately, is calls settingsWindow.ShowDialog() to display the dialog window. A handler is subscribed to the
+settingsWindow.Closed event, which will call SaveSettings() to save the settings when the settings manger window
+is closed.
+
+SettingsMgr - mostly dealing with settings outside UI
+Settings.xaml.cs - deals with UI and elements of the settings manager window, and calls SettingsMgr to load and save the settings.
+
+* MAIN Windows settings such as width, height, position, and other global settings are stored HERE!
+
+Flow of SettingsManager:
+
+1. When the application starts, an instance of SettingsMgr is created, which automatically loads the application 
+   settings and note settings from their respective XML files (if they exist). If the files do not exist or there
+   is an error during loading, default settings are used. Environment variables can be used in the configuration
+   paths, and they will be expanded to their full paths when loading the settings. The variables used to track 
+   data path and note settings path are `CurrentDataFilePath` and `CurrentNoteSettingsFilePath`, which are updated
+   based on the loaded settings.
+2. The application settings (AppSettings) include properties such as window dimensions, save interval, log path, 
+   data path, theme, and various boolean flags for features like date/time stamps and deletion confirmation.
+3. The note settings (NotesConfiguration) is a collection of NoteSettings, where each NoteSettings contains a 
+   unique noteID (UID), position (Left and Top), and dimension (Width and Height) for an individual note.
+4. The SettingsMgr class provides methods to save the application settings and note settings back to their 
+   respective XML files. It also includes a method to relocate the data files to a new directory, which involves
+   copying existing files to the new location and updating the settings accordingly.
+5. The application can retrieve and update individual note configurations using the GetNoteConf, SaveNoteConf,
+   and RemoveNoteConf methods, which operate on the NotesConfig collection. These are used to manage the settings
+   for each note, such as when a note is created, moved, resized, or deleted.
+
+ */
+
+
+
+
 namespace Jotter
 {
     using System;
@@ -21,7 +57,7 @@ namespace Jotter
     public class AppSettings
     {
         //Width x Height
-        public double WindowWidth { get; set; } = 450;
+        public double WindowWidth { get; set; } = 660;
         public double WindowHeight { get; set; } = 600;
         //Xpos
         public double WindowLeft { get; set; } = 100;
@@ -198,36 +234,93 @@ namespace Jotter
             return (Path.Combine(DefaultDataDirectory, NoteSettingsFileName));
         }
 
+        public static string GetDataDirectory(AppSettings? settings)
+        {
+            if (!string.IsNullOrWhiteSpace(settings?.DataPath))
+            {
+                string configuredPath = ExpandConfiguredPath(settings.DataPath);
+
+                if (string.Equals(Path.GetExtension(configuredPath), ".xml", StringComparison.OrdinalIgnoreCase))
+                    return Path.GetDirectoryName(configuredPath) ?? DefaultDataDirectory;
+
+                return configuredPath;
+            }
+
+            return DefaultDataDirectory;
+        }
+
+        //public static string GetDataFilePath(AppSettings? settings)
+        //{
+        //    if (!string.IsNullOrWhiteSpace(settings?.DataPath))
+        //    {
+        //        string configuredPath = settings.DataPath.Trim();
+
+        //        if (string.Equals(Path.GetExtension(configuredPath), ".xml", StringComparison.OrdinalIgnoreCase))
+        //            return (configuredPath);
+
+        //        return (Path.Combine(configuredPath, NotesFileName));
+        //    }
+
+        //    return (GetDefaultDataFilePath());
+        //}
+
+        /// <summary>
+        /// This method determines the data file path based on the provided settings. It checks if a 
+        /// custom data path is specified in the settings, and if so, it expands any environment variables 
+        /// in the path. If the expanded path points to an XML file, it returns that path directly. 
+        /// Otherwise, it treats the expanded path as a directory and appends the default notes file name 
+        /// to it. If no custom data path is specified, it defaults to using the standard data directory 
+        /// with the default notes file name.
+        /// </summary>
+        /// <param name="settings">The application settings instance.</param>
+        /// <returns>The full path to the data file.</returns>
         public static string GetDataFilePath(AppSettings? settings)
         {
             if (!string.IsNullOrWhiteSpace(settings?.DataPath))
             {
-                string configuredPath = settings.DataPath.Trim();
+                string configuredPath = ExpandConfiguredPath(settings.DataPath);
 
                 if (string.Equals(Path.GetExtension(configuredPath), ".xml", StringComparison.OrdinalIgnoreCase))
-                    return (configuredPath);
-
-                return (Path.Combine(configuredPath, NotesFileName));
+                    return configuredPath;
             }
-
-            return (GetDefaultDataFilePath());
+            return Path.Combine(GetDataDirectory(settings), NotesFileName);
         }
 
         public static string GetNoteSettingsFilePath(AppSettings? settings)
         {
-            string dataFilePath = GetDataFilePath(settings);
-            string? dataDirectory = Path.GetDirectoryName(dataFilePath);
+            //string dataFilePath = GetDataFilePath(settings);
+            //string? dataDirectory = Path.GetDirectoryName(dataFilePath);
 
-            if (string.IsNullOrWhiteSpace(dataDirectory))
-                dataDirectory = DefaultDataDirectory;
+            //if (string.IsNullOrWhiteSpace(dataDirectory))
+            //    dataDirectory = DefaultDataDirectory;
 
-            return (Path.Combine(dataDirectory, NoteSettingsFileName));
+            //return (Path.Combine(dataDirectory, NoteSettingsFileName));
+
+            return Path.Combine(GetDataDirectory(settings), NoteSettingsFileName);
         }
 
         private void SyncCurrentPaths()
         {
             CurrentDataFilePath = GetDataFilePath(Settings);
             CurrentNoteSettingsFilePath = GetNoteSettingsFilePath(Settings);
+        }
+
+        /// <summary>
+        /// This method is to centralize environment variable expansion for paths.
+        ///
+        /// </summary>
+        /// <param name="path">The path to expand.</param>
+        /// <returns>The expanded path.</returns>
+        /// Note: This method is static and can be called without an instance of SettingsMgr.
+        /// The purpose of this function is to ensure that any path provided in the settings 
+        /// that contains environment variables (%APPDATA%) is properly expanded to its full
+        /// path before being used by the application.
+        public static string ExpandConfiguredPath(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return (string.Empty);
+
+            return (Environment.ExpandEnvironmentVariables(path.Trim()));
         }
 
         /// <summary>
@@ -339,18 +432,30 @@ namespace Jotter
             }
         }
 
+
+        /// <summary>
+        /// This method is to move the data files (notes and note settings) to a new directory. 
+        /// It will copy the existing files to the new location, update the settings with the 
+        /// new path, and save the settings and note settings. If the new directory does not 
+        /// exist, it will be created. If the new directory is the same as the 
+        /// current, no action will be taken. 
+        /// </summary>
+        /// <param name="newDirectory">The new directory to move the data files to.</param>
         public void RelocateDataFiles(string newDirectory)
         {
             if (string.IsNullOrWhiteSpace(newDirectory))
                 return;
 
+            string configuredDirectory = newDirectory.Trim();
+            string expandedDirectory = ExpandConfiguredPath(configuredDirectory);
+
             string currentDataFilePath = DataFilePath;
             string currentNoteSettingsFilePath = NoteSettingsDataFilePath;
-            string newDataFilePath = Path.Combine(newDirectory, NotesFileName);
-            string newNoteSettingsFilePath = Path.Combine(newDirectory, NoteSettingsFileName);
+            string newDataFilePath = Path.Combine(expandedDirectory, NotesFileName);
+            string newNoteSettingsFilePath = Path.Combine(expandedDirectory, NoteSettingsFileName);
 
-            if (!Directory.Exists(newDirectory))
-                Directory.CreateDirectory(newDirectory);
+            if (!Directory.Exists(expandedDirectory))
+                Directory.CreateDirectory(expandedDirectory);
 
             if (!string.Equals(currentDataFilePath, newDataFilePath, StringComparison.OrdinalIgnoreCase))
             {
@@ -361,7 +466,7 @@ namespace Jotter
                     File.Copy(currentNoteSettingsFilePath, newNoteSettingsFilePath, true);
             }
 
-            Settings.DataPath = newDirectory;
+            Settings.DataPath = configuredDirectory;
             SyncCurrentPaths();
             SaveSettings();
             SaveNoteSettings();

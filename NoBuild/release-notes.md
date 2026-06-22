@@ -17,7 +17,7 @@ This release reflects the latest commit: [RELEASE_GITHUB_COMMIT]
 
 * Scan with your favorite AV, and run this line to verify hash:
 
-    `certUtil -hashfile Jotter.exe`
+    `certUtil -hashfile Jotter.exe SHA256`
 
     SHA1 hash of `Jotter.exe` (security the file was not modified at the time of this published release):
     

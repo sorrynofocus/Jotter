@@ -32,7 +32,7 @@ echo "Starting %SOLUTIONFILE% build..."
 
 if "%IS_DEBUG%" == "true" (
     echo RUNNING DEBUG BUILD...
-    dotnet clean "%SOLUTIONFILE%" --property:dotNetBuildCmd="clean" --configuration %CONFIG_DEBUG% --property:Platform=%PLATFORM% --nologo --verbosity "%VERBOSE_LEVEL%"
+    @REM dotnet clean "%SOLUTIONFILE%" --property:dotNetBuildCmd="clean" --configuration %CONFIG_DEBUG% --property:Platform=%PLATFORM% --nologo --verbosity "%VERBOSE_LEVEL%"
     dotnet build "%SOLUTIONFILE%" --property:dotNetBuildCmd="build" --framework %FRAMEWORK% --configuration %CONFIG_DEBUG% --property:Platform=%PLATFORM% --nologo -nodeReuse:true --verbosity "%VERBOSE_LEVEL%"
     dotnet publish "%SOLUTIONFILE%" --property:dotNetBuildCmd="publish" --framework %FRAMEWORK% -r "%RUNTIME_IDENTIFIER%" --configuration %CONFIG_DEBUG% --property:Platform=%PLATFORM% --self-contained true --property:PublishSingleFile=true  --property:IncludeNativeLibrariesForSelfExtract=true --verbosity "%VERBOSE_LEVEL%" --property:PublishDir=%PUBLISHDIR_DEBUG%
     echo.
@@ -47,7 +47,7 @@ if "%IS_DEBUG%" == "true" (
 
 ) else (
     echo RUNNING RELEASE BUILD...
-    dotnet clean "%SOLUTIONFILE%" --property:dotNetBuildCmd="clean" --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --nologo --verbosity "%VERBOSE_LEVEL%"
+    @REM dotnet clean "%SOLUTIONFILE%" --property:dotNetBuildCmd="clean" --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --nologo --verbosity "%VERBOSE_LEVEL%"
     dotnet build "%SOLUTIONFILE%" --property:dotNetBuildCmd="build" --framework %FRAMEWORK% --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --nologo -nodeReuse:true --verbosity "%VERBOSE_LEVEL%"
     dotnet publish "%SOLUTIONFILE%" --property:dotNetBuildCmd="publish" --framework %FRAMEWORK% -r "%RUNTIME_IDENTIFIER%" --configuration %CONFIG_RELEASE% --property:Platform=%PLATFORM% --self-contained true --property:PublishSingleFile=true  --property:IncludeNativeLibrariesForSelfExtract=true --verbosity "%VERBOSE_LEVEL%" --property:PublishDir=%PUBLISHDIR_RELEASE%
     echo.
